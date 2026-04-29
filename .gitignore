@@ -18,3 +18,7 @@ yarn-error.log
 /.vscode
 storage/app/backups/
 storage/logs/
+storage/framework/sessions/
+storage/framework/views/
+storage/framework/cache/data/
+storage/app/public/
