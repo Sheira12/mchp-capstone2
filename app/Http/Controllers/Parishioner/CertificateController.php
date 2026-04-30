@@ -20,9 +20,15 @@ class CertificateController extends Controller
     {
         // Ensure the certificate belongs to the authenticated parishioner
         if ($certificate->parishioner_id !== auth()->user()->parishioner?->id) {
-            abort(403);
+            abort(403, 'This certificate does not belong to your account.');
         }
 
+        // Allow download for both issued and released status
+        if (!in_array($certificate->status, ['issued', 'released'])) {
+            return back()->withErrors(['error' => 'This certificate is not yet ready for download.']);
+        }
+
+        set_time_limit(60);
         if (!$certificate->file_path || !Storage::disk('public')->exists($certificate->file_path)) {
             app(\App\Services\CertificateService::class)->generate($certificate);
             $certificate->refresh();

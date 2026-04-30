@@ -55,6 +55,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 });
 
+// 2FA routes — accessible when NOT fully authenticated (session has 2fa_user_id)
+Route::get('/verify-otp', [AuthController::class, 'show2fa'])->name('2fa.show');
+Route::post('/verify-otp', [AuthController::class, 'verify2fa'])->name('2fa.verify');
+Route::post('/resend-otp', [AuthController::class, 'resend2fa'])->name('2fa.resend');
+
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
 /*
@@ -110,6 +115,8 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
     // Sacramental Records
     Route::post('/sacramental-records/{sacramentalRecord}/verify', [SacramentalRecordController::class, 'verify'])
         ->name('sacramental-records.verify');
+    Route::get('/sacramental-records/search', [SacramentalRecordController::class, 'search'])
+        ->name('sacramental-records.search');
     Route::resource('sacramental-records', SacramentalRecordController::class);
 
     // Bookings

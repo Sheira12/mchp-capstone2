@@ -97,6 +97,25 @@ class SacramentalRecordController extends Controller
             ->with('success', 'Record deleted.');
     }
 
+    public function search(\Illuminate\Http\Request $request)
+    {
+        $term = $request->get('q', '');
+        $results = SacramentalRecord::with('parishioner')
+            ->whereHas('parishioner', fn($q) => $q->search($term))
+            ->orWhere('register_number', 'like', "%{$term}%")
+            ->limit(10)
+            ->get()
+            ->map(fn($r) => [
+                'id'   => $r->id,
+                'text' => ucfirst(str_replace('_', ' ', $r->type)) . ' — ' . $r->parishioner->full_name,
+                'meta' => $r->date_administered->format('M d, Y')
+                    . ($r->register_number ? ' · Reg# ' . $r->register_number : '')
+                    . ' · ID #' . $r->id,
+            ]);
+
+        return response()->json($results);
+    }
+
     public function verify(SacramentalRecord $sacramentalRecord)
     {
         $sacramentalRecord->update([

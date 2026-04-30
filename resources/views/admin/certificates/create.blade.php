@@ -116,9 +116,37 @@
             </div>
             @else
             <div>
-                <label class="form-label">Sacramental Record ID <span class="text-gray-400 text-xs">(optional)</span></label>
-                <input type="number" name="sacramental_record_id" value="{{ old('sacramental_record_id') }}"
-                       class="form-input w-full" placeholder="Leave blank if not linked to a record">
+                <label class="form-label">
+                    Linked Sacramental Record
+                    <span class="text-gray-400 text-xs font-normal">(optional — search by parishioner name)</span>
+                </label>
+
+                {{-- Record search --}}
+                <div class="relative" id="record-search-wrap">
+                    <div class="relative">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <input type="text" id="record-search-input"
+                               placeholder="Search sacramental records… (or leave blank)"
+                               class="form-input w-full pl-9"
+                               autocomplete="off">
+                    </div>
+                    <div id="record-results" class="search-results hidden"></div>
+                </div>
+
+                {{-- Selected record display --}}
+                <div id="record-selected" class="hidden mt-2 bg-green-50 border border-green-200 rounded-lg px-4 py-3 flex items-center justify-between">
+                    <div>
+                        <p id="record-selected-text" class="font-semibold text-sm text-green-900"></p>
+                        <p id="record-selected-meta" class="text-xs text-green-600 mt-0.5"></p>
+                    </div>
+                    <button type="button" onclick="clearRecord()" class="text-green-400 hover:text-red-500 transition ml-3">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <input type="hidden" name="sacramental_record_id" id="sacramental_record_id" value="">
+                <p class="text-xs text-gray-400 mt-1">Leave blank to create a certificate without linking to a sacramental record.</p>
+                @error('sacramental_record_id')<p class="form-error mt-1">{{ $message }}</p>@enderror
             </div>
             @endif
 
@@ -235,6 +263,67 @@ function escapeHtml(str) {
 document.addEventListener('click', function(e) {
     if (resultsDiv && !e.target.closest('#parishioner-search-wrap')) {
         resultsDiv.classList.add('hidden');
+    }
+});
+
+// ── Sacramental Record Search ──
+let recTimeout;
+const recInput   = document.getElementById('record-search-input');
+const recResults = document.getElementById('record-results');
+const recWrap    = document.getElementById('record-search-wrap');
+const recHidden  = document.getElementById('sacramental_record_id');
+
+if (recInput) {
+    recInput.addEventListener('input', function () {
+        clearTimeout(recTimeout);
+        const q = this.value.trim();
+        if (q.length < 2) { recResults.classList.add('hidden'); return; }
+
+        recTimeout = setTimeout(() => {
+            fetch(`/admin/sacramental-records/search?q=${encodeURIComponent(q)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.length) {
+                        recResults.innerHTML = '<div class="search-result-item"><span class="name" style="color:#94a3b8">No records found</span></div>';
+                    } else {
+                        recResults.innerHTML = data.map(r => `
+                            <div class="search-result-item" onclick="selectRecord(${r.id}, '${escapeHtml(r.text)}', '${escapeHtml(r.meta)}')">
+                                <div class="name">${escapeHtml(r.text)}</div>
+                                <div class="meta">${escapeHtml(r.meta)}</div>
+                            </div>
+                        `).join('');
+                    }
+                    recResults.classList.remove('hidden');
+                })
+                .catch(() => recResults.classList.add('hidden'));
+        }, 280);
+    });
+
+    recInput.addEventListener('keydown', e => {
+        if (e.key === 'Escape') recResults.classList.add('hidden');
+    });
+}
+
+function selectRecord(id, text, meta) {
+    recHidden.value = id;
+    document.getElementById('record-selected-text').textContent = text;
+    document.getElementById('record-selected-meta').textContent = meta;
+    document.getElementById('record-selected').classList.remove('hidden');
+    recWrap.classList.add('hidden');
+    recResults.classList.add('hidden');
+}
+
+function clearRecord() {
+    recHidden.value = '';
+    document.getElementById('record-selected').classList.add('hidden');
+    recWrap.classList.remove('hidden');
+    recInput.value = '';
+    recInput.focus();
+}
+
+document.addEventListener('click', function(e) {
+    if (recResults && !e.target.closest('#record-search-wrap')) {
+        recResults.classList.add('hidden');
     }
 });
 </script>

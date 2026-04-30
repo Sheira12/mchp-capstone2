@@ -62,17 +62,30 @@ class CertificateController extends Controller
             'notes'                 => ['nullable', 'string'],
         ]);
 
+        // Treat empty string as null for optional FK
+        if (empty($validated['sacramental_record_id'])) {
+            $validated['sacramental_record_id'] = null;
+        }
+
         $validated['issued_by'] = auth()->id();
 
         $certificate = Certificate::create($validated);
 
-        // Generate PDF and QR code
-        $this->certificateService->generate($certificate);
+        // Generate PDF and QR code — increase time limit for this operation
+        set_time_limit(120);
+        try {
+            $this->certificateService->generate($certificate);
+            $certificate->refresh();
+            $message = 'Certificate created and generated successfully.';
+        } catch (\Exception $e) {
+            \Log::error('Certificate generation failed: ' . $e->getMessage());
+            $message = 'Certificate created. PDF generation failed — use Regenerate to retry.';
+        }
 
         AuditLog::record('create', $certificate, [], $certificate->toArray(), 'Certificate created');
 
         return redirect()->route('admin.certificates.show', $certificate)
-            ->with('success', 'Certificate created and generated successfully.');
+            ->with('success', $message);
     }
 
     public function show(Certificate $certificate)
@@ -83,6 +96,7 @@ class CertificateController extends Controller
 
     public function download(Certificate $certificate)
     {
+        set_time_limit(120);
         if (!$certificate->file_path || !\Storage::disk('public')->exists($certificate->file_path)) {
             $this->certificateService->generate($certificate);
             $certificate->refresh();
@@ -95,9 +109,14 @@ class CertificateController extends Controller
 
     public function regenerate(Certificate $certificate)
     {
-        $this->certificateService->generate($certificate);
-
-        return back()->with('success', 'Certificate regenerated.');
+        set_time_limit(120);
+        try {
+            $this->certificateService->generate($certificate);
+            return back()->with('success', 'Certificate regenerated successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Certificate regeneration failed: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Regeneration failed: ' . $e->getMessage()]);
+        }
     }
 
     public function release(Certificate $certificate)
