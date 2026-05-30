@@ -23,7 +23,7 @@ class MassSchedule extends Model
     protected $casts = [
         'is_active'    => 'boolean',
         'special_date' => 'date',
-        'time'         => 'datetime:H:i',
+        // 'time' is a TIME column — keep as string, format in views with Carbon::parse()
     ];
 
     const DAYS = [

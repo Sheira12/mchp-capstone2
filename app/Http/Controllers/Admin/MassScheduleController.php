@@ -65,4 +65,9 @@ class MassScheduleController extends Controller
         $massSchedule->delete();
         return redirect()->route('admin.mass-schedules.index')->with('success', 'Schedule deleted.');
     }
+
+    public function show(MassSchedule $massSchedule)
+    {
+        return redirect()->route('admin.mass-schedules.edit', $massSchedule);
+    }
 }

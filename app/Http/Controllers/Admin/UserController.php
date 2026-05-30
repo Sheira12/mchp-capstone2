@@ -82,6 +82,12 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')->with('success', 'User deleted.');
     }
 
+    public function show(User $user)
+    {
+        $user->load('roles');
+        return view('admin.users.show', compact('user'));
+    }
+
     public function toggleActive(User $user)
     {
         if ($user->id === auth()->id()) {

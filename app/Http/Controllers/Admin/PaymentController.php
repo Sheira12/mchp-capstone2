@@ -89,6 +89,62 @@ class PaymentController extends Controller
             ->with('success', 'Cash payment recorded.');
     }
 
+    /**
+     * Verify a pending GCash/Maya payment after checking proof.
+     */
+    public function verify(Request $request, Payment $payment)
+    {
+        if (!in_array($payment->status, ['pending'])) {
+            return back()->withErrors(['error' => 'Only pending payments can be verified.']);
+        }
+
+        $payment->update([
+            'status'      => 'paid',
+            'paid_at'     => now(),
+            'verified_by' => auth()->id(),
+            'verified_at' => now(),
+            'notes'       => $payment->notes . ' | Verified by ' . auth()->user()->name . ' on ' . now()->format('M d, Y g:i A'),
+        ]);
+
+        // Update linked booking to confirmed
+        if ($payment->booking && $payment->booking->status === 'pending') {
+            $payment->booking->update(['status' => 'confirmed']);
+        }
+
+        // Send receipt notification
+        $linkedUser = \App\Models\User::where('parishioner_id', $payment->parishioner_id)->first();
+        if ($linkedUser) {
+            $linkedUser->notify(new \App\Notifications\PaymentReceiptNotification($payment));
+        }
+
+        AuditLog::record('verify', $payment, ['status' => 'pending'], ['status' => 'paid'], 'Payment verified by admin');
+
+        return back()->with('success', 'Payment verified and receipt sent to parishioner.');
+    }
+
+    /**
+     * Reject a pending payment proof.
+     */
+    public function reject(Request $request, Payment $payment)
+    {
+        $request->validate(['rejection_reason' => ['required', 'string', 'max:500']]);
+
+        if ($payment->status !== 'pending') {
+            return back()->withErrors(['error' => 'Only pending payments can be rejected.']);
+        }
+
+        $payment->update([
+            'status'           => 'failed',
+            'rejection_reason' => $request->get('rejection_reason'),
+            'verified_by'      => auth()->id(),
+            'verified_at'      => now(),
+        ]);
+
+        AuditLog::record('reject', $payment, ['status' => 'pending'], ['status' => 'failed'], 'Payment proof rejected');
+
+        return back()->with('success', 'Payment rejected. Parishioner should resubmit proof.');
+    }
+
     public function refund(Request $request, Payment $payment)
     {
         $request->validate(['refund_reason' => ['required', 'string']]);

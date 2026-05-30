@@ -8,6 +8,71 @@
     <link rel="icon" type="image/png" href="{{ asset('images/parish-logo.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
+    <style>
+    /* ═══════════════════════════════════════════
+       ADMIN LAYOUT — GLOBAL RESPONSIVE OVERRIDES
+       ═══════════════════════════════════════════ */
+
+    /* Content max-width centering */
+    main.flex-1.px-6 { max-width: 100%; }
+    @media (min-width: 1280px) {
+        main.flex-1.px-6 > .py-6 { max-width: 1200px; margin: 0 auto; }
+    }
+
+    /* Mobile: reduce padding */
+    @media (max-width: 639px) {
+        main.flex-1.px-6 { padding-left: 0.75rem; padding-right: 0.75rem; }
+        .py-6 { padding-top: 1rem; padding-bottom: 1rem; }
+    }
+
+    /* Admin grid overrides */
+    @media (max-width: 639px) {
+        .grid.grid-cols-1.sm\:grid-cols-2 { grid-template-columns: 1fr !important; }
+        .grid.grid-cols-2 { grid-template-columns: 1fr !important; }
+        dl.grid.grid-cols-2 { grid-template-columns: 1fr !important; }
+    }
+    @media (min-width: 640px) {
+        .grid.grid-cols-1.sm\:grid-cols-2 { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+    @media (max-width: 1023px) {
+        .grid.grid-cols-1.lg\:grid-cols-2 { grid-template-columns: 1fr !important; }
+        .grid.grid-cols-1.lg\:grid-cols-3 { grid-template-columns: 1fr !important; }
+        .lg\:col-span-2 { grid-column: span 1 !important; }
+    }
+    @media (min-width: 1024px) {
+        .grid.grid-cols-1.lg\:grid-cols-2 { grid-template-columns: repeat(2, 1fr) !important; }
+        .grid.grid-cols-1.lg\:grid-cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
+        .lg\:col-span-2 { grid-column: span 2 !important; }
+    }
+
+    /* Stat cards: 2 cols on mobile, 4 on desktop */
+    .grid.grid-cols-1.sm\:grid-cols-2.lg\:grid-cols-4 {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    @media (min-width: 1024px) {
+        .grid.grid-cols-1.sm\:grid-cols-2.lg\:grid-cols-4 {
+            grid-template-columns: repeat(4, 1fr) !important;
+        }
+    }
+
+    /* Tables: horizontal scroll */
+    .overflow-x-auto { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* Cards: no overflow */
+    .bg-white.rounded-xl, .bg-white.rounded-2xl { word-break: break-word; }
+
+    /* Font scaling */
+    @media (max-width: 479px) {
+        .text-3xl { font-size: 1.5rem !important; }
+        .text-2xl { font-size: 1.25rem !important; }
+        h1.text-xl { font-size: 1rem !important; }
+    }
+
+    /* Topbar: hide "View Website" text on mobile */
+    @media (max-width: 639px) {
+        header .text-sm.text-blue-600 { font-size: 0.75rem; }
+    }
+    </style>
 </head>
 <body class="h-full font-sans antialiased">
 <div class="min-h-full flex">

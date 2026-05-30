@@ -77,14 +77,7 @@ class AuthController extends Controller
             ]);
         }
 
-        // Admin roles skip 2FA — log in directly
-        if ($user->hasRole(['super_admin', 'parish_secretary', 'finance_officer'])) {
-            Auth::login($user, $request->boolean('remember'));
-            $user->update(['last_login_at' => now()]);
-            $request->session()->regenerate();
-            return redirect()->intended(route('admin.dashboard'));
-        }
-
+        // ALL roles go through 2FA (paper requirement: Objective 6)
         // Parishioners go through 2FA
         $code = $user->generateTwoFactorCode();
 
@@ -117,7 +110,7 @@ class AuthController extends Controller
         $request->session()->put('2fa_has_email', $hasEmail);
 
         // In local/dev mode, flash the code so it can be seen without email
-        $devCode = config('app.debug') ? $code : null;
+        $devCode = null; // Never show code on screen — always send via email
 
         return redirect()->route('2fa.show')
             ->with('2fa_email', $this->maskEmail($user->email))
@@ -185,7 +178,7 @@ class AuthController extends Controller
             }
         }
 
-        $devCode = config('app.debug') ? $code : null;
+        $devCode = null; // Never show code on screen
 
         return redirect()->route('2fa.show')
             ->with('2fa_email', $this->maskEmail($user->email))
@@ -238,8 +231,7 @@ class AuthController extends Controller
             return redirect()->intended(route('admin.dashboard'));
         }
 
-        return redirect()->intended(route('parishioner.dashboard'));
-    }
+        return redirect()->intended(route('parishioner.dashboard'));    }
 
     public function resend2fa(Request $request)
     {
@@ -343,5 +335,14 @@ class AuthController extends Controller
         [$local, $domain] = explode('@', $email, 2);
         $masked = substr($local, 0, 2) . str_repeat('*', max(0, strlen($local) - 2));
         return $masked . '@' . $domain;
+    }
+
+    private function maskPhone(string $phone): string
+    {
+        $digits = preg_replace('/\D/', '', $phone);
+        if (strlen($digits) >= 7) {
+            return substr($digits, 0, 3) . str_repeat('*', strlen($digits) - 6) . substr($digits, -3);
+        }
+        return str_repeat('*', strlen($phone));
     }
 }

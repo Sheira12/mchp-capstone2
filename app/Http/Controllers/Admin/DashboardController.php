@@ -37,9 +37,9 @@ class DashboardController extends Controller
         $totalParishioners  = Parishioner::count();
         $newParishioners    = Parishioner::where('created_at', '>=', $start)->count();
 
-        // Sacrament breakdown
+        // Sacrament breakdown — filter by date_administered (the actual sacrament date)
         $sacramentCounts = SacramentalRecord::select('type', DB::raw('count(*) as total'))
-            ->where('created_at', '>=', $start)
+            ->where('date_administered', '>=', $start)
             ->groupBy('type')
             ->pluck('total', 'type')
             ->toArray();
@@ -96,6 +96,57 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+        // ── Descriptive Statistics (Objective 4: frequency, percentage, median) ──
+
+        // Sacrament frequency & percentage
+        $sacramentStats = [];
+        $totalSacraments = array_sum($sacramentCounts);
+        foreach ($sacramentCounts as $type => $count) {
+            $sacramentStats[$type] = [
+                'count'      => $count,
+                'percentage' => $totalSacraments > 0 ? round(($count / $totalSacraments) * 100, 1) : 0,
+            ];
+        }
+
+        // Booking frequency & percentage by type
+        $bookingByType = Booking::select('booking_type', DB::raw('count(*) as total'))
+            ->where('created_at', '>=', $start)
+            ->groupBy('booking_type')
+            ->pluck('total', 'booking_type')
+            ->toArray();
+        $totalBookingsByType = array_sum($bookingByType);
+        $bookingTypeStats = [];
+        foreach ($bookingByType as $type => $count) {
+            $bookingTypeStats[$type] = [
+                'count'      => $count,
+                'percentage' => $totalBookingsByType > 0 ? round(($count / $totalBookingsByType) * 100, 1) : 0,
+            ];
+        }
+
+        // Median payment amount (last 12 months)
+        $paymentAmounts = Payment::paid()
+            ->where('paid_at', '>=', now()->subMonths(12))
+            ->orderBy('amount')
+            ->pluck('amount')
+            ->toArray();
+        $medianPayment = $this->calculateMedian($paymentAmounts);
+
+        // Monthly booking frequency (last 12 months)
+        $monthlyBookings = Booking::select(
+            DB::raw('YEAR(scheduled_date) as year'),
+            DB::raw('MONTH(scheduled_date) as month'),
+            DB::raw('count(*) as total')
+        )
+            ->where('scheduled_date', '>=', now()->subMonths(12))
+            ->groupBy('year', 'month')
+            ->orderBy('year')->orderBy('month')
+            ->get();
+
+        // Average bookings per month
+        $avgMonthlyBookings = $monthlyBookings->count() > 0
+            ? round($monthlyBookings->avg('total'), 1)
+            : 0;
+
         return compact(
             'totalParishioners',
             'newParishioners',
@@ -108,8 +159,24 @@ class DashboardController extends Controller
             'monthlyTrend',
             'revenueTrend',
             'pendingCertificates',
-            'recentBookings'
+            'recentBookings',
+            'sacramentStats',
+            'bookingTypeStats',
+            'medianPayment',
+            'monthlyBookings',
+            'avgMonthlyBookings'
         );
+    }
+
+    private function calculateMedian(array $values): float
+    {
+        if (empty($values)) return 0;
+        sort($values);
+        $count = count($values);
+        $mid   = (int) floor($count / 2);
+        return $count % 2 === 0
+            ? ($values[$mid - 1] + $values[$mid]) / 2
+            : $values[$mid];
     }
 
     public function exportReport(Request $request)
@@ -117,8 +184,8 @@ class DashboardController extends Controller
         $validated = $request->validate([
             'type'       => ['required', 'in:pdf,excel'],
             'period'     => ['required', 'in:week,month,year,custom'],
-            'date_from'  => ['required_if:period,custom', 'date'],
-            'date_to'    => ['required_if:period,custom', 'date', 'after_or_equal:date_from'],
+            'date_from'  => ['nullable', 'required_if:period,custom', 'date'],
+            'date_to'    => ['nullable', 'required_if:period,custom', 'date', 'after_or_equal:date_from'],
             'category'   => ['nullable', 'string'],
         ]);
 

@@ -96,36 +96,50 @@
         </h2>
 
         @if($booking->payment && $booking->payment->status === 'paid')
-        <div class="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl p-4">
+        {{-- PAID --}}
+        <div class="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl p-4 mb-3">
             <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                 <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
             </div>
-            <div>
+            <div class="flex-1">
                 <p class="font-bold text-green-800">Payment Confirmed</p>
                 <p class="text-sm text-green-700">₱{{ number_format($booking->payment->amount, 2) }} via {{ ucfirst($booking->payment->payment_method) }}</p>
                 @if($booking->payment->receipt_number)
                 <p class="text-xs text-green-600 font-mono mt-0.5">Receipt: {{ $booking->payment->receipt_number }}</p>
                 @endif
             </div>
+            <a href="{{ route('parishioner.payments.receipt', $booking->payment) }}"
+               class="flex-shrink-0 text-xs font-bold text-green-700 bg-green-100 hover:bg-green-200 px-3 py-1.5 rounded-lg transition">
+                View Receipt
+            </a>
+        </div>
+
+        @elseif($booking->payment && $booking->payment->status === 'pending' && $booking->payment->payment_method === 'cash')
+        {{-- CASH PENDING --}}
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div>
+                    <p class="font-bold text-amber-800">Cash Payment Pending</p>
+                    <p class="text-sm text-amber-700">Please bring ₱{{ number_format($booking->service_fee, 2) }} to the parish office.</p>
+                    <p class="text-xs text-amber-600 mt-0.5">Office hours: Mon–Fri 8AM–5PM, Sat 8AM–12PM</p>
+                </div>
+            </div>
         </div>
 
         @elseif(in_array($booking->status, ['pending', 'confirmed']))
+        {{-- NOT YET PAID --}}
         <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
             <p class="text-sm font-semibold text-amber-800 mb-1">Payment Required</p>
             <p class="text-sm text-amber-700">Amount due: <strong>₱{{ number_format($booking->service_fee, 2) }}</strong></p>
         </div>
-        <div class="grid grid-cols-2 gap-3">
-            <button onclick="initiatePayment('gcash')"
-                    class="flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition text-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                Pay via GCash
-            </button>
-            <button onclick="initiatePayment('paymaya')"
-                    class="flex items-center justify-center gap-2 bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition text-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                Pay via Maya
-            </button>
-        </div>
+        <a href="{{ route('parishioner.payments.pay', $booking) }}"
+           class="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition text-sm shadow-md hover:shadow-lg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            Pay Now — GCash, Maya or Cash
+        </a>
         @else
         <p class="text-sm text-gray-400">No payment required for this booking.</p>
         @endif
@@ -136,12 +150,23 @@
     @if($booking->qrCode)
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
         <h2 class="font-bold text-gray-900 mb-4">Booking QR Code</h2>
+        @php
+            $qPath = $booking->qrCode->qr_image_path;
+            $qExists = $qPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($qPath);
+        @endphp
+        @if($qExists)
         <div class="inline-block p-4 bg-white border-2 border-gray-100 rounded-2xl shadow-sm">
-            @if($booking->qrCode->qr_image_path)
-            <img src="{{ Storage::url($booking->qrCode->qr_image_path) }}" alt="QR Code" class="w-36 h-36">
-            @endif
+            <img src="{{ Storage::url($qPath) }}" alt="QR Code" class="w-36 h-36">
         </div>
+        @else
+        <div class="inline-flex flex-col items-center justify-center w-36 h-36 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 text-xs">
+            <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+            QR generating...
+        </div>
+        @endif
         <p class="text-xs text-gray-400 mt-3">Present this QR code at the parish office for verification</p>
+        <a href="{{ $booking->qrCode->verification_url }}" target="_blank"
+           class="text-xs text-blue-600 hover:underline mt-1 block">Verify online →</a>
     </div>
     @endif
 

@@ -15,32 +15,40 @@ class CertificateService
     {
         $certificate->load(['parishioner', 'sacramentalRecord', 'issuedBy']);
 
-        // Generate or retrieve QR code
+        // Generate or retrieve QR code record
         $qrCode = $certificate->qrCode ?? $this->createQrCode($certificate);
 
-        // Generate QR image
+        // Generate QR as SVG (no imagick needed)
         $qrImagePath = "certificates/qr/{$certificate->certificate_number}.svg";
+
         $qrSvg = QrCodeGenerator::format('svg')
             ->size(150)
+            ->margin(1)
             ->errorCorrection('H')
             ->generate($qrCode->verification_url);
 
         Storage::disk('public')->put($qrImagePath, $qrSvg);
         $qrCode->update(['qr_image_path' => $qrImagePath]);
 
-        // Generate PDF
+        // Convert SVG to base64 data URI — DomPDF embeds this without HTTP or imagick
+        $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+
+        // Generate PDF — landscape letter for better layout
         $view = $this->getTemplateView($certificate->type);
-        $pdf  = Pdf::loadView($view, [
+
+        $pdf = Pdf::loadView($view, [
             'certificate' => $certificate,
             'qrCode'      => $qrCode,
+            'qrBase64'    => $qrBase64,
             'qrImageUrl'  => Storage::disk('public')->url($qrImagePath),
+            'logoPath'    => public_path('images/parish-logo.png'),
             'parish'      => [
                 'name'    => config('parish.name'),
                 'address' => config('parish.address'),
                 'phone'   => config('parish.phone'),
                 'priest'  => config('parish.priest'),
             ],
-        ])->setPaper('letter', 'portrait');
+        ])->setPaper('A4', 'portrait');
 
         $pdfPath = "certificates/pdf/{$certificate->certificate_number}.pdf";
         Storage::disk('public')->put($pdfPath, $pdf->output());
@@ -79,15 +87,27 @@ class CertificateService
 
     public function batchPdf($certificates)
     {
+        $certData = $certificates->map(function ($cert) {
+            $qrBase64 = null;
+            if ($cert->qrCode?->qr_image_path) {
+                $svgContent = Storage::disk('public')->get($cert->qrCode->qr_image_path);
+                if ($svgContent) {
+                    $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($svgContent);
+                }
+            }
+            return ['certificate' => $cert, 'qrBase64' => $qrBase64];
+        });
+
         $pdf = Pdf::loadView('certificates.batch', [
-            'certificates' => $certificates,
-            'parish'       => [
+            'certData'  => $certData,
+            'logoPath'  => public_path('images/parish-logo.png'),
+            'parish'    => [
                 'name'    => config('parish.name'),
                 'address' => config('parish.address'),
                 'phone'   => config('parish.phone'),
                 'priest'  => config('parish.priest'),
             ],
-        ])->setPaper('letter', 'portrait');
+        ])->setPaper('A4', 'portrait');
 
         return response($pdf->output(), 200, [
             'Content-Type'        => 'application/pdf',

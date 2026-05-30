@@ -133,7 +133,131 @@
     .sb-toggle svg { width: 20px; height: 20px; }
 
     /* ── Page content ── */
-    .portal-content { flex: 1; padding: 1.5rem; }
+    .portal-content {
+        flex: 1;
+        padding: 1.25rem 1rem;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* ── Centered content wrapper ── */
+    .content-center {
+        max-width: 900px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    /* ── Responsive grid helpers ── */
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+
+    @media (max-width: 767px) {
+        .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+        .portal-content { padding: 1rem 0.75rem; }
+    }
+    @media (min-width: 768px) and (max-width: 1023px) {
+        .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); }
+        .portal-content { padding: 1.25rem 1.25rem; }
+    }
+    @media (min-width: 1024px) {
+        .portal-content { padding: 1.5rem 2rem; }
+    }
+
+    /* ═══════════════════════════════════════════
+       GLOBAL RESPONSIVE OVERRIDES
+       Applies to ALL portal pages automatically
+       ═══════════════════════════════════════════ */
+
+    /* Stat grid: 2 cols mobile, 4 cols desktop */
+    #stat-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.75rem !important;
+    }
+    @media (min-width: 1024px) {
+        #stat-grid { grid-template-columns: repeat(4, 1fr) !important; }
+    }
+
+    /* Hero banner: stack on mobile */
+    @media (max-width: 639px) {
+        .hero-banner { padding: 1.25rem !important; }
+        .hero-banner > div { flex-direction: column !important; gap: 1rem !important; }
+    }
+
+    /* Tailwind grid overrides for mobile */
+    @media (max-width: 639px) {
+        .grid.grid-cols-2:not(.keep-2) { grid-template-columns: 1fr !important; }
+        dl.grid.grid-cols-2 { grid-template-columns: 1fr !important; }
+        .field-row { grid-template-columns: 1fr !important; }
+    }
+    @media (min-width: 640px) {
+        .grid.grid-cols-1.sm\:grid-cols-2 { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+    @media (max-width: 1023px) {
+        .grid.grid-cols-1.lg\:grid-cols-3 { grid-template-columns: 1fr !important; }
+        .grid.grid-cols-1.lg\:grid-cols-2 { grid-template-columns: 1fr !important; }
+        .lg\:col-span-2 { grid-column: span 1 !important; }
+    }
+    @media (min-width: 1024px) {
+        .grid.grid-cols-1.lg\:grid-cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
+        .grid.grid-cols-1.lg\:grid-cols-2 { grid-template-columns: repeat(2, 1fr) !important; }
+        .lg\:col-span-2 { grid-column: span 2 !important; }
+    }
+
+    /* Certificate cards: 1 col on mobile */
+    @media (max-width: 639px) {
+        div[style*="minmax(320px"] { grid-template-columns: 1fr !important; }
+        div[style*="minmax(300px"] { grid-template-columns: 1fr !important; }
+    }
+
+    /* Max-width centering for page content */
+    @media (min-width: 1280px) {
+        .portal-content > .space-y-6,
+        .portal-content > .space-y-5,
+        .portal-content > .space-y-4 {
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    }
+
+    /* Prevent horizontal overflow */
+    .portal-content * { max-width: 100%; }
+    .portal-content img { height: auto; }
+    .overflow-x-auto { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* Font scaling on small screens */
+    @media (max-width: 479px) {
+        .text-4xl { font-size: 1.75rem !important; line-height: 1.2 !important; }
+        .text-3xl { font-size: 1.5rem !important; }
+        .text-2xl { font-size: 1.25rem !important; }
+        h1.text-2xl, h1.text-xl { font-size: 1.125rem !important; }
+        .text-lg { font-size: 1rem !important; }
+    }
+
+    /* Payment method tabs: always 3 cols */
+    .grid.grid-cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
+
+    /* Receipt action buttons: stack on very small */
+    @media (max-width: 400px) {
+        .grid.grid-cols-2.gap-3 { grid-template-columns: 1fr !important; }
+    }
+
+    /* Topbar adjustments */
+    @media (max-width: 479px) {
+        .topbar-website { display: none !important; }
+        .topbar-user-name { display: none !important; }
+        .portal-topbar { padding: 0 0.75rem; }
+    }
+    @media (min-width: 480px) and (max-width: 639px) {
+        .topbar-user-name { display: none !important; }
+    }
+
+    /* Cards no overflow */
+    .bg-white.rounded-2xl,
+    .bg-white.rounded-xl { word-break: break-word; }
 
     /* ── Flash messages ── */
     .flash { display: flex; align-items: flex-start; gap: 12px; padding: 0.875rem 1.125rem; border-radius: 0.875rem; margin-bottom: 1.25rem; font-size: 0.875rem; }
@@ -154,6 +278,43 @@
     .badge-issued    { background: #dbeafe; color: #1e40af; }
     .badge-released  { background: #d1fae5; color: #065f46; }
 
+    /* ── Mobile bottom nav ── */
+    .mobile-bottom-nav {
+        display: none;
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        background: #1e3a8a;
+        z-index: 90;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        padding: 0 0.5rem;
+        padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .mobile-bottom-nav-inner {
+        display: flex;
+        align-items: stretch;
+        justify-content: space-around;
+        height: 56px;
+    }
+    .mbn-item {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 3px; flex: 1; text-decoration: none;
+        color: rgba(255,255,255,0.6); font-size: 0.6rem; font-weight: 600;
+        padding: 0 4px; transition: color 0.15s; position: relative;
+        border: none; background: none; cursor: pointer;
+    }
+    .mbn-item.active { color: #fff; }
+    .mbn-item svg { width: 20px; height: 20px; }
+    .mbn-badge {
+        position: absolute; top: 6px; right: calc(50% - 18px);
+        background: #f59e0b; color: #fff; font-size: 0.55rem; font-weight: 700;
+        padding: 1px 5px; border-radius: 9999px; min-width: 16px; text-align: center;
+    }
+
+    @media (max-width: 1023px) {
+        .mobile-bottom-nav { display: block; }
+        .portal-content { padding-bottom: 72px; }
+    }
+
     /* ── Mobile overlay ── */
     .sb-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
 
@@ -164,6 +325,13 @@
         .portal-main { margin-left: 0; }
         .sb-toggle { display: flex; }
         .sb-overlay.open { display: block; }
+        /* Hide "Parish Website" text on small screens */
+        .topbar-website span { display: none; }
+        /* Hide user name on very small screens */
+        .topbar-user-name { display: none; }
+    }
+    @media (max-width: 480px) {
+        .topbar-website { display: none; }
     }
     </style>
 </head>
@@ -340,12 +508,46 @@
                             {{ substr(auth()->user()->name, 0, 1) }}
                         </div>
                     @endif
-                    <span style="font-size:0.8125rem;font-weight:600;color:#374151;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    <span class="topbar-user-name" style="font-size:0.8125rem;font-weight:600;color:#374151;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                         {{ auth()->user()->name }}
                     </span>
                 </a>
             </div>
         </header>
+
+    {{-- ═══════════════ MOBILE BOTTOM NAV ═══════════════ --}}
+    <nav class="mobile-bottom-nav">
+        <div class="mobile-bottom-nav-inner">
+            <a href="{{ route('parishioner.dashboard') }}"
+               class="mbn-item {{ request()->routeIs('parishioner.dashboard') ? 'active' : '' }}">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                Home
+            </a>
+            <a href="{{ route('parishioner.bookings.index') }}"
+               class="mbn-item {{ request()->routeIs('parishioner.bookings.*') ? 'active' : '' }}">
+                @php $pendingMobile = auth()->user()->parishioner?->bookings()->where('status','pending')->count() ?? 0; @endphp
+                @if($pendingMobile > 0)<span class="mbn-badge">{{ $pendingMobile }}</span>@endif
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Bookings
+            </a>
+            <a href="{{ route('parishioner.bookings.create') }}"
+               class="mbn-item {{ request()->routeIs('parishioner.bookings.create') ? 'active' : '' }}"
+               style="background:rgba(255,255,255,0.1);border-radius:12px;margin:8px 4px;">
+                <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                Book
+            </a>
+            <a href="{{ route('parishioner.certificates.index') }}"
+               class="mbn-item {{ request()->routeIs('parishioner.certificates.*') ? 'active' : '' }}">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Certs
+            </a>
+            <a href="{{ route('parishioner.payments.index') }}"
+               class="mbn-item {{ request()->routeIs('parishioner.payments.*') ? 'active' : '' }}">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                Payments
+            </a>
+        </div>
+    </nav>
 
         {{-- Page content --}}
         <main class="portal-content">

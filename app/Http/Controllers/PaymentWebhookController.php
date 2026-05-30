@@ -67,9 +67,13 @@ class PaymentWebhookController extends Controller
             $payment->booking->update(['status' => 'confirmed']);
         }
 
-        // Send receipt
-        if ($payment->parishioner?->email) {
-            $payment->parishioner->notify(new PaymentReceiptNotification($payment));
+        // Send receipt email to parishioner
+        if ($payment->parishioner?->user?->email) {
+            $payment->parishioner->user->notify(new PaymentReceiptNotification($payment));
+        } elseif ($payment->parishioner?->email) {
+            // Fallback: notify via parishioner email directly
+            \Illuminate\Support\Facades\Notification::route('mail', $payment->parishioner->email)
+                ->notify(new PaymentReceiptNotification($payment));
         }
 
         AuditLog::record('payment_paid', $payment, ['status' => 'pending'], ['status' => 'paid'], 'Payment confirmed via webhook');

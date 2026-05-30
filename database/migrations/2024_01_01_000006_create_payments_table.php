@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('parishioner_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('booking_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('certificate_id')->nullable();
+            $table->foreignId('certificate_id')->nullable()->constrained('certificates')->nullOnDelete();
             $table->decimal('amount', 10, 2);
             $table->enum('payment_method', ['gcash', 'maya', 'cash', 'bank'])->default('cash');
             $table->enum('status', ['pending', 'paid', 'failed', 'refunded', 'voided'])->default('pending');

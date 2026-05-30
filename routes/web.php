@@ -34,6 +34,7 @@ Route::get('/announcements/{announcement}', [PublicController::class, 'announcem
 
 // QR Verification (public)
 Route::get('/verify/{token}', [VerificationController::class, 'verify'])->name('verify');
+Route::get('/api/verify/{token}', [VerificationController::class, 'apiVerify'])->name('verify.api');
 
 // Chatbot
 Route::post('/chatbot', [ChatbotController::class, 'chat'])->name('chatbot.chat');
@@ -59,6 +60,7 @@ Route::middleware('guest')->group(function () {
 Route::get('/verify-otp', [AuthController::class, 'show2fa'])->name('2fa.show');
 Route::post('/verify-otp', [AuthController::class, 'verify2fa'])->name('2fa.verify');
 Route::post('/resend-otp', [AuthController::class, 'resend2fa'])->name('2fa.resend');
+Route::post('/switch-channel', [AuthController::class, 'switchChannel'])->name('2fa.switch-channel');
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
@@ -81,12 +83,21 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
 
     // Payments
     Route::get('/payments', [ParishionerPaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/pay/{booking}', [ParishionerPaymentController::class, 'payBooking'])->name('payments.pay');
+    Route::post('/payments/pay/{booking}/cash', [ParishionerPaymentController::class, 'payCash'])->name('payments.pay-cash');
+    Route::post('/payments/pay/{booking}/proof', [ParishionerPaymentController::class, 'submitProof'])->name('payments.submit-proof');
+    Route::get('/payments/pay/{booking}/demo/{method}', [ParishionerPaymentController::class, 'demoCheckout'])->name('payments.demo-checkout');
+    Route::post('/payments/pay/{booking}/demo/{method}/complete', [ParishionerPaymentController::class, 'demoComplete'])->name('payments.demo-complete');
+    Route::get('/payments/receipt/{payment}', [ParishionerPaymentController::class, 'receipt'])->name('payments.receipt');
+    Route::get('/payments/receipt/{payment}/pdf', [ParishionerPaymentController::class, 'receiptPdf'])->name('payments.receipt-pdf');
     Route::post('/payments/initiate', [ParishionerPaymentController::class, 'initiate'])->name('payments.initiate');
     Route::get('/payments/success', [ParishionerPaymentController::class, 'success'])->name('payments.success');
     Route::get('/payments/failed', [ParishionerPaymentController::class, 'failed'])->name('payments.failed');
 
     // Certificates
     Route::get('/certificates', [\App\Http\Controllers\Parishioner\CertificateController::class, 'index'])->name('certificates.index');
+    Route::get('/certificates/request', [\App\Http\Controllers\Parishioner\CertificateController::class, 'create'])->name('certificates.create');
+    Route::post('/certificates/request', [\App\Http\Controllers\Parishioner\CertificateController::class, 'store'])->name('certificates.store');
     Route::get('/certificates/{certificate}/download', [\App\Http\Controllers\Parishioner\CertificateController::class, 'download'])->name('certificates.download');
 });
 
@@ -121,6 +132,9 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
 
     // Bookings
     Route::get('/bookings/calendar', [BookingController::class, 'calendar'])->name('bookings.calendar');
+    Route::get('/bookings/qr-scanner', [BookingController::class, 'qrScanner'])->name('bookings.qr-scanner');
+    Route::post('/bookings/qr-verify', [BookingController::class, 'qrVerify'])->name('bookings.qr-verify');
+    Route::get('/bookings/{booking}/stub', [BookingController::class, 'printStub'])->name('bookings.stub');
     Route::post('/bookings/{booking}/confirm', [BookingController::class, 'confirm'])->name('bookings.confirm');
     Route::post('/bookings/{booking}/complete', [BookingController::class, 'complete'])->name('bookings.complete');
     Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
@@ -136,6 +150,8 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
     // Payments (Finance Officer + Admin)
     Route::middleware('role:super_admin|finance_officer')->group(function () {
         Route::post('/payments/record-cash', [PaymentController::class, 'recordCash'])->name('payments.record-cash');
+        Route::post('/payments/{payment}/verify', [PaymentController::class, 'verify'])->name('payments.verify');
+        Route::post('/payments/{payment}/reject', [PaymentController::class, 'reject'])->name('payments.reject');
         Route::post('/payments/{payment}/refund', [PaymentController::class, 'refund'])->name('payments.refund');
         Route::post('/payments/{payment}/void', [PaymentController::class, 'void'])->name('payments.void');
         Route::get('/payments/report', [PaymentController::class, 'report'])->name('payments.report');

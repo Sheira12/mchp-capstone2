@@ -13,11 +13,12 @@
 .hero-banner {
   background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #2563eb 100%);
   border-radius: 1.25rem;
-  padding: 2rem 2.5rem;
+  padding: 1.5rem;
   color: #fff;
   position: relative;
   overflow: hidden;
 }
+@media(min-width:640px){ .hero-banner { padding: 2rem 2.5rem; } }
 .hero-banner::before {
   content: "";
   position: absolute;
@@ -37,13 +38,14 @@
 /* Stat cards */
 .stat-card {
   border-radius: 1.25rem;
-  padding: 1.5rem;
+  padding: 1.25rem;
   color: #fff;
   position: relative;
   overflow: hidden;
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
   transition: transform 0.2s, box-shadow 0.2s;
 }
+@media(min-width:640px){ .stat-card { padding: 1.5rem; } }
 .stat-card:hover { transform: translateY(-3px); box-shadow: 0 14px 32px rgba(0,0,0,0.18); }
 .stat-card .blob {
   position: absolute; top: -40%; right: -20%;
@@ -62,16 +64,17 @@
   background: #fff;
   border-radius: 1.25rem;
   border: 1.5px solid #f1f5f9;
-  padding: 1.5rem 1rem;
+  padding: 1rem 0.75rem;
   text-align: center;
   transition: all 0.25s ease;
   text-decoration: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.875rem;
+  gap: 0.625rem;
   cursor: pointer;
 }
+@media(min-width:640px){ .qa-card { padding: 1.5rem 1rem; gap: 0.875rem; } }
 .qa-card:hover {
   box-shadow: 0 16px 40px rgba(37,99,235,0.14);
   transform: translateY(-5px);
@@ -161,7 +164,7 @@
 
 {{-- ═══ HERO BANNER ═══ --}}
 <div class="hero-banner">
-    <div class="relative z-10" style="display:flex;align-items:center;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;">
+    <div class="relative z-10" style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
 
         {{-- LEFT: Avatar + Greeting --}}
         <div style="display:flex;align-items:center;gap:1.25rem;flex:1;min-width:0;">
@@ -203,9 +206,9 @@
         </div>
 
         {{-- RIGHT: Actions --}}
-        <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:0.625rem;flex-wrap:wrap;width:100%;">
             <a href="{{ route('parishioner.bookings.create') }}"
-               style="display:inline-flex;align-items:center;gap:8px;background:#fff;color:#1e3a8a;font-weight:800;font-size:0.875rem;padding:0.75rem 1.5rem;border-radius:0.875rem;box-shadow:0 4px 16px rgba(0,0,0,0.2);text-decoration:none;transition:all 0.2s;white-space:nowrap;"
+               style="display:inline-flex;align-items:center;gap:8px;background:#fff;color:#1e3a8a;font-weight:800;font-size:0.8125rem;padding:0.625rem 1.25rem;border-radius:0.875rem;box-shadow:0 4px 16px rgba(0,0,0,0.2);text-decoration:none;transition:all 0.2s;white-space:nowrap;"
                onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.25)';"
                onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.2)';">
                 <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -242,7 +245,7 @@
 
 {{-- ═══ STAT CARDS ═══ --}}
 @if($p)
-<div id="stat-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;">
+<div id="stat-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.75rem;">
     {{-- Total Bookings --}}
     <div class="stat-card" style="background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%);">
         <div class="blob"></div><div class="blob2"></div>
@@ -435,7 +438,15 @@
                     <p class="font-bold text-sm text-gray-900">₱{{ number_format($payment->amount, 2) }}</p>
                     <p class="text-xs text-gray-400 capitalize mt-0.5">{{ $payment->payment_method }} · {{ $payment->created_at->format('M d') }}</p>
                 </div>
-                <span class="status-pill {{ $ps }}">{{ ucfirst($payment->status) }}</span>
+                <div class="flex items-center gap-2">
+                    <span class="status-pill {{ $ps }}">{{ ucfirst($payment->status) }}</span>
+                    @if($payment->status === 'paid')
+                    <a href="{{ route('parishioner.payments.receipt', $payment) }}"
+                       style="font-size:0.7rem;font-weight:700;color:#2563eb;text-decoration:none;"
+                       onmouseover="this.style.textDecoration='underline';"
+                       onmouseout="this.style.textDecoration='none';">Receipt</a>
+                    @endif
+                </div>
             </div>
             @empty
             <div class="py-8 text-center">

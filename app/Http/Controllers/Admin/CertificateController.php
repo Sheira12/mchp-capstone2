@@ -134,4 +134,37 @@ class CertificateController extends Controller
 
         return $this->certificateService->batchPdf($certificates);
     }
+
+    public function edit(Certificate $certificate)
+    {
+        $certificate->load(['parishioner', 'sacramentalRecord']);
+        return view('admin.certificates.edit', compact('certificate'));
+    }
+
+    public function update(Request $request, Certificate $certificate)
+    {
+        $validated = $request->validate([
+            'type'                  => ['required', 'string'],
+            'issued_date'           => ['required', 'date'],
+            'purpose'               => ['nullable', 'string', 'max:255'],
+            'notes'                 => ['nullable', 'string'],
+            'status'                => ['required', 'in:draft,issued,released,revoked'],
+        ]);
+
+        $oldValues = $certificate->toArray();
+        $certificate->update($validated);
+        AuditLog::record('update', $certificate, $oldValues, $certificate->fresh()->toArray(), 'Certificate updated');
+
+        return redirect()->route('admin.certificates.show', $certificate)->with('success', 'Certificate updated.');
+    }
+
+    public function destroy(Certificate $certificate)
+    {
+        if ($certificate->file_path) {
+            \Storage::disk('public')->delete($certificate->file_path);
+        }
+        AuditLog::record('delete', $certificate, $certificate->toArray(), [], 'Certificate deleted');
+        $certificate->delete();
+        return redirect()->route('admin.certificates.index')->with('success', 'Certificate deleted.');
+    }
 }

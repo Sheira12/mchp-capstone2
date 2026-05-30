@@ -9,6 +9,45 @@
     <link rel="icon" type="image/png" href="{{ asset('images/parish-logo.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
+    <style>
+    /* ── Public layout responsive fixes ── */
+    * { box-sizing: border-box; }
+    img { max-width: 100%; height: auto; }
+
+    /* Chatbot: move up on mobile so it doesn't cover bottom nav */
+    @media (max-width: 639px) {
+        #chatbot-widget { bottom: 1rem; right: 1rem; }
+        #chatbot-panel { width: calc(100vw - 2rem); right: 0; }
+    }
+
+    /* Home page: CTA grid stack on mobile */
+    @media (max-width: 767px) {
+        .grid.grid-cols-1.md\:grid-cols-3 { grid-template-columns: 1fr !important; }
+        /* Services grid */
+        div[style*="minmax(160px"] { grid-template-columns: repeat(2, 1fr) !important; }
+        /* Announcement grid */
+        div[style*="minmax(300px"] { grid-template-columns: 1fr !important; }
+        /* CTA 2-col */
+        div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+    }
+
+    /* Mass schedule grid: wrap nicely */
+    .mass-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important; }
+
+    /* Contact strip: stack on mobile */
+    @media (max-width: 639px) {
+        div[style*="repeat(auto-fit,minmax(200px"] { grid-template-columns: 1fr !important; }
+    }
+
+    /* Footer grid */
+    @media (max-width: 767px) {
+        .grid.grid-cols-1.md\:grid-cols-3 { grid-template-columns: 1fr !important; }
+    }
+
+    /* Prevent horizontal scroll */
+    body { overflow-x: hidden; }
+    section, .max-w-7xl { max-width: 100%; }
+    </style>
 </head>
 <body class="font-sans antialiased bg-white text-gray-800">
 

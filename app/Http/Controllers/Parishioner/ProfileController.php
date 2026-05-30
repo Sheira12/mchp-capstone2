@@ -66,6 +66,15 @@ class ProfileController extends Controller
             $user->save();
         }
 
+        // ── Sync the User.name field so the sidebar/topbar shows the updated name ──
+        $fullName = trim(
+            $validated['first_name'] . ' ' .
+            ($validated['middle_name'] ? substr($validated['middle_name'], 0, 1) . '. ' : '') .
+            $validated['last_name'] .
+            ($validated['suffix'] ? ' ' . $validated['suffix'] : '')
+        );
+        $user->update(['name' => $fullName]);
+
         // Log profile change (one entry summarising the update)
         if ($user->parishioner_id) {
             \App\Models\ProfileChangeLog::create([

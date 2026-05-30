@@ -54,6 +54,9 @@
 }
 .fl .hint { font-size: 0.72rem; color: #94a3b8; margin-top: 2px; }
 .fl .err { font-size: 0.72rem; color: #ef4444; margin-top: 2px; }
+
+/* Responsive profile wrapper */
+.profile-wrap { max-width: 680px; margin: 0 auto; width: 100%; }
 </style>
 @endpush
 

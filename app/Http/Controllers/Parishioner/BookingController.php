@@ -65,6 +65,7 @@ class BookingController extends Controller
         $service = Service::where('slug', $validated['booking_type'])->first();
         $validated['service_fee']    = $service?->fee ?? 0;
         $validated['parishioner_id'] = $parishioner->id;
+        $validated['status']         = 'pending'; // Always start as pending
 
         $booking = Booking::create($validated);
 
@@ -75,13 +76,6 @@ class BookingController extends Controller
         $linkedUser = \App\Models\User::where('parishioner_id', $booking->parishioner_id)->first();
         if ($linkedUser) {
             $linkedUser->notify(new BookingStatusNotification($booking, 'created'));
-        } elseif ($booking->parishioner->email) {
-            \Illuminate\Support\Facades\Mail::to($booking->parishioner->email)
-                ->queue(new \App\Mail\InquiryMail([
-                    'name' => $booking->parishioner->full_name,
-                    'subject' => 'Booking Received - ' . $booking->reference_number,
-                    'message' => 'Your booking for ' . $booking->getTypeLabel() . ' on ' . $booking->scheduled_date->format('F d, Y') . ' has been received.',
-                ]));
         }
 
         return redirect()->route('parishioner.bookings.show', $booking)

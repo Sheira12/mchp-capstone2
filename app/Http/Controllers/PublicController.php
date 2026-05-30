@@ -56,8 +56,13 @@ class PublicController extends Controller
             'message' => ['required', 'string', 'max:2000'],
         ]);
 
-        // Send to parish email
-        \Mail::to(config('parish.email'))->send(new \App\Mail\InquiryMail($validated));
+        // Resolve the parish email — fall back to MAIL_FROM_ADDRESS if not set
+        $parishEmail = config('parish.email');
+        if (!$parishEmail || !filter_var($parishEmail, FILTER_VALIDATE_EMAIL)) {
+            $parishEmail = config('mail.from.address');
+        }
+
+        \Mail::to($parishEmail)->send(new \App\Mail\InquiryMail($validated));
 
         return back()->with('success', 'Your inquiry has been sent. We will get back to you shortly.');
     }

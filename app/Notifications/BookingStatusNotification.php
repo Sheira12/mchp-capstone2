@@ -29,6 +29,7 @@ class BookingStatusNotification extends Notification implements ShouldQueue
             'created'   => 'Booking Received - ' . $this->booking->reference_number,
             'confirmed' => 'Booking Confirmed - ' . $this->booking->reference_number,
             'cancelled' => 'Booking Cancelled - ' . $this->booking->reference_number,
+            'reminder'  => 'Booking Reminder - ' . $this->booking->reference_number,
             default     => 'Booking Update - ' . $this->booking->reference_number,
         };
 
@@ -81,6 +82,7 @@ class BookingStatusNotification extends Notification implements ShouldQueue
             'created'   => 'We have received your booking request. Our parish staff will review and confirm it shortly.',
             'confirmed' => 'Your booking has been confirmed! Please prepare the required documents and arrive on time.',
             'cancelled' => 'We regret to inform you that your booking has been cancelled.',
+            'reminder'  => 'This is a friendly reminder that you have a booking scheduled for tomorrow. Please be on time and bring all required documents.',
             default     => 'Your booking status has been updated.',
         };
     }

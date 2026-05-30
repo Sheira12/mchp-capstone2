@@ -89,8 +89,13 @@ class ChatbotController extends Controller
         ChatMessage::where('session_id', $request->get('session_id'))
             ->update(['is_escalated' => true]);
 
-        // Notify parish staff
-        \Mail::to(config('parish.email'))->send(
+        // Notify parish staff — guard against misconfigured email
+        $parishEmail = config('parish.email');
+        if (!$parishEmail || !filter_var($parishEmail, FILTER_VALIDATE_EMAIL)) {
+            $parishEmail = config('mail.from.address');
+        }
+
+        \Mail::to($parishEmail)->send(
             new \App\Mail\ChatEscalationMail($request->get('session_id'), $request->get('message'))
         );
 

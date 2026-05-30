@@ -11,6 +11,15 @@
             <h1 style="font-size:1.5rem;font-weight:800;color:#0f172a;margin:0 0 4px;">My Certificates</h1>
             <p style="font-size:0.875rem;color:#64748b;margin:0;">View, download, and verify your official parish certificates</p>
         </div>
+        <a href="{{ route('parishioner.certificates.create') }}"
+           style="display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;font-weight:700;font-size:0.875rem;padding:0.75rem 1.5rem;border-radius:0.875rem;text-decoration:none;box-shadow:0 4px 14px rgba(37,99,235,0.3);transition:all 0.2s;white-space:nowrap;"
+           onmouseover="this.style.background='#1d4ed8';this.style.transform='translateY(-1px)';"
+           onmouseout="this.style.background='#2563eb';this.style.transform='';">
+            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            Request Certificate
+        </a>
     </div>
 
     @if($certificates->isEmpty())
@@ -22,12 +31,12 @@
         </div>
         <h3 style="font-size:1.125rem;font-weight:700;color:#0f172a;margin:0 0 0.5rem;">No certificates yet</h3>
         <p style="font-size:0.875rem;color:#64748b;max-width:360px;margin:0 auto 1.5rem;line-height:1.6;">
-            Certificates will appear here once issued by the parish office. Book a service to request one.
+            Certificates will appear here once issued by the parish office. Request one online or visit the parish office.
         </p>
-        <a href="{{ route('parishioner.bookings.create') }}"
+        <a href="{{ route('parishioner.certificates.create') }}"
            style="display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;font-weight:700;font-size:0.875rem;padding:0.75rem 1.75rem;border-radius:0.875rem;text-decoration:none;box-shadow:0 4px 14px rgba(37,99,235,0.3);">
             <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-            Book a Service
+            Request a Certificate
         </a>
     </div>
 
@@ -54,8 +63,8 @@
             ];
             $tm = $typeMap[$cert->type] ?? ['icon'=>'📜','bg'=>'#f8faff','color'=>'#2563eb'];
 
-            // Can download if file exists (issued or released)
-            $canDownload = $cert->file_path && in_array($cert->status, ['issued','released']);
+            // Can download if status is issued or released (controller auto-regenerates PDF if missing)
+            $canDownload = in_array($cert->status, ['issued', 'released']);
         @endphp
 
         <div style="background:#fff;border-radius:1.25rem;border:1px solid #e8edf5;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;transition:all 0.25s ease;"
@@ -150,9 +159,14 @@
                 Request a baptismal, confirmation, marriage, or other parish certificate by booking a service or contacting the parish office.
             </p>
             <div style="display:flex;flex-wrap:wrap;gap:0.625rem;">
-                <a href="{{ route('parishioner.bookings.create') }}"
+                <a href="{{ route('parishioner.certificates.create') }}"
                    style="display:inline-flex;align-items:center;gap:6px;background:#d97706;color:#fff;font-weight:700;font-size:0.8125rem;padding:0.5rem 1.125rem;border-radius:0.625rem;text-decoration:none;transition:background 0.15s;"
                    onmouseover="this.style.background='#b45309';" onmouseout="this.style.background='#d97706';">
+                    Request Online
+                </a>
+                <a href="{{ route('parishioner.bookings.create') }}"
+                   style="display:inline-flex;align-items:center;gap:6px;background:#fff;color:#92400e;font-weight:600;font-size:0.8125rem;padding:0.5rem 1.125rem;border-radius:0.625rem;text-decoration:none;border:1px solid #fde68a;transition:background 0.15s;"
+                   onmouseover="this.style.background='#fef3c7';" onmouseout="this.style.background='#fff';">
                     Book a Service
                 </a>
                 <a href="{{ route('contact') }}"

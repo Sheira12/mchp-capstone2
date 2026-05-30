@@ -32,8 +32,10 @@ class BookingController extends Controller
         }
 
         if ($search = $request->get('search')) {
-            $query->whereHas('parishioner', fn($q) => $q->search($search))
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('parishioner', fn($sq) => $sq->search($search))
                   ->orWhere('reference_number', 'like', "%{$search}%");
+            });
         }
 
         $bookings = $query->orderBy('scheduled_date')->orderBy('scheduled_time')
@@ -141,8 +143,86 @@ class BookingController extends Controller
         return back()->with('success', 'Booking cancelled.');
     }
 
-    public function calendar(Request $request)
+    /**
+     * QR Scanner page — camera-based QR scanning for walk-in verification.
+     */
+    public function qrScanner()
     {
+        return view('admin.bookings.qr-scanner');
+    }
+
+    /**
+     * API endpoint called by the QR scanner JS to look up a booking by token.
+     */
+    public function qrVerify(Request $request)
+    {
+        $request->validate(['token' => ['required', 'string']]);
+
+        $qrCode = \App\Models\QrCode::where('token', $request->get('token'))
+            ->where('is_active', true)
+            ->first();
+
+        if (!$qrCode) {
+            return response()->json(['valid' => false, 'message' => 'Invalid or expired QR code.'], 404);
+        }
+
+        $entity = $qrCode->qrCodeable;
+
+        if (!$entity || !($entity instanceof Booking)) {
+            return response()->json(['valid' => false, 'message' => 'QR code is not linked to a booking.'], 404);
+        }
+
+        $entity->load(['parishioner', 'payment']);
+        $qrCode->incrementScanCount();
+
+        return response()->json([
+            'valid'   => true,
+            'booking' => [
+                'id'             => $entity->id,
+                'reference'      => $entity->reference_number,
+                'type'           => $entity->getTypeLabel(),
+                'status'         => $entity->status,
+                'status_label'   => $entity->getStatusLabel(),
+                'parishioner'    => $entity->parishioner->full_name,
+                'contact'        => $entity->parishioner->contact_number,
+                'scheduled_date' => $entity->scheduled_date->format('F d, Y'),
+                'scheduled_time' => $entity->scheduled_time
+                    ? \Carbon\Carbon::parse($entity->scheduled_time)->format('g:i A')
+                    : 'TBD',
+                'service_fee'    => $entity->service_fee,
+                'payment_status' => $entity->payment?->status ?? 'unpaid',
+                'url'            => route('admin.bookings.show', $entity),
+            ],
+        ]);
+    }
+
+    /**
+     * Print walk-in stub — printable QR slip for the parishioner.
+     */
+    public function printStub(Booking $booking)
+    {
+        $booking->load(['parishioner', 'qrCode']);
+
+        // Generate QR if missing
+        if (!$booking->qrCode) {
+            app(\App\Services\QrCodeService::class)->generateForBooking($booking);
+            $booking->refresh();
+        }
+
+        // Build base64 QR for the stub
+        $qrBase64 = null;
+        if ($booking->qrCode?->qr_image_path) {
+            $svg = \Illuminate\Support\Facades\Storage::disk('public')
+                ->get($booking->qrCode->qr_image_path);
+            if ($svg) {
+                $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($svg);
+            }
+        }
+
+        return view('admin.bookings.stub', compact('booking', 'qrBase64'));
+    }
+
+    public function calendar(Request $request)    {
         $month = $request->get('month', now()->month);
         $year  = $request->get('year', now()->year);
 
@@ -173,5 +253,38 @@ class BookingController extends Controller
             'address'        => ['nullable', 'string', 'max:255'],
             'notes'          => ['nullable', 'string'],
         ]);
+    }
+
+    public function edit(Booking $booking)
+    {
+        $booking->load('parishioner');
+        return view('admin.bookings.edit', compact('booking'));
+    }
+
+    public function update(Request $request, Booking $booking)
+    {
+        $validated = $request->validate([
+            'booking_type'   => ['required', 'string'],
+            'scheduled_date' => ['required', 'date'],
+            'scheduled_time' => ['nullable', 'date_format:H:i'],
+            'service_fee'    => ['nullable', 'numeric', 'min:0'],
+            'address'        => ['nullable', 'string', 'max:255'],
+            'notes'          => ['nullable', 'string'],
+            'admin_notes'    => ['nullable', 'string'],
+            'status'         => ['required', 'in:pending,confirmed,completed,cancelled'],
+        ]);
+
+        $oldValues = $booking->toArray();
+        $booking->update($validated);
+        AuditLog::record('update', $booking, $oldValues, $booking->fresh()->toArray(), 'Booking updated');
+
+        return redirect()->route('admin.bookings.show', $booking)->with('success', 'Booking updated.');
+    }
+
+    public function destroy(Booking $booking)
+    {
+        AuditLog::record('delete', $booking, $booking->toArray(), [], 'Booking deleted');
+        $booking->delete();
+        return redirect()->route('admin.bookings.index')->with('success', 'Booking deleted.');
     }
 }

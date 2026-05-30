@@ -175,6 +175,7 @@ class ParishionerController extends Controller
             'barangay'            => ['nullable', 'string', 'max:100'],
             'city'                => ['nullable', 'string', 'max:100'],
             'province'            => ['nullable', 'string', 'max:100'],
+            'postal_code'         => ['nullable', 'string', 'max:10'],
             'contact_number'      => ['nullable', 'string', 'max:20'],
             'email'               => ['nullable', 'email', 'max:255'],
             'photo'               => ['nullable', 'image', 'max:2048'],

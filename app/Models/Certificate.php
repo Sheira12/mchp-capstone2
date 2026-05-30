@@ -42,8 +42,12 @@ class Certificate extends Model
     {
         parent::boot();
         static::creating(function ($cert) {
-            $year   = date('Y');
-            $count  = static::whereYear('created_at', $year)->count() + 1;
+            $year = date('Y');
+            // Use DB lock to prevent duplicate certificate numbers under concurrent inserts
+            $count = \DB::table('certificates')
+                ->whereYear('created_at', $year)
+                ->lockForUpdate()
+                ->count() + 1;
             $cert->certificate_number = "CERT-{$year}-" . str_pad($count, 5, '0', STR_PAD_LEFT);
         });
     }

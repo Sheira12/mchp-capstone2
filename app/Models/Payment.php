@@ -33,6 +33,9 @@ class Payment extends Model
         'status',
         'reference_number',
         'gateway_reference',
+        'submitted_reference',
+        'proof_path',
+        'payer_contact',
         'gateway_response',
         'paid_at',
         'receipt_number',
@@ -43,6 +46,9 @@ class Payment extends Model
         'void_reason',
         'voided_by',
         'voided_at',
+        'verified_by',
+        'verified_at',
+        'rejection_reason',
     ];
 
     protected $casts = [
@@ -50,6 +56,7 @@ class Payment extends Model
         'paid_at'          => 'datetime',
         'refunded_at'      => 'datetime',
         'voided_at'        => 'datetime',
+        'verified_at'      => 'datetime',
         'gateway_response' => 'array',
     ];
 
@@ -90,6 +97,11 @@ class Payment extends Model
     public function voidedBy()
     {
         return $this->belongsTo(User::class, 'voided_by');
+    }
+
+    public function verifiedBy()
+    {
+        return $this->belongsTo(User::class, 'verified_by');
     }
 
     public function scopePaid($query)

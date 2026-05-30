@@ -1,7 +1,5 @@
 @extends('layouts.portal')
-
 @section('title', 'Payment Successful')
-@section('page-title', 'Payment Successful')
 
 @section('content')
 <div class="py-12 flex items-center justify-center">
@@ -16,6 +14,7 @@
         @if($ref)
             <p class="text-sm text-gray-400 mb-6">Reference: <span class="font-mono font-medium text-gray-700">{{ $ref }}</span></p>
         @endif
+        <p class="text-sm text-blue-600 mb-6">Your receipt will be emailed to you shortly.</p>
         <div class="flex flex-col gap-3">
             <a href="{{ route('parishioner.payments.index') }}" class="btn-primary">View Payment History</a>
             <a href="{{ route('parishioner.dashboard') }}" class="btn-secondary">Back to Dashboard</a>

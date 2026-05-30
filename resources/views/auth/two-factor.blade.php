@@ -65,6 +65,20 @@
         </div>
         @endif
 
+        {{-- ── DEV MODE: Show OTP code directly ── --}}
+        {{-- REMOVED: Code box hidden for production/demo --}}
+
+        {{-- Mail failed warning --}}
+        @if(isset($emailSent) && !$emailSent && isset($maskedEmail))
+        <div class="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 flex items-start gap-2">
+            <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            <div>
+                <p class="font-bold">Email could not be sent.</p>
+                <p class="mt-0.5">Check your Gmail SMTP settings in <code class="bg-red-100 px-1 rounded">.env</code> or use the code shown above (dev mode).</p>
+            </div>
+        </div>
+        @endif
+
         @if($errors->any())
         <div id="error-box" class="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
             @foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach

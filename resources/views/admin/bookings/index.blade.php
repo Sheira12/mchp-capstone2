@@ -8,35 +8,57 @@
 
     {{-- Header --}}
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <p class="text-sm text-gray-500">{{ $bookings->total() }} bookings found</p>
-        <div class="flex gap-2">
-            <a href="{{ route('admin.bookings.calendar') }}" class="btn-secondary text-sm">📅 Calendar View</a>
-            <a href="{{ route('admin.bookings.create') }}" class="btn-primary text-sm">+ New Booking</a>
+        <div class="flex flex-wrap items-center gap-3">
+            <p class="text-sm text-gray-500">{{ $bookings->total() }} bookings found</p>
+            @php $pendingCount = \App\Models\Booking::pending()->count(); @endphp
+            @if($pendingCount > 0)
+            <a href="{{ route('admin.bookings.index', ['status' => 'pending']) }}"
+               class="inline-flex items-center gap-1.5 bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-amber-200 transition animate-pulse">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                {{ $pendingCount }} Pending Approval
+            </a>
+            @endif
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('admin.bookings.qr-scanner') }}" class="btn-secondary text-sm flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                <span class="hidden sm:inline">QR Scanner</span>
+                <span class="sm:hidden">QR</span>
+            </a>
+            <a href="{{ route('admin.bookings.calendar') }}" class="btn-secondary text-sm">
+                <span class="hidden sm:inline">📅 Calendar View</span>
+                <span class="sm:hidden">📅</span>
+            </a>
+            <a href="{{ route('admin.bookings.create') }}" class="btn-primary text-sm">+ New</a>
         </div>
     </div>
 
     {{-- Filters --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <form method="GET" class="flex flex-wrap gap-3">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search parishioner or reference..." class="form-input text-sm flex-1 min-w-48">
-            <select name="status" class="form-select text-sm">
+        <form method="GET" class="flex flex-wrap gap-2">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search parishioner or reference..." class="form-input text-sm w-full sm:flex-1 sm:min-w-48">
+            <select name="status" class="form-select text-sm w-full sm:w-auto">
                 <option value="">All Statuses</option>
                 @foreach(\App\Models\Booking::STATUSES as $val => $label)
                 <option value="{{ $val }}" {{ request('status') === $val ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
-            <select name="type" class="form-select text-sm">
+            <select name="type" class="form-select text-sm w-full sm:w-auto">
                 <option value="">All Types</option>
                 @foreach(\App\Models\Booking::TYPES as $val => $label)
                 <option value="{{ $val }}" {{ request('type') === $val ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
-            <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-input text-sm">
-            <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-input text-sm">
-            <button type="submit" class="btn-primary text-sm">Filter</button>
-            @if(request()->hasAny(['search', 'status', 'type', 'date_from', 'date_to']))
-            <a href="{{ route('admin.bookings.index') }}" class="btn-secondary text-sm">Clear</a>
-            @endif
+            <div class="flex gap-2 w-full sm:w-auto">
+                <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-input text-sm flex-1">
+                <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-input text-sm flex-1">
+            </div>
+            <div class="flex gap-2 w-full sm:w-auto">
+                <button type="submit" class="btn-primary text-sm flex-1 sm:flex-none">Filter</button>
+                @if(request()->hasAny(['search', 'status', 'type', 'date_from', 'date_to']))
+                <a href="{{ route('admin.bookings.index') }}" class="btn-secondary text-sm flex-1 sm:flex-none text-center">Clear</a>
+                @endif
+            </div>
         </form>
     </div>
 
@@ -60,8 +82,10 @@
                     @php
                         $statusColors = ['pending' => 'amber', 'confirmed' => 'green', 'completed' => 'blue', 'cancelled' => 'red'];
                         $color = $statusColors[$booking->status] ?? 'gray';
+                        $isPending = $booking->status === 'pending';
                     @endphp
-                    <tr class="hover:bg-gray-50">
+                    <tr class="hover:bg-gray-50 {{ $isPending ? 'bg-amber-50 border-l-4 border-l-amber-400' : '' }}"
+                        style="{{ $isPending ? 'border-left: 4px solid #f59e0b;' : '' }}">
                         <td class="px-4 py-3 font-mono text-xs text-gray-500">{{ $booking->reference_number }}</td>
                         <td class="px-4 py-3">
                             <a href="{{ route('admin.parishioners.show', $booking->parishioner) }}" class="font-medium text-gray-900 hover:text-blue-700">

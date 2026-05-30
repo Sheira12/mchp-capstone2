@@ -12,6 +12,15 @@ class QrCodeService
 {
     public function generateForBooking(Booking $booking): QrCode
     {
+        // Remove any existing QR for this booking
+        $existing = $booking->qrCode;
+        if ($existing) {
+            if ($existing->qr_image_path) {
+                Storage::disk('public')->delete($existing->qr_image_path);
+            }
+            $existing->delete();
+        }
+
         $qrCode = QrCode::create([
             'qr_codeable_type' => Booking::class,
             'qr_codeable_id'   => $booking->id,
@@ -25,7 +34,12 @@ class QrCodeService
     public function generateForCertificate(Certificate $certificate): QrCode
     {
         $existing = $certificate->qrCode;
-        if ($existing) return $existing;
+        if ($existing) {
+            if ($existing->qr_image_path) {
+                Storage::disk('public')->delete($existing->qr_image_path);
+            }
+            $existing->delete();
+        }
 
         $qrCode = QrCode::create([
             'qr_codeable_type' => Certificate::class,
@@ -37,6 +51,11 @@ class QrCodeService
         return $qrCode;
     }
 
+    /**
+     * Generate SVG QR code — no imagick extension required.
+     * SVG is served directly in <img> tags in the browser.
+     * For PDF embedding, CertificateService converts SVG to base64 data URI.
+     */
     public function generateImage(QrCode $qrCode): void
     {
         $type = class_basename($qrCode->qr_codeable_type);
@@ -44,6 +63,7 @@ class QrCodeService
 
         $svg = QrCodeGenerator::format('svg')
             ->size(200)
+            ->margin(1)
             ->errorCorrection('H')
             ->generate($qrCode->verification_url);
 

@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -18,7 +19,10 @@ class InquiryMail extends Mailable
     {
         return new Envelope(
             subject: 'Parish Inquiry: ' . $this->inquiry['subject'],
-            replyTo: [$this->inquiry['email'] => $this->inquiry['name']],
+            // Use Address object — the old [$email => $name] format causes RFC 2822 errors
+            replyTo: [
+                new Address($this->inquiry['email'], $this->inquiry['name']),
+            ],
         );
     }
 

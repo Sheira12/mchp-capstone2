@@ -64,10 +64,25 @@
                             </p>
                         </div>
                     </div>
-                    <span class="badge badge-{{ $payment->status }} flex-shrink-0">{{ ucfirst($payment->status) }}</span>
+                    <div class="flex flex-col items-end gap-2 flex-shrink-0">
+                        <span class="badge badge-{{ $payment->status }}">{{ ucfirst($payment->status) }}</span>
+                        @if($payment->status === 'paid')
+                        <a href="{{ route('parishioner.payments.receipt', $payment) }}"
+                           style="display:inline-flex;align-items:center;gap:4px;font-size:0.72rem;font-weight:700;color:#2563eb;text-decoration:none;background:#eff6ff;padding:3px 10px;border-radius:6px;border:1px solid #bfdbfe;"
+                           onmouseover="this.style.background='#dbeafe';" onmouseout="this.style.background='#eff6ff';">
+                            <svg style="width:11px;height:11px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            View Receipt
+                        </a>
+                        @elseif($payment->status === 'pending' && $payment->booking)
+                        <a href="{{ route('parishioner.payments.pay', $payment->booking) }}"
+                           style="display:inline-flex;align-items:center;gap:4px;font-size:0.72rem;font-weight:700;color:#fff;text-decoration:none;background:#2563eb;padding:3px 10px;border-radius:6px;"
+                           onmouseover="this.style.background='#1d4ed8';" onmouseout="this.style.background='#2563eb';">
+                            Pay Now
+                        </a>
+                        @endif
+                    </div>
                 </div>
             </div>
-        </div>
         @endforeach
     </div>
 
