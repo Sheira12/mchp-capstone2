@@ -45,7 +45,7 @@ class User extends Authenticatable
         $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $this->update([
             'two_factor_code'       => $code,
-            'two_factor_expires_at' => now()->addMinutes(10),
+            'two_factor_expires_at' => now()->addMinutes(15), // 15 minutes validity
         ]);
         return $code;
     }

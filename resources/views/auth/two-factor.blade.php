@@ -47,8 +47,13 @@
             </div>
             <h2 class="text-2xl font-bold text-gray-900">Two-Factor Verification</h2>
             <p class="text-sm text-gray-500 mt-2">
-                We sent a 6-digit code to<br>
-                <span class="font-semibold text-gray-700">{{ $maskedEmail }}</span>
+                A 6-digit verification code was sent to:
+            </p>
+            <div class="mt-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-2 inline-block">
+                <span class="font-bold text-blue-800 text-base tracking-wide">{{ $maskedEmail }}</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">
+                Check your <strong>Primary</strong> inbox. If not found, check <strong>Spam/Promotions</strong> folder.
             </p>
         </div>
 
@@ -96,7 +101,7 @@
 
             {{-- Timer --}}
             <p class="text-center text-sm text-gray-500 mb-5">
-                Code expires in <span id="countdown">10:00</span>
+                Code expires in <span id="countdown">15:00</span>
             </p>
 
             <button type="submit" id="submit-btn"
@@ -106,8 +111,17 @@
         </form>
 
         {{-- Resend --}}
-        <div class="text-center mt-5">
-            <p class="text-sm text-gray-500 mb-2">Didn't receive the code?</p>
+        <div class="text-center mt-5 space-y-3">
+            {{-- Open Gmail shortcut --}}
+            <a href="https://mail.google.com" target="_blank"
+               class="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-semibold text-sm py-2.5 rounded-xl transition">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/>
+                </svg>
+                Open Gmail to get your code →
+            </a>
+
+            <p class="text-sm text-gray-500">Didn't receive the code?</p>
             <form method="POST" action="{{ route('2fa.resend') }}" class="inline">
                 @csrf
                 <button type="submit"
@@ -184,7 +198,7 @@ boxes[0]?.focus();
 @endif
 
 // ── Countdown timer ──
-let seconds = 10 * 60;
+let seconds = 15 * 60; // 15 minutes
 const countEl = document.getElementById('countdown');
 
 function updateTimer() {

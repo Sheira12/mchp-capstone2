@@ -247,9 +247,12 @@ class AuthController extends Controller
             return redirect()->route('login');
         }
 
-        // Rate limit: only allow resend every 60 seconds
-        if ($user->two_factor_expires_at && $user->two_factor_expires_at->diffInSeconds(now()) < 540) {
-            return back()->withErrors(['code' => 'Please wait before requesting a new code.']);
+        // Rate limit: only allow resend every 60 seconds (not before 60s have passed since last send)
+        if ($user->two_factor_expires_at && $user->two_factor_expires_at->isFuture()) {
+            $secondsSinceIssued = 600 - $user->two_factor_expires_at->diffInSeconds(now(), false);
+            if ($secondsSinceIssued < 60) {
+                return back()->withErrors(['code' => 'Please wait ' . (60 - (int)$secondsSinceIssued) . ' seconds before requesting a new code.']);
+            }
         }
 
         $code = $user->generateTwoFactorCode();

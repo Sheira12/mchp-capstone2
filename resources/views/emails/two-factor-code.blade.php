@@ -44,7 +44,7 @@
         <div class="otp-box">
             <p class="otp-label">Your Verification Code</p>
             <p class="otp-code">{{ $code }}</p>
-            <p class="otp-expiry">⏱ This code expires in <strong>10 minutes</strong></p>
+            <p class="otp-expiry">⏱ This code expires in <strong>15 minutes</strong></p>
         </div>
         <div class="warning">
             <strong>Security Notice:</strong> Never share this code with anyone.
