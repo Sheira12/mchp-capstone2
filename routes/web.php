@@ -36,6 +36,12 @@ Route::get('/announcements/{announcement}', [PublicController::class, 'announcem
 Route::get('/verify/{token}', [VerificationController::class, 'verify'])->name('verify');
 Route::get('/api/verify/{token}', [VerificationController::class, 'apiVerify'])->name('verify.api');
 
+// Walk-in Booking Kiosk (public — no login required, for use at parish office)
+Route::get('/walk-in', [\App\Http\Controllers\WalkInBookingController::class, 'index'])->name('walkin.index');
+Route::post('/walk-in', [\App\Http\Controllers\WalkInBookingController::class, 'store'])->name('walkin.store');
+Route::get('/walk-in/confirmation/{booking}', [\App\Http\Controllers\WalkInBookingController::class, 'confirmation'])->name('walkin.confirmation');
+Route::get('/walk-in/confirmation/{booking}/print', [\App\Http\Controllers\WalkInBookingController::class, 'printStub'])->name('walkin.print');
+
 // Chatbot
 Route::post('/chatbot', [ChatbotController::class, 'chat'])->name('chatbot.chat');
 Route::post('/chatbot/escalate', [ChatbotController::class, 'escalate'])->name('chatbot.escalate');

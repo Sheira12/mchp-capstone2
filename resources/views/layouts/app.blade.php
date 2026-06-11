@@ -124,6 +124,10 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 Calendar
             </a>
+            <a href="{{ route('walkin.index') }}" target="_blank" class="nav-link" style="background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                <span style="color:#fde68a;font-weight:600;">Walk-in Kiosk</span>
+            </a>
 
             @role('super_admin|finance_officer')
             <div class="pt-2 pb-1 px-3 text-xs font-semibold text-blue-400 uppercase tracking-wider">Finance</div>

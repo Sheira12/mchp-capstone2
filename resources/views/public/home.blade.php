@@ -75,6 +75,13 @@
                 <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 Our Services
             </a>
+            <a href="{{ route('walkin.index') }}"
+               style="display:inline-flex;align-items:center;gap:8px;background:rgba(212,175,55,0.85);color:#fff;font-weight:700;font-size:0.875rem;padding:0.8rem 1.75rem;border-radius:9999px;border:1.5px solid rgba(212,175,55,0.5);box-shadow:0 6px 24px rgba(0,0,0,0.25);text-decoration:none;transition:all 0.2s;"
+               onmouseover="this.style.background='rgba(212,175,55,1)';this.style.transform='translateY(-2px)';"
+               onmouseout="this.style.background='rgba(212,175,55,0.85)';this.style.transform='';">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                Walk-in Booking
+            </a>
             <a href="{{ route('register') }}"
                style="display:inline-flex;align-items:center;gap:8px;background:rgba(37,99,235,0.9);color:#fff;font-weight:700;font-size:0.875rem;padding:0.8rem 1.75rem;border-radius:9999px;border:1.5px solid rgba(147,197,253,0.35);box-shadow:0 6px 24px rgba(0,0,0,0.35);text-decoration:none;transition:all 0.2s;"
                onmouseover="this.style.background='#2563eb';this.style.transform='translateY(-2px)';"
