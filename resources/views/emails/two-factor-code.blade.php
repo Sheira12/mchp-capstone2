@@ -26,7 +26,12 @@
 <body>
 <div class="wrap">
     <div class="header">
-        <img src="{{ asset('images/parish-logo.png') }}" alt="Parish Logo">
+        @php
+            $logoUrl = config('app.url') . '/images/parish-logo.png';
+        @endphp
+        <img src="{{ $logoUrl }}" alt="{{ config('parish.name') }}"
+             style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,0.4);margin-bottom:12px;"
+             onerror="this.style.display='none'">
         <h1>{{ config('parish.name') }}</h1>
         <p>Southville 1, Niugan, Cabuyao, Laguna</p>
     </div>

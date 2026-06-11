@@ -10,11 +10,7 @@
 <div class="w-full max-w-md">
 
     {{-- Logo --}}
-    <div class="text-center mb-8">
-        <img src="{{ asset('images/parish-logo.png') }}" alt="Parish Logo" class="w-20 h-20 rounded-full mx-auto mb-4 object-cover border-4 border-white shadow-lg">
-        <h1 class="text-white text-xl font-bold">Mary Help of Christians Parish</h1>
-        <p class="text-blue-200 text-sm">Southville 1, Niugan, Cabuyao, Laguna</p>
-    </div>
+    @include('auth._logo')
 
     {{-- Card --}}
     <div class="bg-white rounded-2xl shadow-2xl p-8">
