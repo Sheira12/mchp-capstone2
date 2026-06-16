@@ -1,19 +1,36 @@
 {{-- Shared auth page logo header --}}
-<div class="text-center mb-8">
-    <div class="mx-auto mb-4" style="width:84px;height:84px;">
+<div style="text-align:center;margin-bottom:2rem;">
+    {{-- Logo circle with overflow:hidden to enforce round crop --}}
+    <div style="
+        width:88px; height:88px;
+        border-radius:50%;
+        overflow:hidden;
+        margin:0 auto 1rem;
+        border:4px solid rgba(255,255,255,0.85);
+        box-shadow:0 8px 32px rgba(0,0,0,0.35);
+        background:rgba(255,255,255,0.18);
+        display:flex; align-items:center; justify-content:center;
+        flex-shrink:0;
+    " id="logo-wrap">
         <img src="{{ asset('images/parish-logo.png') }}"
-             id="auth-logo"
-             alt="Mary Help of Christians Parish"
-             style="width:84px;height:84px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,0.9);box-shadow:0 8px 32px rgba(0,0,0,0.35);display:block;"
-             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-        <div style="display:none;width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,0.18);border:4px solid rgba(255,255,255,0.6);box-shadow:0 8px 32px rgba(0,0,0,0.35);align-items:center;justify-content:center;font-size:2rem;">
-            ⛪
-        </div>
+             alt="MHC Parish Logo"
+             style="
+                 width:88px;
+                 height:88px;
+                 object-fit:cover;
+                 display:block;
+             "
+             onerror="
+                 this.style.display='none';
+                 document.getElementById('logo-wrap').innerHTML='<span style=\'font-size:2.25rem;\'>⛪</span>';
+             ">
     </div>
-    <h1 class="text-white text-xl font-bold tracking-tight">Mary Help of Christians Parish</h1>
+    <h1 style="color:#fff;font-size:1.25rem;font-weight:800;margin:0 0 4px;letter-spacing:-0.01em;">
+        Mary Help of Christians Parish
+    </h1>
     @if(isset($subtitle))
-        <p class="text-blue-200 text-sm mt-0.5">{{ $subtitle }}</p>
+        <p style="color:rgba(191,219,254,0.9);font-size:0.875rem;margin:0;">{{ $subtitle }}</p>
     @else
-        <p class="text-blue-200 text-sm mt-0.5">Southville 1, Niugan, Cabuyao, Laguna</p>
+        <p style="color:rgba(191,219,254,0.9);font-size:0.875rem;margin:0;">Southville 1, Niugan, Cabuyao, Laguna</p>
     @endif
 </div>
