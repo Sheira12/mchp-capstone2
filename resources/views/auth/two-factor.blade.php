@@ -65,11 +65,24 @@
         </div>
         @endif
 
-        {{-- ── DEV MODE: Show OTP code directly ── --}}
-        {{-- REMOVED: Code box hidden for production/demo --}}
+        {{-- ── Show OTP when email delivery fails ── --}}
+        @if(isset($devCode) && $devCode)
+        <div class="mb-4 bg-amber-50 border-2 border-amber-400 rounded-xl px-4 py-3">
+            <div class="flex items-center gap-2 mb-2">
+                <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <span class="text-xs font-bold text-amber-700 uppercase tracking-wide">Email Unavailable — Your Verification Code</span>
+            </div>
+            <p class="text-2xl font-mono font-black text-amber-900 tracking-[0.3em] text-center py-1 bg-white rounded-lg border border-amber-200">{{ $devCode }}</p>
+            <p class="text-xs text-amber-600 text-center mt-1.5">Enter this code in the boxes below to sign in</p>
+            <button type="button" onclick="fillCode('{{ $devCode }}')"
+                    class="mt-2 w-full text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-lg transition">
+                ✓ Auto-fill this code
+            </button>
+        </div>
+        @endif
 
-        {{-- Mail failed warning --}}
-        @if(isset($emailSent) && !$emailSent && isset($maskedEmail))
+        {{-- Mail failed warning (when code shown above, skip this) --}}
+        @if(isset($emailSent) && !$emailSent && !(isset($devCode) && $devCode))
         <div class="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 flex items-start gap-2">
             <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             <div>
@@ -196,6 +209,19 @@ document.getElementById('otp-boxes')?.classList.add('shake');
 boxes.forEach(b => { b.value = ''; b.classList.remove('filled'); });
 boxes[0]?.focus();
 @endif
+
+// ── Auto-fill code from on-screen display ──
+function fillCode(code) {
+    const digits = String(code).replace(/\D/g, '').slice(0, 6);
+    digits.split('').forEach((ch, j) => {
+        if (boxes[j]) {
+            boxes[j].value = ch;
+            boxes[j].classList.add('filled');
+        }
+    });
+    updateHidden();
+    if (digits.length === 6) setTimeout(() => form.submit(), 400);
+}
 
 // ── Countdown timer ──
 let seconds = 15 * 60; // 15 minutes

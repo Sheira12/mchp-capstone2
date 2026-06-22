@@ -109,8 +109,10 @@ class AuthController extends Controller
         $request->session()->put('2fa_has_sms', $hasSms);
         $request->session()->put('2fa_has_email', $hasEmail);
 
-        // In local/dev mode, flash the code so it can be seen without email
-        $devCode = null; // Never show code on screen — always send via email
+        // Show code on screen ONLY when email delivery fails (network issue fallback)
+        // When internet is available, email is sent and $emailSent=true, devCode=null
+        // When email fails (no internet/DNS), show code on screen so login still works
+        $devCode = (!$emailSent) ? $code : null;
 
         return redirect()->route('2fa.show')
             ->with('2fa_email', $this->maskEmail($user->email))
@@ -178,17 +180,17 @@ class AuthController extends Controller
             }
         }
 
-        $devCode = null; // Never show code on screen
+        $devCode = !$sent ? $code : null;
 
         return redirect()->route('2fa.show')
             ->with('2fa_email', $this->maskEmail($user->email))
             ->with('2fa_phone', $request->session()->get('2fa_phone'))
             ->with('dev_code', $devCode)
             ->with('email_sent', $sent)
-            ->with('resent', 'Verification code sent via ' . strtoupper($channel) . '.');
-    }
-
-    public function verify2fa(Request $request)
+            ->with('resent', $sent
+                ? 'Verification code sent via ' . strtoupper($channel) . '.'
+                : 'Email unavailable. Your code is shown below — please enter it now.');
+    }(Request $request)
     {
         $request->validate([
             'code' => ['required', 'string', 'size:6'],
@@ -257,13 +259,23 @@ class AuthController extends Controller
 
         $code = $user->generateTwoFactorCode();
 
+        $sent = false;
         try {
             Mail::to($user->email)->send(new TwoFactorCodeMail($user, $code));
+            $sent = true;
         } catch (\Exception $e) {
             \Log::error('2FA resend mail failed: ' . $e->getMessage());
         }
 
-        return back()->with('resent', 'A new verification code has been sent to your email.');
+        // Show code on screen if email fails
+        $devCode = !$sent ? $code : null;
+
+        return back()
+            ->with('resent', $sent
+                ? 'A new verification code has been sent to your email.'
+                : 'Email unavailable. Your verification code is shown below.')
+            ->with('dev_code', $devCode)
+            ->with('email_sent', $sent);
     }
 
     // ─────────────────────────────────────────────
