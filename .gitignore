@@ -21,4 +21,5 @@ storage/logs/
 storage/framework/sessions/
 storage/framework/views/
 storage/framework/cache/data/
+storage/framework/cache/laravel-excel/
 storage/app/public/
