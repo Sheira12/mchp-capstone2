@@ -190,7 +190,13 @@ class AuthController extends Controller
             ->with('resent', $sent
                 ? 'Verification code sent via ' . strtoupper($channel) . '.'
                 : 'Email unavailable. Your code is shown below — please enter it now.');
-    }(Request $request)
+    }
+
+    // ─────────────────────────────────────────────
+    //  2FA VERIFY
+    // ─────────────────────────────────────────────
+
+    public function verify2fa(Request $request)
     {
         $request->validate([
             'code' => ['required', 'string', 'size:6'],

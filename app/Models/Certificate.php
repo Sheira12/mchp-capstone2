@@ -42,13 +42,23 @@ class Certificate extends Model
     {
         parent::boot();
         static::creating(function ($cert) {
+            if (!empty($cert->certificate_number)) return; // Already set, skip
+
             $year = date('Y');
-            // Use DB lock to prevent duplicate certificate numbers under concurrent inserts
-            $count = \DB::table('certificates')
-                ->whereYear('created_at', $year)
-                ->lockForUpdate()
-                ->count() + 1;
-            $cert->certificate_number = "CERT-{$year}-" . str_pad($count, 5, '0', STR_PAD_LEFT);
+
+            // Use transaction + MAX to prevent duplicate numbers
+            \DB::transaction(function () use ($cert, $year) {
+                // Get the highest existing number this year, then add 1
+                $maxNum = \DB::table('certificates')
+                    ->whereYear('created_at', $year)
+                    ->where('certificate_number', 'like', "CERT-{$year}-%")
+                    ->lockForUpdate()
+                    ->selectRaw('MAX(CAST(SUBSTRING(certificate_number, ' . (strlen("CERT-{$year}-") + 1) . ') AS UNSIGNED)) as max_num')
+                    ->value('max_num');
+
+                $next = ($maxNum ?? 0) + 1;
+                $cert->certificate_number = "CERT-{$year}-" . str_pad($next, 5, '0', STR_PAD_LEFT);
+            });
         });
     }
 

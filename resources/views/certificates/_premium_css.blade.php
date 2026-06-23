@@ -90,7 +90,7 @@ html, body {
     font-size: 7pt; font-weight: bold;
     letter-spacing: 2.5pt; text-transform: uppercase;
     color: #D4AF37; text-align: center;
-    margin-bottom: 10pt;
+    margin-bottom: 8pt;
 }
 
 /* ── Seal / Logo ── */
@@ -99,7 +99,7 @@ html, body {
     border-radius: 50%; border: 2pt solid #D4AF37;
     box-shadow: 0 0 0 4pt rgba(212,175,55,0.15);
     overflow: hidden;
-    margin: 0 auto 7pt;
+    margin: 0 auto 6pt;
     background: #fff; display: block; text-align: center;
 }
 .seal-ring img { width: 68pt; height: 68pt; display: block; }
@@ -109,16 +109,16 @@ html, body {
     font-family: Georgia, serif;
     font-size: 13pt; font-weight: bold;
     color: #1F3A5F; letter-spacing: 0.75pt;
-    text-align: center; margin-bottom: 2.5pt;
+    text-align: center; margin-bottom: 2pt;
 }
 .parish-addr {
     font-family: Arial, Helvetica, sans-serif;
     font-size: 7pt; color: #7A8A9A;
-    text-align: center; margin-bottom: 10pt;
+    text-align: center; margin-bottom: 8pt;
 }
 
 /* ── Gold divider ── */
-.gold-div { text-align: center; margin-bottom: 10pt; line-height: 0; font-size: 0; }
+.gold-div { text-align: center; margin-bottom: 8pt; line-height: 0; font-size: 0; }
 
 /* ── Certificate label ── */
 .cert-label {
@@ -141,14 +141,14 @@ html, body {
 .cert-sub {
     font-family: 'Times New Roman', serif;
     font-size: 9pt; font-style: italic;
-    color: #9AAABB; text-align: center; margin-bottom: 10pt;
+    color: #9AAABB; text-align: center; margin-bottom: 8pt;
 }
 
 /* ── Intro text ── */
 .intro {
     font-family: 'Times New Roman', serif;
     font-size: 10pt; color: #4A5A6A;
-    text-align: center; line-height: 1.7; margin-bottom: 8pt;
+    text-align: center; line-height: 1.65; margin-bottom: 7pt;
 }
 
 /* ── Recipient block ── */
@@ -156,7 +156,7 @@ html, body {
     width: 100%; text-align: center;
     border-top: 1pt solid rgba(212,175,55,0.55);
     border-bottom: 1pt solid rgba(212,175,55,0.55);
-    padding: 10pt 0; margin: 5pt 0 14pt;
+    padding: 9pt 0; margin: 5pt 0 12pt;
     background: rgba(212,175,55,0.03);
 }
 .recipient-name {
@@ -168,13 +168,13 @@ html, body {
     font-family: Arial, Helvetica, sans-serif;
     font-size: 7pt; font-weight: bold;
     letter-spacing: 2.5pt; text-transform: uppercase;
-    color: #D4AF37; margin-top: 4pt;
+    color: #D4AF37; margin-top: 3pt;
 }
 
 /* ── Details grid ── */
 .det-grid {
     width: 100%; border-collapse: collapse;
-    margin-bottom: 14pt; display: table;
+    margin-bottom: 12pt; display: table;
 }
 .det-col {
     display: table-cell; width: 50%; vertical-align: top;
@@ -183,7 +183,7 @@ html, body {
 .det-col:last-child  { padding-left: 14pt; }
 
 .det-item {
-    margin-bottom: 9pt; padding-bottom: 8pt;
+    margin-bottom: 8pt; padding-bottom: 7pt;
     border-bottom: 0.5pt solid rgba(31,58,95,0.08);
 }
 .det-item:last-child { border-bottom: none; margin-bottom: 0; }
@@ -192,12 +192,12 @@ html, body {
     font-family: Arial, Helvetica, sans-serif;
     font-size: 6.5pt; font-weight: bold;
     letter-spacing: 1pt; text-transform: uppercase;
-    color: #D4AF37; margin-bottom: 2.5pt;
+    color: #D4AF37; margin-bottom: 2pt;
 }
 .det-val {
     font-family: 'Times New Roman', serif;
     font-size: 11pt; color: #1F3A5F;
-    font-weight: bold; line-height: 1.35;
+    font-weight: bold; line-height: 1.3;
 }
 .det-val.na {
     color: #B8C4CC; font-weight: normal;
@@ -208,8 +208,8 @@ html, body {
 .issuance {
     font-family: 'Times New Roman', serif;
     font-size: 10pt; color: #4A5A6A;
-    text-align: center; line-height: 1.8;
-    margin-bottom: 16pt; padding: 8pt 10pt;
+    text-align: center; line-height: 1.75;
+    margin-bottom: 14pt; padding: 8pt 10pt;
     border-top: 0.75pt solid rgba(212,175,55,0.3);
     border-bottom: 0.75pt solid rgba(212,175,55,0.3);
     width: 100%;
@@ -220,6 +220,8 @@ html, body {
 .sig-row {
     width: 100%; display: table;
     border-collapse: collapse;
+    /* Push signatures toward bottom of the page */
+    margin-top: 60pt;
 }
 .sig-cell {
     display: table-cell; text-align: center;
@@ -227,7 +229,8 @@ html, body {
 }
 .sig-line {
     border-top: 1.5pt solid #1F3A5F;
-    padding-top: 5pt; margin-top: 36pt;
+    padding-top: 5pt;
+    margin-top: 0;
 }
 .sig-name {
     font-family: 'Times New Roman', serif;
