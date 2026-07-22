@@ -74,6 +74,27 @@ class FamilyController extends Controller
             ->with('success', 'Family updated.');
     }
 
+    public function search(Request $request)
+    {
+        $term = $request->get('q', '');
+        if (strlen($term) < 2) return response()->json([]);
+
+        $results = Family::where('family_name', 'like', "%{$term}%")
+            ->orWhere('barangay', 'like', "%{$term}%")
+            ->orWhere('contact_number', 'like', "%{$term}%")
+            ->withCount('members')
+            ->limit(10)
+            ->get()
+            ->map(fn($f) => [
+                'id'    => $f->id,
+                'text'  => $f->family_name,
+                'extra' => $f->barangay ? $f->barangay . ' · ' . $f->members_count . ' members' : $f->members_count . ' members',
+                'url'   => route('admin.families.show', $f->id),
+            ]);
+
+        return response()->json($results);
+    }
+
     public function destroy(Family $family)
     {
         $family->delete();

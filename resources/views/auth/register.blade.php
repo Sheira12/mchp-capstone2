@@ -5,15 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register — {{ config('parish.name') }}</title>
     @vite(['resources/css/app.css'])
+    <style>
+        .auth-bg {
+            background-image: url('/images/church-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        .auth-overlay {
+            background: linear-gradient(135deg, rgba(15,23,80,0.82) 0%, rgba(30,58,138,0.78) 50%, rgba(49,46,129,0.82) 100%);
+        }
+    </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center p-4">
+<body class="min-h-screen auth-bg">
+<div class="min-h-screen auth-overlay flex items-center justify-center p-4">
 <div class="w-full max-w-md">
 
     <div class="text-center mb-8">
         @include('auth._logo')
     </div>
 
-    <div class="bg-white rounded-2xl shadow-2xl p-8">
+    <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8">
         <h2 class="text-xl font-bold text-gray-900 mb-6">Create Account</h2>
 
         @if($errors->any())
@@ -59,6 +71,11 @@
             <a href="{{ route('home') }}" class="hover:underline">← Back to Parish Website</a>
         </p>
     </div>
+
+    <p class="text-center text-xs text-white/50 mt-4">
+        Mary Help of Christians Parish · Southville 1, Niugan, Cabuyao, Laguna
+    </p>
+</div>
 </div>
 </body>
 </html>

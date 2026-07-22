@@ -8,15 +8,15 @@
 
     {{-- Filters --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <form method="GET" class="flex flex-wrap gap-3 items-end">
+        <form method="GET" data-live-search data-target="#certificates-table" class="flex flex-wrap gap-3 items-end">
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Search</label>
                 <input type="text" name="search" value="{{ request('search') }}"
-                       class="form-input text-sm w-48" placeholder="Name or cert #…">
+                       class="form-input text-sm w-48" placeholder="Name or cert #…" data-live-input>
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Type</label>
-                <select name="type" class="form-select text-sm">
+                <select name="type" class="form-select text-sm" data-live-input>
                     <option value="">All Types</option>
                     <option value="baptism" @selected(request('type') === 'baptism')>Baptism</option>
                     <option value="confirmation" @selected(request('type') === 'confirmation')>Confirmation</option>
@@ -27,7 +27,7 @@
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Status</label>
-                <select name="status" class="form-select text-sm">
+                <select name="status" class="form-select text-sm" data-live-input>
                     <option value="">All Status</option>
                     <option value="draft" @selected(request('status') === 'draft')>Draft</option>
                     <option value="issued" @selected(request('status') === 'issued')>Issued</option>
@@ -45,7 +45,7 @@
     </div>
 
     {{-- Table --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div id="certificates-table" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-100">
                 <tr class="text-left text-gray-500">

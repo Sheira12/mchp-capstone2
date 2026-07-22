@@ -10,43 +10,48 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        // Super Admin
+        // ── Super Admin ──────────────────────────────────────
         $admin = User::firstOrCreate(
-            ['email' => 'admin@mhcparish.ph'],
+            ['email' => 'maryhelpparish@gmail.com'],
             [
-                'name'     => 'System Administrator',
-                'password' => Hash::make('Admin@1234'),
+                'name'      => 'System Administrator',
+                'password'  => Hash::make('Admin@1234'),
                 'is_active' => true,
             ]
         );
-        $admin->assignRole('super_admin');
+        // Force password & active in case record already existed
+        $admin->update(['password' => Hash::make('Admin@1234'), 'is_active' => true]);
+        $admin->syncRoles(['super_admin']);
 
-        // Parish Secretary
+        // ── Parish Secretary ─────────────────────────────────
         $secretary = User::firstOrCreate(
-            ['email' => 'secretary@mhcparish.ph'],
+            ['email' => 'cumpioaries07@gmail.com'],
             [
-                'name'     => 'Parish Secretary',
-                'password' => Hash::make('Secretary@1234'),
+                'name'      => 'Parish Secretary',
+                'password'  => Hash::make('Secretary@1234'),
                 'is_active' => true,
             ]
         );
-        $secretary->assignRole('parish_secretary');
+        $secretary->update(['password' => Hash::make('Secretary@1234'), 'is_active' => true]);
+        $secretary->syncRoles(['parish_secretary']);
 
-        // Finance Officer
+        // ── Finance Officer ──────────────────────────────────
         $finance = User::firstOrCreate(
-            ['email' => 'finance@mhcparish.ph'],
+            ['email' => 'financemhcpparish@gmail.com'],   // ← no trailing newline
             [
-                'name'     => 'Finance Officer',
-                'password' => Hash::make('Finance@1234'),
+                'name'      => 'Finance Officer',
+                'password'  => Hash::make('Finance@1234'),
                 'is_active' => true,
             ]
         );
-        $finance->assignRole('finance_officer');
+        $finance->update(['password' => Hash::make('Finance@1234'), 'is_active' => true]);
+        $finance->syncRoles(['finance_officer']);
 
-        $this->command->info('Admin users created:');
-        $this->command->info('  Super Admin: admin@mhcparish.ph / Admin@1234');
-        $this->command->info('  Secretary:   secretary@mhcparish.ph / Secretary@1234');
-        $this->command->info('  Finance:     finance@mhcparish.ph / Finance@1234');
-        $this->command->warn('  ⚠ Change these passwords immediately after first login!');
+        $this->command->info('');
+        $this->command->info('✅ Admin accounts ready:');
+        $this->command->info('  Super Admin  : maryhelpparish@gmail.com  / Admin@1234');
+        $this->command->info('  Secretary    : cumpioaries07@gmail.com   / Secretary@1234');
+        $this->command->info('  Finance      : financemhcpparish@gmail.com / Finance@1234');
+        $this->command->warn('  ⚠  Change these passwords after first login!');
     }
 }

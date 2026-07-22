@@ -124,6 +124,7 @@ class PaymentController extends Controller
 
     /**
      * Submit proof of payment (reference number + optional screenshot).
+     * Requires OTP verification before submission.
      */
     public function submitProof(Request $request, Booking $booking)
     {
@@ -136,7 +137,17 @@ class PaymentController extends Controller
             'submitted_reference'  => ['required', 'string', 'max:100'],
             'payer_contact'        => ['nullable', 'string', 'max:20'],
             'proof'                => ['nullable', 'image', 'max:5120'], // 5MB max
+            'otp_code'             => ['required', 'string', 'size:6'],
         ]);
+
+        // Verify OTP before processing payment
+        $user = auth()->user();
+        if (!$user->validateTwoFactorCode($validated['otp_code'])) {
+            return back()
+                ->withInput()
+                ->withErrors(['otp_code' => 'Invalid or expired verification code. Please request a new code.']);
+        }
+        $user->clearTwoFactorCode();
 
         // Handle proof upload
         $proofPath = null;
@@ -154,7 +165,7 @@ class PaymentController extends Controller
             'status'              => 'pending', // Admin must verify
             'submitted_reference' => $validated['submitted_reference'],
             'payer_contact'       => $validated['payer_contact'] ?? $booking->parishioner->contact_number,
-            'notes'               => 'Payment submitted via ' . strtoupper($validated['payment_method']) . '. Awaiting admin verification.',
+            'notes'               => 'Payment submitted via ' . strtoupper($validated['payment_method']) . '. OTP verified. Awaiting admin verification.',
         ]);
 
         if ($proofPath) {
@@ -164,7 +175,38 @@ class PaymentController extends Controller
         $payment->save();
 
         return redirect()->route('parishioner.bookings.show', $booking)
-            ->with('success', 'Payment submitted successfully! Our team will verify your payment within 24 hours. You will receive an email confirmation once verified.');
+            ->with('success', 'Payment submitted and OTP verified! Our team will confirm your payment within 24 hours.');
+    }
+
+    /**
+     * Send OTP for payment verification.
+     */
+    public function sendPaymentOtp(Request $request)
+    {
+        $user = auth()->user();
+        $code = $user->generateTwoFactorCode();
+
+        $sent = false;
+        try {
+            \Illuminate\Support\Facades\Mail::to($user->email)
+                ->send(new \App\Mail\TwoFactorCodeMail($user, $code));
+            $sent = true;
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Payment OTP email failed: ' . $e->getMessage());
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'sent'    => $sent,
+                'message' => $sent
+                    ? 'Verification code sent to ' . \Illuminate\Support\Str::mask($user->email, '*', 2, -strlen(explode('@', $user->email)[1]) - 3)
+                    : 'Email unavailable. Code: ' . $code,
+                'dev_code' => !$sent ? $code : null,
+            ]);
+        }
+
+        return back()->with('otp_sent', true);
     }
 
     /**

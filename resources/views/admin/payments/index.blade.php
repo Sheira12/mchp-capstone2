@@ -44,15 +44,15 @@
 
     {{-- Filters --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <form method="GET" class="flex flex-wrap gap-3 items-end">
+        <form method="GET" data-live-search data-target="#payments-table" class="flex flex-wrap gap-3 items-end">
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Search</label>
                 <input type="text" name="search" value="{{ request('search') }}"
-                       class="form-input text-sm w-48" placeholder="Ref # or name…">
+                       class="form-input text-sm w-48" placeholder="Ref # or name…" data-live-input>
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Status</label>
-                <select name="status" class="form-select text-sm">
+                <select name="status" class="form-select text-sm" data-live-input>
                     <option value="">All</option>
                     <option value="pending" @selected(request('status') === 'pending')>Pending</option>
                     <option value="paid" @selected(request('status') === 'paid')>Paid</option>
@@ -62,7 +62,7 @@
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Method</label>
-                <select name="method" class="form-select text-sm">
+                <select name="method" class="form-select text-sm" data-live-input>
                     <option value="">All</option>
                     <option value="cash" @selected(request('method') === 'cash')>Cash</option>
                     <option value="gcash" @selected(request('method') === 'gcash')>GCash</option>
@@ -71,11 +71,11 @@
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">From</label>
-                <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-input text-sm">
+                <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-input text-sm" data-live-input>
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">To</label>
-                <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-input text-sm">
+                <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-input text-sm" data-live-input>
             </div>
             <button type="submit" class="btn-secondary text-sm">Filter</button>
             @if(request()->hasAny(['search','status','method','date_from','date_to']))
@@ -90,7 +90,7 @@
     </div>
 
     {{-- Table --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div id="payments-table" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-100">
                 <tr class="text-left text-gray-500">

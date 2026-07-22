@@ -81,18 +81,31 @@ class CertificateController extends Controller
             return back()->withInput()->with('duplicate_warning', $existing);
         }
 
-        $certificate = Certificate::create([
-            'parishioner_id'        => $parishioner->id,
-            'sacramental_record_id' => $validated['sacramental_record_id'] ?? null,
-            'type'                  => $validated['type'],
-            'issued_date'           => now()->toDateString(),
-            'purpose'               => $validated['purpose'],
-            'notes'                 => $validated['notes'] ?? null,
-            'status'                => 'draft', // Admin must review and issue
-        ]);
+        $certificate = \DB::transaction(function () use ($validated, $parishioner) {
+            return Certificate::create([
+                'parishioner_id'        => $parishioner->id,
+                'sacramental_record_id' => $validated['sacramental_record_id'] ?? null,
+                'type'                  => $validated['type'],
+                'issued_date'           => now()->toDateString(),
+                'purpose'               => $validated['purpose'],
+                'notes'                 => $validated['notes'] ?? null,
+                'status'                => 'draft',
+            ]);
+        });
 
-        // Notify admin via email (optional — uses existing notification infrastructure)
-        // The admin will see it in the certificates list as "draft"
+        // Notify ALL admin users (shows in admin notification bell)
+        $adminUsers = \App\Models\User::role(['super_admin', 'parish_secretary'])->get();
+        foreach ($adminUsers as $admin) {
+            $admin->notify(new \App\Notifications\AdminCertificateNotification($certificate));
+        }
+
+        // Notify the parishioner (shows in portal notification bell)
+        auth()->user()->notify(new \App\Notifications\ParishionerStatusNotification(
+            'Certificate Request Received',
+            'Your request for a ' . $certificate->getTypeLabel() . ' has been submitted. We will process it within 1–3 working days.',
+            route('parishioner.certificates.index'),
+            'document'
+        ));
 
         return redirect()->route('parishioner.certificates.index')
             ->with('success', 'Certificate request submitted successfully. The parish office will process it within 1–3 working days.');

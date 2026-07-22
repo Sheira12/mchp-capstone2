@@ -101,6 +101,12 @@ class WalkInBookingController extends Controller
         // Generate QR code
         app(QrCodeService::class)->generateForBooking($booking);
 
+        // Notify admin users (database notification)
+        $adminUsers = \App\Models\User::role(['super_admin', 'parish_secretary'])->get();
+        foreach ($adminUsers as $admin) {
+            $admin->notify(new \App\Notifications\AdminBookingNotification($booking));
+        }
+
         // Log for audit
         \App\Models\AuditLog::record(
             'walkin_booking',

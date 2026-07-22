@@ -69,7 +69,10 @@ class CertificateController extends Controller
 
         $validated['issued_by'] = auth()->id();
 
-        $certificate = Certificate::create($validated);
+        // Wrap in a transaction so the number generation and INSERT are atomic
+        $certificate = \DB::transaction(function () use ($validated) {
+            return Certificate::create($validated);
+        });
 
         // Generate PDF and QR code — increase time limit for this operation
         set_time_limit(120);
@@ -123,6 +126,17 @@ class CertificateController extends Controller
     {
         $certificate->update(['status' => 'released']);
         AuditLog::record('release', $certificate, ['status' => 'issued'], ['status' => 'released'], 'Certificate released');
+
+        // Notify the parishioner their certificate is ready
+        $linkedUser = \App\Models\User::where('parishioner_id', $certificate->parishioner_id)->first();
+        if ($linkedUser) {
+            $linkedUser->notify(new \App\Notifications\ParishionerStatusNotification(
+                'Certificate Ready for Download 📄',
+                'Your ' . $certificate->getTypeLabel() . ' is now ready. You can download it from your portal.',
+                route('parishioner.certificates.index'),
+                'document'
+            ));
+        }
 
         return back()->with('success', 'Certificate marked as released.');
     }

@@ -6,6 +6,13 @@
 @section('content')
 <div class="py-6 space-y-4">
 
+    @if(session('success'))
+    <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        {{ session('success') }}
+    </div>
+    @endif
+
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <form method="GET" class="flex gap-2">
             <input type="text" name="search" value="{{ request('search') }}"

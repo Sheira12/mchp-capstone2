@@ -147,6 +147,8 @@ class ParishionerController extends Controller
     public function search(Request $request)
     {
         $term = $request->get('q', '');
+        if (strlen($term) < 2) return response()->json([]);
+
         $results = Parishioner::search($term)
             ->select('id', 'first_name', 'middle_name', 'last_name', 'birthdate', 'contact_number')
             ->limit(10)
@@ -155,9 +157,62 @@ class ParishionerController extends Controller
                 'id'    => $p->id,
                 'text'  => $p->full_name,
                 'extra' => $p->contact_number,
+                'url'   => route('admin.parishioners.show', $p->id),
             ]);
 
         return response()->json($results);
+    }
+
+    /**
+     * Statement of Account for a parishioner.
+     */
+    public function soa(Request $request, Parishioner $parishioner)
+    {
+        $query = $parishioner->payments()->with(['booking', 'certificate'])->orderBy('created_at');
+
+        if ($from = $request->get('from')) $query->whereDate('created_at', '>=', $from);
+        if ($to   = $request->get('to'))   $query->whereDate('created_at', '<=', $to);
+        if ($type = $request->get('type'))  $query->where('payment_method', $type);
+
+        $payments = $query->get();
+
+        $totalDue       = $parishioner->bookings()->sum('service_fee');
+        $totalPaid      = $payments->where('status', 'paid')->sum('amount');
+        $outstanding    = max(0, $totalDue - $totalPaid);
+
+        return view('admin.parishioners.soa', compact('parishioner', 'payments', 'totalDue', 'totalPaid', 'outstanding'));
+    }
+
+    /**
+     * Export SOA as PDF.
+     */
+    public function soaPdf(Request $request, Parishioner $parishioner)
+    {
+        $payments    = $parishioner->payments()->with(['booking', 'certificate'])->orderBy('created_at')->get();
+        $totalDue    = $parishioner->bookings()->sum('service_fee');
+        $totalPaid   = $payments->where('status', 'paid')->sum('amount');
+        $outstanding = max(0, $totalDue - $totalPaid);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.parishioners.soa-pdf', [
+            'parishioner' => $parishioner,
+            'payments'    => $payments,
+            'totalDue'    => $totalDue,
+            'totalPaid'   => $totalPaid,
+            'outstanding' => $outstanding,
+            'parish'      => [
+                'name'    => config('parish.name'),
+                'address' => config('parish.address'),
+                'phone'   => config('parish.phone'),
+                'email'   => config('parish.email'),
+                'priest'  => config('parish.priest'),
+            ],
+            'logoPath'    => public_path('images/parish-logo.png'),
+            'printedAt'   => now()->format('F d, Y h:i A'),
+        ])
+        ->setPaper('A4', 'portrait')
+        ->setOption(['defaultFont' => 'DejaVu Sans', 'isHtml5ParserEnabled' => true, 'isPhpEnabled' => false]);
+
+        return $pdf->download('SOA-' . $parishioner->last_name . '-' . now()->format('Ymd') . '.pdf');
     }
 
     private function validateParishioner(Request $request, ?int $ignoreId = null): array

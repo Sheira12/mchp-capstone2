@@ -31,6 +31,10 @@ Route::get('/contact', [PublicController::class, 'contact'])->name('contact');
 Route::post('/contact', [PublicController::class, 'submitInquiry'])->name('contact.submit');
 Route::get('/announcements', [PublicController::class, 'announcements'])->name('announcements');
 Route::get('/announcements/{announcement}', [PublicController::class, 'announcement'])->name('announcements.show');
+Route::get('/events', [PublicController::class, 'events'])->name('events');
+Route::get('/events/{event}', [PublicController::class, 'event'])->name('events.show');
+Route::get('/gallery', [PublicController::class, 'gallery'])->name('gallery');
+Route::get('/livestream', [PublicController::class, 'livestream'])->name('livestream');
 
 // QR Verification (public)
 Route::get('/verify/{token}', [VerificationController::class, 'verify'])->name('verify');
@@ -92,6 +96,7 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
     Route::get('/payments/pay/{booking}', [ParishionerPaymentController::class, 'payBooking'])->name('payments.pay');
     Route::post('/payments/pay/{booking}/cash', [ParishionerPaymentController::class, 'payCash'])->name('payments.pay-cash');
     Route::post('/payments/pay/{booking}/proof', [ParishionerPaymentController::class, 'submitProof'])->name('payments.submit-proof');
+    Route::post('/payments/otp/send', [ParishionerPaymentController::class, 'sendPaymentOtp'])->name('payments.otp-send');
     Route::get('/payments/pay/{booking}/demo/{method}', [ParishionerPaymentController::class, 'demoCheckout'])->name('payments.demo-checkout');
     Route::post('/payments/pay/{booking}/demo/{method}/complete', [ParishionerPaymentController::class, 'demoComplete'])->name('payments.demo-complete');
     Route::get('/payments/receipt/{payment}', [ParishionerPaymentController::class, 'receipt'])->name('payments.receipt');
@@ -105,6 +110,32 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
     Route::get('/certificates/request', [\App\Http\Controllers\Parishioner\CertificateController::class, 'create'])->name('certificates.create');
     Route::post('/certificates/request', [\App\Http\Controllers\Parishioner\CertificateController::class, 'store'])->name('certificates.store');
     Route::get('/certificates/{certificate}/download', [\App\Http\Controllers\Parishioner\CertificateController::class, 'download'])->name('certificates.download');
+
+    // Portal notifications
+    Route::get('/notifications/unread', function () {
+        $notifications = auth()->user()->unreadNotifications()
+            ->latest()->take(10)->get()
+            ->map(fn($n) => [
+                'id'         => $n->id,
+                'data'       => $n->data,
+                'created_at' => $n->created_at->diffForHumans(),
+                'url'        => $n->data['url'] ?? route('parishioner.dashboard'),
+            ]);
+        return response()->json([
+            'count'         => auth()->user()->unreadNotifications()->count(),
+            'notifications' => $notifications,
+        ]);
+    })->name('notifications.unread');
+
+    Route::post('/notifications/{id}/read', function ($id) {
+        auth()->user()->notifications()->where('id', $id)->first()?->markAsRead();
+        return response()->json(['success' => true]);
+    })->name('notifications.read');
+
+    Route::post('/notifications/read-all', function () {
+        auth()->user()->unreadNotifications->markAsRead();
+        return response()->json(['success' => true]);
+    })->name('notifications.read-all');
 });
 
 /*
@@ -126,8 +157,20 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
     Route::get('/parishioners/search', [ParishionerController::class, 'search'])->name('parishioners.search');
     Route::resource('parishioners', ParishionerController::class);
 
+    // Statement of Account
+    Route::get('/parishioners/{parishioner}/soa', [ParishionerController::class, 'soa'])->name('parishioners.soa');
+    Route::get('/parishioners/{parishioner}/soa/pdf', [ParishionerController::class, 'soaPdf'])->name('parishioners.soa-pdf');
+
     // Families
+    Route::get('/families/search', [FamilyController::class, 'search'])->name('families.search');
     Route::resource('families', FamilyController::class);
+
+    // Enhanced Reports
+    Route::get('/reports', [\App\Http\Controllers\Admin\ReportsController::class, 'index'])->name('reports.index');
+    Route::get('/reports/parishioners', [\App\Http\Controllers\Admin\ReportsController::class, 'parishioners'])->name('reports.parishioners');
+    Route::get('/reports/payments', [\App\Http\Controllers\Admin\ReportsController::class, 'payments'])->name('reports.payments');
+    Route::get('/reports/bookings', [\App\Http\Controllers\Admin\ReportsController::class, 'bookings'])->name('reports.bookings');
+    Route::post('/reports/export', [\App\Http\Controllers\Admin\ReportsController::class, 'export'])->name('reports.export');
 
     // Sacramental Records
     Route::post('/sacramental-records/{sacramentalRecord}/verify', [SacramentalRecordController::class, 'verify'])
@@ -171,14 +214,61 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
         Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
         Route::get('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
         Route::put('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
+        Route::put('/settings/socials', [\App\Http\Controllers\Admin\SettingsController::class, 'updateSocials'])->name('settings.update-socials');
         Route::post('/settings/clear-cache', [\App\Http\Controllers\Admin\SettingsController::class, 'clearCache'])->name('settings.clear-cache');
     });
+
+    // Notification endpoints
+    Route::get('/notifications/unread', function () {
+        $notifications = auth()->user()->unreadNotifications()
+            ->latest()
+            ->take(10)
+            ->get()
+            ->map(fn($n) => [
+                'id'         => $n->id,
+                'data'       => $n->data,
+                'created_at' => $n->created_at->diffForHumans(),
+                'url'        => $n->data['url'] ?? route('admin.bookings.index'),
+            ]);
+        return response()->json([
+            'count'         => auth()->user()->unreadNotifications()->count(),
+            'notifications' => $notifications,
+        ]);
+    })->name('notifications.unread');
+
+    Route::post('/notifications/{id}/read', function ($id) {
+        auth()->user()->notifications()->where('id', $id)->first()?->markAsRead();
+        return response()->json(['success' => true]);
+    })->name('notifications.read');
+
+    Route::post('/notifications/read-all', function () {
+        auth()->user()->unreadNotifications->markAsRead();
+        return response()->json(['success' => true]);
+    })->name('notifications.read-all');
 
     // Announcements
     Route::resource('announcements', \App\Http\Controllers\Admin\AnnouncementController::class);
 
     // Mass Schedules
     Route::resource('mass-schedules', \App\Http\Controllers\Admin\MassScheduleController::class);
+
+    // Events (CMS)
+    Route::resource('events', \App\Http\Controllers\Admin\EventController::class);
+
+    // Gallery
+    Route::middleware(\App\Http\Middleware\IncreasePostSize::class)->group(function () {
+        Route::get('/gallery/albums', [\App\Http\Controllers\Admin\GalleryController::class, 'albums'])->name('gallery.albums');
+        Route::get('/gallery/album/{album}', [\App\Http\Controllers\Admin\GalleryController::class, 'albumDetail'])->name('gallery.album-detail');
+        Route::post('/gallery/album/{album}/add-photos', [\App\Http\Controllers\Admin\GalleryController::class, 'addPhotos'])->name('gallery.album-add-photos');
+        Route::post('/gallery/album/{album}/bulk-update', [\App\Http\Controllers\Admin\GalleryController::class, 'bulkUpdate'])->name('gallery.bulk-update');
+        Route::post('/gallery/bulk-delete', [\App\Http\Controllers\Admin\GalleryController::class, 'bulkDelete'])->name('gallery.bulk-delete');
+        Route::post('/gallery/{gallery}/set-cover', [\App\Http\Controllers\Admin\GalleryController::class, 'setCover'])->name('gallery.set-cover');
+        Route::delete('/gallery/album/delete', [\App\Http\Controllers\Admin\GalleryController::class, 'deleteAlbum'])->name('gallery.album-delete');
+        Route::resource('gallery', \App\Http\Controllers\Admin\GalleryController::class);
+    });
+
+    // Livestreams / YouTube
+    Route::resource('livestreams', \App\Http\Controllers\Admin\LivestreamController::class);
 });
 
 /*

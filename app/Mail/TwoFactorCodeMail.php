@@ -20,8 +20,9 @@ class TwoFactorCodeMail extends Mailable
 
     public function envelope(): Envelope
     {
+        // Code in subject line so it's visible in notification preview without opening email
         return new Envelope(
-            subject: 'Your Login Verification Code — ' . config('parish.name'),
+            subject: '[' . $this->code . '] Login Code — ' . config('parish.name'),
         );
     }
 

@@ -6,6 +6,8 @@
     <title>Verify Your Identity — {{ config('parish.name') }}</title>
     @vite(['resources/css/app.css'])
     <style>
+        .auth-bg { background-image: url('/images/church-bg.jpg'); background-size: cover; background-position: center; background-attachment: fixed; }
+        .auth-overlay { background: linear-gradient(135deg, rgba(15,23,80,0.82) 0%, rgba(30,58,138,0.78) 50%, rgba(49,46,129,0.82) 100%); }
         .otp-input {
             width: 52px; height: 60px;
             text-align: center; font-size: 1.75rem; font-weight: 800;
@@ -29,14 +31,15 @@
         #countdown.expired { color: #ef4444; }
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center p-4">
+<body class="min-h-screen auth-bg">
+<div class="min-h-screen auth-overlay flex items-center justify-center p-4">
 <div class="w-full max-w-md">
 
     {{-- Logo --}}
     @include('auth._logo')
 
     {{-- Card --}}
-    <div class="bg-white rounded-2xl shadow-2xl p-8">
+    <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8">
 
         {{-- Header --}}
         <div class="text-center mb-6">
@@ -65,30 +68,17 @@
         </div>
         @endif
 
-        {{-- ── Show OTP when email delivery fails ── --}}
-        @if(isset($devCode) && $devCode)
-        <div class="mb-4 bg-amber-50 border-2 border-amber-400 rounded-xl px-4 py-3">
+        {{-- ── Fallback: show code on screen if email failed ── --}}
+        @if($devCode)
+        <div class="mb-5 bg-amber-50 border-2 border-amber-400 rounded-xl px-5 py-4">
             <div class="flex items-center gap-2 mb-2">
-                <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                <span class="text-xs font-bold text-amber-700 uppercase tracking-wide">Email Unavailable — Your Verification Code</span>
+                <svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <p class="font-bold text-amber-800 text-sm">Email delivery failed — use this code to sign in:</p>
             </div>
-            <p class="text-2xl font-mono font-black text-amber-900 tracking-[0.3em] text-center py-1 bg-white rounded-lg border border-amber-200">{{ $devCode }}</p>
-            <p class="text-xs text-amber-600 text-center mt-1.5">Enter this code in the boxes below to sign in</p>
-            <button type="button" onclick="fillCode('{{ $devCode }}')"
-                    class="mt-2 w-full text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-lg transition">
-                ✓ Auto-fill this code
-            </button>
-        </div>
-        @endif
-
-        {{-- Mail failed warning (when code shown above, skip this) --}}
-        @if(isset($emailSent) && !$emailSent && !(isset($devCode) && $devCode))
-        <div class="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 flex items-start gap-2">
-            <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-            <div>
-                <p class="font-bold">Email could not be sent.</p>
-                <p class="mt-0.5">Check your Gmail SMTP settings in <code class="bg-red-100 px-1 rounded">.env</code> or use the code shown above (dev mode).</p>
+            <div class="text-center">
+                <span class="inline-block font-mono font-black text-3xl tracking-widest text-amber-900 bg-white border border-amber-300 rounded-lg px-6 py-2 select-all">{{ $devCode }}</span>
             </div>
+            <p class="text-xs text-amber-600 mt-2 text-center">Enter the code above in the boxes below. Check SMTP settings in Admin → Settings.</p>
         </div>
         @endif
 
@@ -210,19 +200,6 @@ boxes.forEach(b => { b.value = ''; b.classList.remove('filled'); });
 boxes[0]?.focus();
 @endif
 
-// ── Auto-fill code from on-screen display ──
-function fillCode(code) {
-    const digits = String(code).replace(/\D/g, '').slice(0, 6);
-    digits.split('').forEach((ch, j) => {
-        if (boxes[j]) {
-            boxes[j].value = ch;
-            boxes[j].classList.add('filled');
-        }
-    });
-    updateHidden();
-    if (digits.length === 6) setTimeout(() => form.submit(), 400);
-}
-
 // ── Countdown timer ──
 let seconds = 15 * 60; // 15 minutes
 const countEl = document.getElementById('countdown');
@@ -243,5 +220,10 @@ function updateTimer() {
 updateTimer();
 const timer = setInterval(updateTimer, 1000);
 </script>
+</div>{{-- /.max-w-md --}}
+<p class="text-center text-xs text-white/50 mt-4 pb-4">
+    Mary Help of Christians Parish · Southville 1, Niugan, Cabuyao, Laguna
+</p>
+</div>{{-- /.auth-overlay --}}
 </body>
 </html>

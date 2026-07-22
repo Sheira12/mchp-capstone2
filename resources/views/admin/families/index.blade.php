@@ -8,9 +8,14 @@
 
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <form method="GET" class="flex gap-2">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search family name or barangay…"
-                   class="form-input text-sm w-64">
+        <form method="GET" class="flex gap-2 flex-1">
+            <div class="relative flex-1 max-w-sm">
+                <input type="text" id="family-search" name="search" value="{{ request('search') }}"
+                       placeholder="Type 2+ chars to search families…"
+                       class="form-input text-sm w-full" autocomplete="off">
+                <div id="family-dropdown"
+                     class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-xl z-40 hidden mt-1 max-h-64 overflow-y-auto"></div>
+            </div>
             <button type="submit" class="btn-secondary text-sm">Search</button>
             @if(request('search'))
                 <a href="{{ route('admin.families.index') }}" class="btn-secondary text-sm">Clear</a>
@@ -82,3 +87,48 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    const inp  = document.getElementById('family-search');
+    const drop = document.getElementById('family-dropdown');
+    if (!inp) return;
+    let timer;
+
+    inp.addEventListener('input', function () {
+        clearTimeout(timer);
+        const q = this.value.trim();
+        if (q.length < 2) { drop.classList.add('hidden'); drop.innerHTML = ''; return; }
+
+        drop.innerHTML = '<div class="px-4 py-3 text-xs text-gray-400 flex items-center gap-2"><svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="30 60"/></svg>Searching…</div>';
+        drop.classList.remove('hidden');
+
+        timer = setTimeout(async () => {
+            try {
+                const res  = await fetch(`{{ route('admin.families.search') }}?q=${encodeURIComponent(q)}`, {
+                    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content }
+                });
+                const data = await res.json();
+                if (!data.length) { drop.innerHTML = '<div class="px-4 py-3 text-sm text-gray-400">No families found.</div>'; return; }
+                drop.innerHTML = data.map(f => `
+                    <a href="${f.url}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 transition border-b border-gray-50 last:border-0">
+                        <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm flex-shrink-0">${f.text[0]}</div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-gray-800">${f.text}</p>
+                            <p class="text-xs text-gray-400">${f.extra || ''}</p>
+                        </div>
+                        <svg class="w-4 h-4 text-gray-300 ml-auto" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                `).join('');
+            } catch { drop.innerHTML = '<div class="px-4 py-3 text-sm text-red-500">Search error.</div>'; }
+        }, 300);
+    });
+
+    document.addEventListener('click', e => {
+        if (!inp.contains(e.target) && !drop.contains(e.target)) drop.classList.add('hidden');
+    });
+    inp.addEventListener('focus', () => { if (inp.value.length >= 2) drop.classList.remove('hidden'); });
+})();
+</script>
+@endpush

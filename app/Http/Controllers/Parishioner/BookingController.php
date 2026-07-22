@@ -72,10 +72,16 @@ class BookingController extends Controller
         // Generate QR code
         app(QrCodeService::class)->generateForBooking($booking);
 
-        // Send notification via linked user account
+        // Notify parishioner via email
         $linkedUser = \App\Models\User::where('parishioner_id', $booking->parishioner_id)->first();
         if ($linkedUser) {
             $linkedUser->notify(new BookingStatusNotification($booking, 'created'));
+        }
+
+        // Notify ALL admin users (database notification — shows in admin bell)
+        $adminUsers = \App\Models\User::role(['super_admin', 'parish_secretary'])->get();
+        foreach ($adminUsers as $admin) {
+            $admin->notify(new \App\Notifications\AdminBookingNotification($booking));
         }
 
         return redirect()->route('parishioner.bookings.show', $booking)

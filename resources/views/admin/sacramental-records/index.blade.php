@@ -8,15 +8,15 @@
 
     {{-- Filters --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <form method="GET" class="flex flex-wrap gap-3 items-end">
+        <form method="GET" data-live-search data-target="#records-table" class="flex flex-wrap gap-3 items-end">
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Search</label>
                 <input type="text" name="search" value="{{ request('search') }}"
-                       class="form-input text-sm w-48" placeholder="Parishioner name…">
+                       class="form-input text-sm w-48" placeholder="Parishioner name…" data-live-input>
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Type</label>
-                <select name="type" class="form-select text-sm">
+                <select name="type" class="form-select text-sm" data-live-input>
                     <option value="">All Types</option>
                     <option value="baptism" @selected(request('type') === 'baptism')>Baptism</option>
                     <option value="first_communion" @selected(request('type') === 'first_communion')>First Communion</option>
@@ -27,11 +27,11 @@
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">From</label>
-                <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-input text-sm">
+                <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-input text-sm" data-live-input>
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">To</label>
-                <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-input text-sm">
+                <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-input text-sm" data-live-input>
             </div>
             <button type="submit" class="btn-secondary text-sm">Filter</button>
             @if(request()->hasAny(['search','type','date_from','date_to']))
@@ -44,7 +44,7 @@
     </div>
 
     {{-- Table --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div id="records-table" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-100">
                 <tr class="text-left text-gray-500">

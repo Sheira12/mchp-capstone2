@@ -35,23 +35,23 @@
 
     {{-- Filters --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <form method="GET" class="flex flex-wrap gap-2">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search parishioner or reference..." class="form-input text-sm w-full sm:flex-1 sm:min-w-48">
-            <select name="status" class="form-select text-sm w-full sm:w-auto">
+        <form method="GET" data-live-search data-target="#bookings-table" class="flex flex-wrap gap-2">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search parishioner or reference..." class="form-input text-sm w-full sm:flex-1 sm:min-w-48" data-live-input>
+            <select name="status" class="form-select text-sm w-full sm:w-auto" data-live-input>
                 <option value="">All Statuses</option>
                 @foreach(\App\Models\Booking::STATUSES as $val => $label)
                 <option value="{{ $val }}" {{ request('status') === $val ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
-            <select name="type" class="form-select text-sm w-full sm:w-auto">
+            <select name="type" class="form-select text-sm w-full sm:w-auto" data-live-input>
                 <option value="">All Types</option>
                 @foreach(\App\Models\Booking::TYPES as $val => $label)
                 <option value="{{ $val }}" {{ request('type') === $val ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
             <div class="flex gap-2 w-full sm:w-auto">
-                <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-input text-sm flex-1">
-                <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-input text-sm flex-1">
+                <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-input text-sm flex-1" data-live-input>
+                <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-input text-sm flex-1" data-live-input>
             </div>
             <div class="flex gap-2 w-full sm:w-auto">
                 <button type="submit" class="btn-primary text-sm flex-1 sm:flex-none">Filter</button>
@@ -63,7 +63,7 @@
     </div>
 
     {{-- Table --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div id="bookings-table" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 border-b border-gray-100">

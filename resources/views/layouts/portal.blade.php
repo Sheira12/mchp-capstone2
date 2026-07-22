@@ -10,7 +10,7 @@
     <style>
     /* ── Reset & Base ── */
     *, *::before, *::after { box-sizing: border-box; }
-    body { margin: 0; background: #f0f4f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    body { margin: 0; background: #f0f4f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow-x: hidden; }
 
     /* ── Layout shell ── */
     .portal-shell { display: flex; min-height: 100vh; }
@@ -496,6 +496,36 @@
                     </svg>
                     Parish Website
                 </a>
+
+                {{-- Portal Notification Bell --}}
+                <div style="position:relative;" id="portal-notif-wrap">
+                    <button onclick="togglePortalNotif()"
+                            style="position:relative;padding:8px;border-radius:8px;background:transparent;border:none;cursor:pointer;color:#64748b;transition:background 0.15s;"
+                            onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
+                        <svg style="width:20px;height:20px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                        <span id="portal-notif-badge"
+                              style="display:none;position:absolute;top:-2px;right:-2px;width:18px;height:18px;border-radius:50%;background:#ef4444;color:#fff;font-size:10px;font-weight:700;align-items:center;justify-content:center;line-height:1;">0</span>
+                    </button>
+                    {{-- Dropdown --}}
+                    <div id="portal-notif-panel"
+                         style="display:none;position:absolute;right:0;top:calc(100% + 8px);width:300px;background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.15);border:1px solid #e2e8f0;z-index:200;overflow:hidden;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #f1f5f9;background:#f8fafc;">
+                            <span style="font-size:13px;font-weight:700;color:#0f172a;">Notifications</span>
+                            <button onclick="portalMarkAllRead()" style="font-size:11px;color:#2563eb;background:none;border:none;cursor:pointer;font-weight:600;">Mark all read</button>
+                        </div>
+                        <div id="portal-notif-list" style="max-height:280px;overflow-y:auto;">
+                            <div style="padding:24px 16px;text-align:center;font-size:13px;color:#94a3b8;">No new notifications</div>
+                        </div>
+                        <a href="{{ route('parishioner.dashboard') }}"
+                           style="display:block;text-align:center;font-size:11px;font-weight:600;color:#2563eb;padding:10px;border-top:1px solid #f1f5f9;text-decoration:none;">
+                            Go to Dashboard →
+                        </a>
+                    </div>
+                </div>
+                {{-- Toast container --}}
+                <div id="portal-toast-container" style="position:fixed;top:68px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;"></div>
                 {{-- User avatar --}}
                 <a href="{{ route('parishioner.profile') }}"
                    style="display:flex;align-items:center;gap:8px;text-decoration:none;padding:4px 10px 4px 4px;border-radius:9999px;border:1.5px solid #e2e8f0;transition:background 0.15s;"
@@ -588,6 +618,131 @@ function closeSidebar() {
     document.getElementById('portal-sidebar').classList.remove('open');
     document.getElementById('sb-overlay').classList.remove('open');
 }
+
+// ── Portal Notification Bell ──────────────────────────────────
+const portalCsrf = document.querySelector('meta[name="csrf-token"]')?.content;
+let portalPanelOpen = false;
+let portalLastCount = null;
+let portalSeenIds   = new Set();
+
+function togglePortalNotif() {
+    portalPanelOpen = !portalPanelOpen;
+    document.getElementById('portal-notif-panel').style.display = portalPanelOpen ? 'block' : 'none';
+}
+
+document.addEventListener('click', function(e) {
+    const wrap = document.getElementById('portal-notif-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+        document.getElementById('portal-notif-panel').style.display = 'none';
+        portalPanelOpen = false;
+    }
+});
+
+function portalUpdateBadge(count) {
+    const badge = document.getElementById('portal-notif-badge');
+    if (count > 0) {
+        badge.textContent = count > 9 ? '9+' : count;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+function portalRenderList(notifications) {
+    const list = document.getElementById('portal-notif-list');
+    if (!notifications.length) {
+        list.innerHTML = '<div style="padding:24px 16px;text-align:center;font-size:13px;color:#94a3b8;">No new notifications</div>';
+        return;
+    }
+    const iconMap = {
+        check: '✓', calendar: '📅', document: '📄', bell: '🔔'
+    };
+    list.innerHTML = notifications.map(n => `
+        <a href="${n.url}" onclick="portalMarkRead('${n.id}')" style="display:flex;align-items:flex-start;gap:10px;padding:12px 16px;text-decoration:none;border-bottom:1px solid #f8fafc;transition:background 0.15s;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='transparent'">
+            <div style="width:32px;height:32px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;">
+                ${iconMap[n.data.icon] || '🔔'}
+            </div>
+            <div style="flex:1;min-width:0;">
+                <p style="font-size:12px;font-weight:700;color:#1e3a8a;margin:0 0 2px;">${n.data.title}</p>
+                <p style="font-size:12px;color:#475569;margin:0;line-height:1.4;">${n.data.message}</p>
+                <p style="font-size:11px;color:#94a3b8;margin:3px 0 0;">${n.created_at}</p>
+            </div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#3b82f6;flex-shrink:0;margin-top:4px;"></div>
+        </a>
+    `).join('');
+}
+
+function portalShowToast(notif) {
+    const container = document.getElementById('portal-toast-container');
+    const iconMap = { check: '✓', calendar: '📅', document: '📄', bell: '🔔' };
+    const icon = iconMap[notif.data.icon] || '🔔';
+    const toast = document.createElement('div');
+    toast.style.cssText = 'pointer-events:auto;display:flex;align-items:flex-start;gap:12px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.12);padding:14px 16px;width:300px;transform:translateX(120%);opacity:0;transition:all 0.3s ease;';
+    toast.innerHTML = `
+        <div style="width:36px;height:36px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;">${icon}</div>
+        <div style="flex:1;min-width:0;">
+            <p style="font-size:12px;font-weight:700;color:#1e40af;margin:0 0 3px;">${notif.data.title}</p>
+            <p style="font-size:12px;color:#374151;margin:0;line-height:1.4;">${notif.data.message}</p>
+            <a href="${notif.url}" style="font-size:11px;color:#2563eb;font-weight:600;text-decoration:none;margin-top:4px;display:inline-block;">View →</a>
+        </div>
+        <button onclick="this.closest('div').remove()" style="background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:16px;line-height:1;padding:0;flex-shrink:0;">×</button>
+    `;
+    container.appendChild(toast);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        toast.style.transform = 'translateX(0)';
+        toast.style.opacity = '1';
+    }));
+    setTimeout(() => {
+        toast.style.transform = 'translateX(120%)';
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 6000);
+}
+
+async function portalFetchNotifications() {
+    try {
+        const res = await fetch('{{ route("parishioner.notifications.unread") }}', {
+            headers: { 'X-CSRF-TOKEN': portalCsrf, 'Accept': 'application/json' }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        portalUpdateBadge(data.count);
+        portalRenderList(data.notifications);
+        if (data.count > 0) {
+            data.notifications.forEach(n => {
+                if (!portalSeenIds.has(n.id)) {
+                    portalSeenIds.add(n.id);
+                    if (portalLastCount !== null) portalShowToast(n);
+                }
+            });
+        }
+        portalLastCount = data.count;
+    } catch(e) {}
+}
+
+async function portalMarkRead(id) {
+    try {
+        await fetch(`/portal/notifications/${id}/read`, { method: 'POST', headers: { 'X-CSRF-TOKEN': portalCsrf } });
+        portalSeenIds.delete(id);
+        setTimeout(portalFetchNotifications, 300);
+    } catch(e) {}
+}
+
+async function portalMarkAllRead() {
+    try {
+        await fetch('{{ route("parishioner.notifications.read-all") }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': portalCsrf } });
+        portalSeenIds.clear();
+        portalLastCount = 0;
+        portalUpdateBadge(0);
+        portalRenderList([]);
+        document.getElementById('portal-notif-panel').style.display = 'none';
+        portalPanelOpen = false;
+    } catch(e) {}
+}
+
+portalLastCount = null;
+portalFetchNotifications().then(() => { portalLastCount = 0; });
+setInterval(portalFetchNotifications, 15000);
 </script>
 
 @stack('scripts')

@@ -13,8 +13,9 @@
        ADMIN LAYOUT — GLOBAL RESPONSIVE OVERRIDES
        ═══════════════════════════════════════════ */
 
-    /* Content max-width centering */
-    main.flex-1.px-6 { max-width: 100%; }
+    /* Prevent horizontal scroll on all screen sizes */
+    body { overflow-x: hidden; }
+    main.flex-1.px-6 { max-width: 100%; overflow-x: hidden; }
     @media (min-width: 1280px) {
         main.flex-1.px-6 > .py-6 { max-width: 1200px; margin: 0 auto; }
     }
@@ -72,6 +73,30 @@
     @media (max-width: 639px) {
         header .text-sm.text-blue-600 { font-size: 0.75rem; }
     }
+
+    /* Mobile bottom nav for admin */
+    .admin-bottom-nav {
+        display: none;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background: #1e3a8a; z-index: 45;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .admin-bottom-nav-inner {
+        display: flex; align-items: stretch; justify-content: space-around; height: 52px;
+    }
+    .abn-item {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 2px; flex: 1; text-decoration: none;
+        color: rgba(255,255,255,0.6); font-size: 0.58rem; font-weight: 600;
+        border: none; background: none; cursor: pointer; transition: color 0.15s;
+    }
+    .abn-item.active { color: #fff; }
+    .abn-item svg { width: 18px; height: 18px; }
+    @media (max-width: 1023px) {
+        .admin-bottom-nav { display: block; }
+        main.flex-1.px-6 { padding-bottom: 60px; }
+    }
     </style>
 </head>
 <body class="h-full font-sans antialiased">
@@ -79,12 +104,17 @@
 
     {{-- Sidebar --}}
     <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-blue-900 text-white flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
-        {{-- Logo --}}
-        <div class="flex items-center gap-3 px-6 py-5 border-b border-blue-800">
-            <img src="{{ asset('images/parish-logo.png') }}" alt="Parish Logo" class="w-10 h-10 rounded-full object-cover">
-            <div class="leading-tight">
-                <p class="text-sm font-bold">MHC Parish</p>
-                <p class="text-xs text-blue-300">Admin Portal</p>
+        {{-- Logo / Brand --}}
+        <div class="flex items-center gap-3 px-5 py-4 border-b border-blue-800 bg-blue-950">
+            <div class="relative flex-shrink-0">
+                <img src="{{ asset('images/parish-logo.png') }}" alt="Parish Logo"
+                     class="w-12 h-12 rounded-full object-cover border-2 border-yellow-400 shadow-lg">
+                <span class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-400 rounded-full border-2 border-blue-950"></span>
+            </div>
+            <div class="leading-tight min-w-0">
+                <p class="text-sm font-bold text-white truncate">MHC Parish</p>
+                <p class="text-xs text-yellow-300 font-medium">Admin Portal</p>
+                <p class="text-xs text-blue-400 truncate">{{ auth()->user()->name }}</p>
             </div>
         </div>
 
@@ -139,6 +169,10 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                 Financial Reports
             </a>
+            <a href="{{ route('admin.reports.index') }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Reports Module
+            </a>
             @endrole
 
             <div class="pt-2 pb-1 px-3 text-xs font-semibold text-blue-400 uppercase tracking-wider">Website</div>
@@ -149,6 +183,18 @@
             <a href="{{ route('admin.mass-schedules.index') }}" class="nav-link {{ request()->routeIs('admin.mass-schedules.*') ? 'active' : '' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 Mass Schedules
+            </a>
+            <a href="{{ route('admin.events.index') }}" class="nav-link {{ request()->routeIs('admin.events.*') ? 'active' : '' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Events
+            </a>
+            <a href="{{ route('admin.gallery.index') }}" class="nav-link {{ request()->routeIs('admin.gallery.*') ? 'active' : '' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Gallery
+            </a>
+            <a href="{{ route('admin.livestreams.index') }}" class="nav-link {{ request()->routeIs('admin.livestreams.*') ? 'active' : '' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.876V15.124a1 1 0 01-1.447.895L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                Livestream
             </a>
 
             @role('super_admin')
@@ -191,15 +237,74 @@
     {{-- Main content --}}
     <div class="flex-1 lg:ml-64 flex flex-col min-h-screen">
         {{-- Top bar --}}
-        <header class="bg-white shadow-sm sticky top-0 z-40">
+        <header class="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-100">
             <div class="flex items-center justify-between px-4 py-3">
-                <button id="sidebar-toggle" class="lg:hidden text-gray-500 hover:text-gray-700">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                </button>
-                <h1 class="text-lg font-semibold text-gray-800">@yield('page-title', 'Dashboard')</h1>
                 <div class="flex items-center gap-3">
-                    <a href="{{ route('home') }}" target="_blank" class="text-sm text-blue-600 hover:underline">View Website</a>
+                    {{-- Mobile hamburger --}}
+                    <button id="sidebar-toggle" class="lg:hidden text-gray-500 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    {{-- Mobile logo (hidden on desktop since sidebar is visible) --}}
+                    <div class="flex items-center gap-2 lg:hidden">
+                        <img src="{{ asset('images/parish-logo.png') }}" alt="Parish Logo" class="w-8 h-8 rounded-full object-cover border border-blue-200">
+                        <span class="text-sm font-bold text-blue-900 hidden sm:block">MHC Parish</span>
+                    </div>
+                    <h1 class="text-base font-semibold text-gray-800 hidden lg:block">@yield('page-title', 'Dashboard')</h1>
+                    <h1 class="text-sm font-semibold text-gray-700 lg:hidden">@yield('page-title', 'Dashboard')</h1>
                 </div>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('home') }}" target="_blank"
+                       class="hidden sm:flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                        View Website
+                    </a>
+
+                    {{-- ── Notification Bell ── --}}
+                    <div class="relative" id="notif-wrap">
+                        <button id="notif-btn" onclick="toggleNotifPanel()"
+                                class="relative p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                            </svg>
+                            {{-- Badge --}}
+                            <span id="notif-badge"
+                                  class="absolute -top-0.5 -right-0.5 hidden w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center leading-none">
+                                0
+                            </span>
+                        </button>
+
+                        {{-- Dropdown panel --}}
+                        <div id="notif-panel"
+                             class="hidden absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+                            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
+                                <span class="text-sm font-bold text-gray-800">Notifications</span>
+                                <button onclick="markAllRead()" class="text-xs text-blue-600 hover:underline font-medium">Mark all read</button>
+                            </div>
+                            <div id="notif-list" class="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                                <div class="px-4 py-8 text-center text-sm text-gray-400">
+                                    <svg class="w-8 h-8 mx-auto mb-2 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                    No new notifications
+                                </div>
+                            </div>
+                            <a href="{{ route('admin.bookings.index', ['status' => 'pending']) }}"
+                               class="block text-center text-xs font-semibold text-blue-600 hover:text-blue-800 py-2.5 border-t border-gray-100 hover:bg-blue-50 transition">
+                                Pending bookings →
+                            </a>
+                            <a href="{{ route('admin.certificates.index', ['status' => 'draft']) }}"
+                               class="block text-center text-xs font-semibold text-purple-600 hover:text-purple-800 py-2.5 border-t border-gray-100 hover:bg-purple-50 transition">
+                                Certificate requests →
+                            </a>
+                        </div>
+                    </div>
+
+                    {{-- Role badge --}}
+                    <span class="hidden md:inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 capitalize">
+                        {{ auth()->user()->getRoleNames()->first() }}
+                    </span>
+                </div>
+
+                {{-- ── Toast notification popup ── --}}
+                <div id="toast-container" class="fixed top-16 right-4 z-50 space-y-2 pointer-events-none"></div>
             </div>
         </header>
 
@@ -244,7 +349,34 @@
 {{-- Sidebar overlay for mobile --}}
 <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
 
+{{-- Mobile bottom nav for admin (shown on < 1024px) --}}
+<nav class="admin-bottom-nav">
+    <div class="admin-bottom-nav-inner">
+        <a href="{{ route('admin.dashboard') }}" class="abn-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            Home
+        </a>
+        <a href="{{ route('admin.parishioners.index') }}" class="abn-item {{ request()->routeIs('admin.parishioners.*') ? 'active' : '' }}">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            Parishioners
+        </a>
+        <a href="{{ route('admin.bookings.index') }}" class="abn-item {{ request()->routeIs('admin.bookings.*') ? 'active' : '' }}">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            Bookings
+        </a>
+        <a href="{{ route('admin.certificates.index') }}" class="abn-item {{ request()->routeIs('admin.certificates.*') ? 'active' : '' }}">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            Certs
+        </a>
+        <button class="abn-item" onclick="document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('sidebar-overlay').classList.toggle('hidden');">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            More
+        </button>
+    </div>
+</nav>
+
 <script>
+    // ── Sidebar toggle ──
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebar-overlay');
     const toggle  = document.getElementById('sidebar-toggle');
@@ -263,6 +395,167 @@
     setTimeout(() => {
         document.querySelectorAll('.alert-success').forEach(el => el.remove());
     }, 5000);
+
+    // ── Notification Bell System ────────────────────────────────────
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    let lastCount = 0;
+    let seenIds   = new Set();
+    let panelOpen = false;
+
+    function toggleNotifPanel() {
+        panelOpen = !panelOpen;
+        document.getElementById('notif-panel').classList.toggle('hidden', !panelOpen);
+    }
+
+    // Close panel when clicking outside
+    document.addEventListener('click', function(e) {
+        const wrap = document.getElementById('notif-wrap');
+        if (wrap && !wrap.contains(e.target)) {
+            document.getElementById('notif-panel').classList.add('hidden');
+            panelOpen = false;
+        }
+    });
+
+    // Render notifications in the dropdown panel
+    function renderNotifList(notifications) {
+        const list = document.getElementById('notif-list');
+        if (!notifications.length) {
+            list.innerHTML = `<div class="px-4 py-8 text-center text-sm text-gray-400">
+                <svg class="w-8 h-8 mx-auto mb-2 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                No new notifications</div>`;
+            return;
+        }
+        list.innerHTML = notifications.map(n => `
+            <a href="${n.url}" onclick="markRead('${n.id}')"
+               class="flex items-start gap-3 px-4 py-3 hover:bg-blue-50 transition cursor-pointer block">
+                <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="${n.data.notif_type === 'certificate_request' ? 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z' : 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'}"/>
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-800 font-medium leading-snug">${n.data.message}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">${n.created_at}</p>
+                </div>
+                <div class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-2"></div>
+            </a>
+        `).join('');
+    }
+
+    // Show a toast popup for a new notification
+    function showToast(notif) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'pointer-events-auto flex items-start gap-3 bg-white border border-gray-200 rounded-xl shadow-xl px-4 py-3 w-80 transform translate-x-full opacity-0 transition-all duration-300';
+        toast.innerHTML = `
+            <div class="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold text-gray-700 uppercase tracking-wide">New Booking</p>
+                <p class="text-sm text-gray-800 leading-snug mt-0.5">${notif.data.message}</p>
+                <a href="${notif.url}" class="text-xs text-blue-600 hover:underline font-semibold mt-1 inline-block">View booking →</a>
+            </div>
+            <button onclick="this.closest('div.pointer-events-auto').remove()" class="text-gray-300 hover:text-gray-500 flex-shrink-0 mt-0.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        `;
+        container.appendChild(toast);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+                toast.classList.add('translate-x-0', 'opacity-100');
+            });
+        });
+
+        // Auto-dismiss after 6s
+        setTimeout(() => {
+            toast.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }, 6000);
+    }
+
+    // Update badge count
+    function updateBadge(count) {
+        const badge = document.getElementById('notif-badge');
+        if (count > 0) {
+            badge.textContent = count > 9 ? '9+' : count;
+            badge.classList.remove('hidden');
+            badge.classList.add('flex');
+        } else {
+            badge.classList.add('hidden');
+            badge.classList.remove('flex');
+        }
+    }
+
+    // Fetch unread notifications from API
+    async function fetchNotifications() {
+        try {
+            const res = await fetch('{{ route("admin.notifications.unread") }}', {
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+
+            updateBadge(data.count);
+            renderNotifList(data.notifications);
+
+            // Show toast for any NEW notifications since last poll
+            if (data.count > 0) {
+                data.notifications.forEach(n => {
+                    if (!seenIds.has(n.id)) {
+                        seenIds.add(n.id);
+                        // Only show toast if this is truly new (not on first load)
+                        if (lastCount !== null) {
+                            showToast(n);
+                        }
+                    }
+                });
+            }
+            lastCount = data.count;
+
+        } catch (e) {
+            // Silent fail — don't break the admin if notification API is down
+        }
+    }
+
+    // Mark single notification as read
+    async function markRead(id) {
+        try {
+            await fetch(`/admin/notifications/${id}/read`, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
+            });
+            seenIds.delete(id);
+            setTimeout(fetchNotifications, 300);
+        } catch(e) {}
+    }
+
+    // Mark all as read
+    async function markAllRead() {
+        try {
+            await fetch('{{ route("admin.notifications.read-all") }}', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
+            });
+            seenIds.clear();
+            lastCount = 0;
+            updateBadge(0);
+            renderNotifList([]);
+            document.getElementById('notif-panel').classList.add('hidden');
+            panelOpen = false;
+        } catch(e) {}
+    }
+
+    // Initial load then poll every 15 seconds
+    // Set lastCount to null on first load so no toast is shown for existing notifications
+    lastCount = null;
+    fetchNotifications().then(() => { lastCount = 0; });
+    setInterval(fetchNotifications, 15000);
 </script>
 
 @stack('scripts')

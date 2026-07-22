@@ -266,6 +266,81 @@
 </section>
 @endif
 
+{{-- GALLERY PREVIEW --}}
+@php $galleryItems = \App\Models\GalleryItem::orderBy('sort_order')->orderByDesc('created_at')->take(8)->get(); @endphp
+@if($galleryItems->count())
+<section class="py-14 bg-white">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Parish Gallery</h2>
+                <p class="text-gray-500 text-sm mt-1">Moments from our parish community</p>
+            </div>
+            <a href="{{ route('gallery') }}" class="text-sm font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                View all photos <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            @foreach($galleryItems as $item)
+            <a href="{{ route('gallery') }}" class="group aspect-square bg-gray-100 rounded-xl overflow-hidden block">
+                <img src="{{ Storage::url($item->image_path) }}" alt="{{ $item->title }}"
+                     class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                     loading="lazy">
+            </a>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
+{{-- LIVESTREAM PREVIEW --}}
+@php $latestVideos = \App\Models\Livestream::active()->orderByDesc('created_at')->take(3)->get(); @endphp
+@if($latestVideos->count())
+<section class="py-14 bg-gray-950">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
+                    Live & On-Demand
+                </h2>
+                <p class="text-gray-400 text-sm mt-1">Watch Masses and events from anywhere</p>
+            </div>
+            <a href="{{ route('livestream') }}" class="text-sm font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-1">
+                All videos <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            @foreach($latestVideos as $ls)
+            <a href="{{ route('livestream') }}" class="group block rounded-xl overflow-hidden bg-gray-800 hover:ring-2 hover:ring-red-500 transition">
+                <div class="relative aspect-video bg-gray-900">
+                    <img src="{{ $ls->thumbnail }}" alt="{{ $ls->title }}"
+                         class="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition"
+                         onerror="this.style.display='none'">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-12 h-12 rounded-full bg-red-600/80 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <svg class="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                    </div>
+                    @if($ls->type === 'live')
+                        <span class="absolute top-2 left-2 flex items-center gap-1 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded">
+                            <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>LIVE
+                        </span>
+                    @endif
+                </div>
+                <div class="p-3">
+                    <p class="text-white text-sm font-semibold line-clamp-2">{{ $ls->title }}</p>
+                    @if($ls->scheduled_at)
+                        <p class="text-gray-400 text-xs mt-1">{{ $ls->scheduled_at->format('M d, Y') }}</p>
+                    @endif
+                </div>
+            </a>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
 {{-- CTA BANNER --}}
 <section style="padding:5rem 0;background:linear-gradient(135deg,#1e3a8a 0%,#312e81 100%);position:relative;overflow:hidden;">
     <div style="position:absolute;top:-80px;right:-80px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(96,165,250,0.15),transparent 70%);"></div>

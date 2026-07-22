@@ -48,7 +48,9 @@ class CertificateService
                 'phone'   => config('parish.phone'),
                 'priest'  => config('parish.priest'),
             ],
-        ])->setPaper('A4', 'portrait');
+        ])
+        ->setPaper('A4', 'portrait')
+        ->setOption(['defaultFont' => 'serif', 'isHtml5ParserEnabled' => true, 'isPhpEnabled' => false, 'isFontSubsettingEnabled' => true]);
 
         $pdfPath = "certificates/pdf/{$certificate->certificate_number}.pdf";
         Storage::disk('public')->put($pdfPath, $pdf->output());
@@ -73,14 +75,16 @@ class CertificateService
 
         if (!isset($typeMap[$record->type])) return null;
 
-        $certificate = Certificate::create([
-            'parishioner_id'        => $record->parishioner_id,
-            'sacramental_record_id' => $record->id,
-            'type'                  => $typeMap[$record->type],
-            'issued_date'           => now()->toDateString(),
-            'issued_by'             => auth()->id(),
-            'purpose'               => 'Auto-generated upon record creation',
-        ]);
+        $certificate = \DB::transaction(function () use ($record, $typeMap) {
+            return Certificate::create([
+                'parishioner_id'        => $record->parishioner_id,
+                'sacramental_record_id' => $record->id,
+                'type'                  => $typeMap[$record->type],
+                'issued_date'           => now()->toDateString(),
+                'issued_by'             => auth()->id(),
+                'purpose'               => 'Auto-generated upon record creation',
+            ]);
+        });
 
         return $this->generate($certificate);
     }
@@ -107,7 +111,9 @@ class CertificateService
                 'phone'   => config('parish.phone'),
                 'priest'  => config('parish.priest'),
             ],
-        ])->setPaper('A4', 'portrait');
+        ])
+        ->setPaper('A4', 'portrait')
+        ->setOption(['defaultFont' => 'serif', 'isHtml5ParserEnabled' => true, 'isPhpEnabled' => false, 'isFontSubsettingEnabled' => true]);
 
         return response($pdf->output(), 200, [
             'Content-Type'        => 'application/pdf',

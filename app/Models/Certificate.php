@@ -42,24 +42,50 @@ class Certificate extends Model
     {
         parent::boot();
         static::creating(function ($cert) {
-            if (!empty($cert->certificate_number)) return; // Already set, skip
+            if (!empty($cert->certificate_number)) return; // Already set externally, skip
 
-            $year = date('Y');
+            $cert->certificate_number = static::generateUniqueNumber();
+        });
+    }
 
-            // Use transaction + MAX to prevent duplicate numbers
-            \DB::transaction(function () use ($cert, $year) {
-                // Get the highest existing number this year, then add 1
+    /**
+     * Generate a unique certificate number using a pessimistic lock + retry loop.
+     * This safely handles concurrent inserts without race conditions.
+     */
+    public static function generateUniqueNumber(): string
+    {
+        $year   = date('Y');
+        $prefix = "CERT-{$year}-";
+        $offset = strlen($prefix) + 1; // SUBSTRING is 1-based
+
+        $maxAttempts = 5;
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            $number = \DB::transaction(function () use ($prefix, $year, $offset) {
+                // Lock the table for the duration of this transaction so no other
+                // concurrent request can read the same MAX value before we commit.
                 $maxNum = \DB::table('certificates')
-                    ->whereYear('created_at', $year)
-                    ->where('certificate_number', 'like', "CERT-{$year}-%")
+                    ->where('certificate_number', 'like', "{$prefix}%")
                     ->lockForUpdate()
-                    ->selectRaw('MAX(CAST(SUBSTRING(certificate_number, ' . (strlen("CERT-{$year}-") + 1) . ') AS UNSIGNED)) as max_num')
+                    ->selectRaw("MAX(CAST(SUBSTRING(certificate_number, {$offset}) AS UNSIGNED)) as max_num")
                     ->value('max_num');
 
-                $next = ($maxNum ?? 0) + 1;
-                $cert->certificate_number = "CERT-{$year}-" . str_pad($next, 5, '0', STR_PAD_LEFT);
+                return $prefix . str_pad(($maxNum ?? 0) + 1, 5, '0', STR_PAD_LEFT);
             });
-        });
+
+            // Check if this number is already taken (handles edge cases)
+            if (!\DB::table('certificates')->where('certificate_number', $number)->exists()) {
+                return $number;
+            }
+
+            // Tiny random backoff before retrying
+            usleep(random_int(10000, 50000)); // 10–50 ms
+        }
+
+        // Last-resort fallback: append microseconds to guarantee uniqueness
+        $year   = date('Y');
+        $micro  = substr((string) microtime(true) * 100, -5);
+        return "CERT-{$year}-" . str_pad($micro, 5, '0', STR_PAD_LEFT);
     }
 
     public function parishioner()

@@ -1,4 +1,5 @@
 import './bootstrap';
+import './live-search';
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 

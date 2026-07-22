@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 
@@ -18,7 +19,9 @@ class SettingsController extends Controller
             'parish_priest'  => config('parish.priest'),
         ];
 
-        return view('admin.settings.index', compact('settings'));
+        $socials = Setting::socials();
+
+        return view('admin.settings.index', compact('settings', 'socials'));
     }
 
     public function update(Request $request)
@@ -31,26 +34,39 @@ class SettingsController extends Controller
             'parish_priest'  => ['nullable', 'string', 'max:255'],
         ]);
 
-        // Update .env file
         foreach ($validated as $key => $value) {
-            $envKey = strtoupper($key);
-            $this->updateEnv($envKey, $value);
+            $this->updateEnv(strtoupper($key), $value ?? '');
         }
 
         Artisan::call('config:clear');
 
-        return back()->with('success', 'Settings updated.');
+        return back()->with('success', 'Parish settings updated.');
+    }
+
+    public function updateSocials(Request $request)
+    {
+        $validated = $request->validate([
+            'social_facebook'  => ['nullable', 'url', 'max:500'],
+            'social_messenger' => ['nullable', 'url', 'max:500'],
+            'social_instagram' => ['nullable', 'url', 'max:500'],
+            'social_youtube'   => ['nullable', 'url', 'max:500'],
+            'social_tiktok'    => ['nullable', 'url', 'max:500'],
+        ]);
+
+        foreach ($validated as $key => $value) {
+            Setting::set($key, $value ?? '');
+        }
+
+        return back()->with('success', 'Social media links updated.');
     }
 
     public function clearCache(Request $request)
     {
         $type = $request->get('type', 'config');
-
         match ($type) {
-            'view'   => Artisan::call('view:clear'),
-            default  => Artisan::call('config:clear'),
+            'view'  => Artisan::call('view:clear'),
+            default => Artisan::call('config:clear'),
         };
-
         return back()->with('success', ucfirst($type) . ' cache cleared.');
     }
 

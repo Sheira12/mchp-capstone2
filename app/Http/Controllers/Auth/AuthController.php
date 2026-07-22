@@ -34,8 +34,8 @@ class AuthController extends Controller
         ]);
 
         $user = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
+            'name'     => trim($validated['name']),
+            'email'    => strtolower(trim($validated['email'])),
             'password' => Hash::make($validated['password']),
         ]);
 
@@ -61,6 +61,9 @@ class AuthController extends Controller
             'email'    => ['required', 'email'],
             'password' => ['required'],
         ]);
+
+        // Normalize email — strip whitespace that can cause login failures
+        $credentials['email'] = strtolower(trim($credentials['email']));
 
         // Attempt credentials without actually logging in
         if (!Auth::validate($credentials)) {

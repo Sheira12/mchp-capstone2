@@ -3,63 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verification Code</title>
-    <style>
-        body { margin: 0; padding: 0; background: #f0f4f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-        .wrap { max-width: 520px; margin: 40px auto; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
-        .header { background: linear-gradient(135deg, #1e3a8a, #2563eb); padding: 32px 40px; text-align: center; }
-        .header img { width: 64px; height: 64px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.4); margin-bottom: 12px; }
-        .header h1 { color: #fff; font-size: 1.25rem; font-weight: 700; margin: 0; }
-        .header p  { color: #bfdbfe; font-size: 0.875rem; margin: 4px 0 0; }
-        .body { padding: 36px 40px; }
-        .greeting { font-size: 1rem; color: #0f172a; font-weight: 600; margin-bottom: 12px; }
-        .message  { font-size: 0.9rem; color: #475569; line-height: 1.7; margin-bottom: 28px; }
-        .otp-box  { background: #f0f4f8; border: 2px dashed #bfdbfe; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 28px; }
-        .otp-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
-        .otp-code  { font-size: 2.5rem; font-weight: 800; letter-spacing: 0.3em; color: #1e3a8a; font-family: 'Courier New', monospace; }
-        .otp-expiry { font-size: 0.8rem; color: #94a3b8; margin-top: 8px; }
-        .warning { background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 12px 16px; font-size: 0.8rem; color: #92400e; margin-bottom: 24px; }
-        .footer { background: #f8faff; border-top: 1px solid #e2e8f0; padding: 20px 40px; text-align: center; }
-        .footer p { font-size: 0.75rem; color: #94a3b8; margin: 0; line-height: 1.6; }
-    </style>
+    <title>Your Login Code — {{ config('parish.name') }}</title>
 </head>
-<body>
-<div class="wrap">
-    <div class="header">
-        @php
-            $logoUrl = config('app.url') . '/images/parish-logo.png';
-        @endphp
-        <img src="{{ $logoUrl }}" alt="{{ config('parish.name') }}"
-             style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,0.4);margin-bottom:12px;"
-             onerror="this.style.display='none'">
-        <h1>{{ config('parish.name') }}</h1>
-        <p>Southville 1, Niugan, Cabuyao, Laguna</p>
-    </div>
-    <div class="body">
-        <p class="greeting">Hello, {{ $user->name }}!</p>
-        <p class="message">
-            You are attempting to sign in to the MHC Parish Parishioner Portal.
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:Arial,Helvetica,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:32px 16px;">
+  <tr><td align="center">
+    <table width="540" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.10);">
+
+      {{-- Header --}}
+      <tr>
+        <td style="background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%);padding:28px 40px;text-align:center;">
+          <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#bfdbfe;">
+            {{ strtoupper(config('parish.name')) }}
+          </p>
+          <h1 style="margin:0;font-size:20px;font-weight:800;color:#ffffff;">
+            Login Verification Code
+          </h1>
+          <p style="margin:6px 0 0;font-size:12px;color:#93c5fd;">
+            Southville 1, Niugan, Cabuyao, Laguna
+          </p>
+        </td>
+      </tr>
+
+      {{-- Body --}}
+      <tr>
+        <td style="padding:32px 40px;">
+          <p style="margin:0 0 16px;font-size:15px;font-weight:600;color:#0f172a;">
+            Hello, {{ $user->name }}!
+          </p>
+          <p style="margin:0 0 24px;font-size:14px;color:#475569;line-height:1.7;">
+            A sign-in was requested for your <strong>{{ config('app.name') }}</strong> account.
             Use the verification code below to complete your login.
-        </p>
-        <div class="otp-box">
-            <p class="otp-label">Your Verification Code</p>
-            <p class="otp-code">{{ $code }}</p>
-            <p class="otp-expiry">⏱ This code expires in <strong>15 minutes</strong></p>
-        </div>
-        <div class="warning">
-            <strong>Security Notice:</strong> Never share this code with anyone.
-            Parish staff will never ask for your verification code.
-            If you did not request this, please ignore this email.
-        </div>
-        <p class="message" style="margin-bottom:0;">
-            God bless,<br>
-            <strong>{{ config('parish.name') }}</strong>
-        </p>
-    </div>
-    <div class="footer">
-        <p>© {{ date('Y') }} {{ config('parish.name') }} · Diocese of San Pablo</p>
-        <p>This is an automated message. Please do not reply.</p>
-    </div>
-</div>
+          </p>
+
+          {{-- Code box --}}
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+            <tr>
+              <td align="center" style="background:#f0f4ff;border:2px dashed #93c5fd;border-radius:12px;padding:28px 20px;">
+                <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#64748b;">
+                  Your Verification Code
+                </p>
+                <p style="margin:0;font-size:42px;font-weight:900;letter-spacing:14px;color:#1e3a8a;font-family:'Courier New',Courier,monospace;">
+                  {{ $code }}
+                </p>
+                <p style="margin:10px 0 0;font-size:12px;color:#94a3b8;">
+                  &#9201; Expires in <strong>15 minutes</strong>
+                </p>
+              </td>
+            </tr>
+          </table>
+
+          {{-- Role info --}}
+          @php $role = ucwords(str_replace('_', ' ', $user->getRoleNames()->first() ?? 'User')); @endphp
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:24px;">
+            <tr>
+              <td style="padding:12px 16px;font-size:13px;color:#475569;">
+                <strong style="color:#1e293b;">Account:</strong> {{ $user->email }}<br>
+                <strong style="color:#1e293b;">Role:</strong> {{ $role }}<br>
+                <strong style="color:#1e293b;">Time:</strong> {{ now()->setTimezone('Asia/Manila')->format('M d, Y h:i A') }} (Manila)
+              </td>
+            </tr>
+          </table>
+
+          {{-- Warning --}}
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:6px;padding:12px 16px;font-size:13px;color:#92400e;">
+                <strong>&#9888; Security Notice:</strong> Never share this code with anyone.
+                Parish staff will never ask for your verification code.
+                If you did not attempt to sign in, please contact the administrator immediately.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      {{-- Footer --}}
+      <tr>
+        <td style="background:#f8faff;border-top:1px solid #e2e8f0;padding:18px 40px;text-align:center;">
+          <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6;">
+            &copy; {{ date('Y') }} {{ config('parish.name') }} &middot; Diocese of San Pablo<br>
+            This is an automated message &mdash; please do not reply to this email.
+          </p>
+        </td>
+      </tr>
+
+    </table>
+  </td></tr>
+</table>
+
 </body>
 </html>

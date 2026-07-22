@@ -104,6 +104,13 @@ class BookingController extends Controller
         $linkedUser = \App\Models\User::where('parishioner_id', $booking->parishioner_id)->first();
         if ($linkedUser) {
             $linkedUser->notify(new BookingStatusNotification($booking, 'confirmed'));
+            // Portal DB notification
+            $linkedUser->notify(new \App\Notifications\ParishionerStatusNotification(
+                'Booking Confirmed ✓',
+                'Your booking for ' . $booking->getTypeLabel() . ' on ' . $booking->scheduled_date->format('M d, Y') . ' has been confirmed.',
+                route('parishioner.bookings.show', $booking->id),
+                'check'
+            ));
         }
 
         AuditLog::record('confirm', $booking, ['status' => 'pending'], ['status' => 'confirmed'], 'Booking confirmed');
@@ -136,6 +143,13 @@ class BookingController extends Controller
         $linkedUser = \App\Models\User::where('parishioner_id', $booking->parishioner_id)->first();
         if ($linkedUser) {
             $linkedUser->notify(new BookingStatusNotification($booking, 'cancelled'));
+            // Portal DB notification
+            $linkedUser->notify(new \App\Notifications\ParishionerStatusNotification(
+                'Booking Cancelled',
+                'Your booking for ' . $booking->getTypeLabel() . ' on ' . $booking->scheduled_date->format('M d, Y') . ' has been cancelled.',
+                route('parishioner.bookings.index'),
+                'bell'
+            ));
         }
 
         AuditLog::record('cancel', $booking, ['status' => $booking->getOriginal('status')], ['status' => 'cancelled'], 'Booking cancelled');

@@ -19,23 +19,28 @@
 
     {{-- Search & Filters --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <form method="GET" class="flex flex-wrap gap-3">
-            <div class="flex-1 min-w-48">
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name, email, phone..." class="form-input w-full text-sm">
+        <form method="GET" data-live-search data-target="#parishioners-table" class="flex flex-wrap gap-3">
+            <div class="flex-1 min-w-48 relative">
+                <input type="text" id="parishioner-search" name="search" value="{{ request('search') }}"
+                       placeholder="Type 2+ chars to search by name, phone, email..."
+                       class="form-input w-full text-sm pr-8"
+                       autocomplete="off" data-live-input>
+                <div id="parishioner-dropdown"
+                     class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-xl z-40 hidden mt-1 max-h-64 overflow-y-auto"></div>
             </div>
-            <select name="barangay" class="form-select text-sm">
+            <select name="barangay" class="form-select text-sm" data-live-input>
                 <option value="">All Barangays</option>
                 @foreach($barangays as $b)
                 <option value="{{ $b }}" {{ request('barangay') === $b ? 'selected' : '' }}>{{ $b }}</option>
                 @endforeach
             </select>
-            <select name="family_id" class="form-select text-sm">
+            <select name="family_id" class="form-select text-sm" data-live-input>
                 <option value="">All Families</option>
                 @foreach($families as $f)
                 <option value="{{ $f->id }}" {{ request('family_id') == $f->id ? 'selected' : '' }}>{{ $f->family_name }}</option>
                 @endforeach
             </select>
-            <select name="sacrament" class="form-select text-sm">
+            <select name="sacrament" class="form-select text-sm" data-live-input>
                 <option value="">Any Sacrament</option>
                 @foreach(\App\Models\SacramentalRecord::TYPES as $key => $label)
                 <option value="{{ $key }}" {{ request('sacrament') === $key ? 'selected' : '' }}>Has {{ $label }}</option>
@@ -49,7 +54,7 @@
     </div>
 
     {{-- Table --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div id="parishioners-table" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 border-b border-gray-100">
@@ -114,6 +119,10 @@
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                     View
                                 </a>
+                                <a href="{{ route('admin.parishioners.soa', $parishioner) }}" class="action-btn action-btn-gray" title="Statement of Account">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    SOA
+                                </a>
                                 <a href="{{ route('admin.parishioners.edit', $parishioner) }}" class="action-btn action-btn-edit">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     Edit
@@ -141,3 +150,53 @@
 
 </div>
 @endsection
+
+@push('scripts')
+<script>
+// ── Live search for parishioners (fires after 2+ chars) ──
+(function () {
+    const inp  = document.getElementById('parishioner-search');
+    const drop = document.getElementById('parishioner-dropdown');
+    if (!inp) return;
+    let timer;
+
+    inp.addEventListener('input', function () {
+        clearTimeout(timer);
+        const q = this.value.trim();
+        if (q.length < 2) { drop.classList.add('hidden'); drop.innerHTML = ''; return; }
+
+        drop.innerHTML = '<div class="px-4 py-3 text-xs text-gray-400 flex items-center gap-2"><svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="30 60"/></svg>Searching…</div>';
+        drop.classList.remove('hidden');
+
+        timer = setTimeout(async () => {
+            try {
+                const res  = await fetch(`{{ route('admin.parishioners.search') }}?q=${encodeURIComponent(q)}`, {
+                    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content }
+                });
+                const data = await res.json();
+                if (!data.length) {
+                    drop.innerHTML = '<div class="px-4 py-3 text-sm text-gray-400">No results found.</div>';
+                    return;
+                }
+                drop.innerHTML = data.map(p => `
+                    <a href="${p.url}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 transition border-b border-gray-50 last:border-0">
+                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">${p.text[0]}</div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-gray-800 truncate">${p.text}</p>
+                            <p class="text-xs text-gray-400">${p.extra || ''}</p>
+                        </div>
+                        <svg class="w-4 h-4 text-gray-300 ml-auto flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                `).join('');
+            } catch { drop.innerHTML = '<div class="px-4 py-3 text-sm text-red-500">Search error.</div>'; }
+        }, 300);
+    });
+
+    // Close when clicking outside
+    document.addEventListener('click', e => {
+        if (!inp.contains(e.target) && !drop.contains(e.target)) drop.classList.add('hidden');
+    });
+    inp.addEventListener('focus', () => { if (inp.value.length >= 2) drop.classList.remove('hidden'); });
+})();
+</script>
+@endpush

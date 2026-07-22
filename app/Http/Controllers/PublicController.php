@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Announcement;
+use App\Models\Event;
 use App\Models\MassSchedule;
 use App\Models\Service;
 use Illuminate\Http\Request;
@@ -82,5 +83,55 @@ class PublicController extends Controller
             abort(404);
         }
         return view('public.announcement', compact('announcement'));
+    }
+
+    public function events()
+    {
+        $upcomingEvents = Event::published()->upcoming()->paginate(9);
+        $featuredEvent  = Event::published()->featured()->upcoming()->first();
+
+        return view('public.events', compact('upcomingEvents', 'featuredEvent'));
+    }
+
+    public function event(Event $event)
+    {
+        if ($event->status !== 'published') {
+            abort(404);
+        }
+        $relatedEvents = Event::published()
+            ->where('category', $event->category)
+            ->where('id', '!=', $event->id)
+            ->upcoming()
+            ->take(3)
+            ->get();
+
+        return view('public.event', compact('event', 'relatedEvents'));
+    }
+
+    public function gallery(Request $request)
+    {
+        $album    = $request->get('album');
+        $category = $request->get('category');
+
+        $query = \App\Models\GalleryItem::orderBy('sort_order')->orderByDesc('created_at');
+
+        if ($album) {
+            $query->where('album', $album);
+        } elseif ($category) {
+            $query->where('category', $category);
+        }
+
+        $items      = $query->paginate(24)->withQueryString();
+        $categories = \App\Models\GalleryItem::CATEGORIES;
+        $albums     = \App\Models\GalleryItem::albumCounts();
+
+        return view('public.gallery', compact('items', 'categories', 'albums', 'album', 'category'));
+    }
+
+    public function livestream()
+    {
+        $featured    = \App\Models\Livestream::active()->featured()->orderByDesc('created_at')->first();
+        $livestreams = \App\Models\Livestream::active()->orderByDesc('created_at')->paginate(12);
+        return view('public.livestream', compact('featured', 'livestreams'));
     }
 }
