@@ -176,19 +176,35 @@
 @push('styles')
 <style>
 @media print {
-    nav, aside, header, .no-print, [data-sidebar], .sidebar { display: none !important; }
-    body, html { background: white !important; margin: 0; padding: 0; }
+    .no-print { display: none !important; }
+    nav, aside, header, [data-sidebar], .sidebar { display: none !important; }
+    .print-header     { display: flex !important; }
+    .print-block      { display: block !important; }
+    .print-signatures { display: grid !important; }
+    body, html { background: white !important; }
     .py-6 { padding: 0 !important; }
     .space-y-5 > * + * { margin-top: 10pt; }
-    .print-header    { display: block !important; }
-    .print-signatures{ display: block !important; }
-    .bg-white { box-shadow: none !important; border: 1pt solid #e2e8f0 !important; }
-    .rounded-xl { border-radius: 3pt !important; }
-    table thead tr, tfoot tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .bg-gray-50, .bg-green-50, .bg-red-50, .bg-blue-50, .bg-gray-100, .bg-blue-100, .bg-red-100 {
-        -webkit-print-color-adjust: exact; print-color-adjust: exact;
-    }
+    .bg-white { box-shadow: none !important; }
+    table thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tr.bg-gray-50, tr.bg-amber-50, tr.bg-green-50, tr.bg-blue-50 {
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     @page { size: A4 portrait; margin: 15mm 12mm; }
 }
 </style>
+@endpush
+
+
+@push('scripts')
+<script>
+// Hide layout chrome on print, restore after
+window.addEventListener('beforeprint', function() {
+    document.querySelectorAll('nav, aside, header, [data-sidebar], .sidebar, .no-print')
+        .forEach(el => { el.dataset.hiddenForPrint = '1'; el.style.display = 'none'; });
+    document.getElementById('print-area')?.style.setProperty('display', 'block', 'important');
+});
+window.addEventListener('afterprint', function() {
+    document.querySelectorAll('[data-hidden-for-print]')
+        .forEach(el => { el.style.display = ''; delete el.dataset.hiddenForPrint; });
+});
+</script>
 @endpush

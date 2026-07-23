@@ -6,7 +6,7 @@
 <div class="py-6 space-y-5">
 
     {{-- Filters & Actions --}}
-    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 no-print">
         <form method="GET" class="flex flex-wrap gap-3 items-end">
             <div><label class="form-label text-xs">From</label><input type="date" name="from" value="{{ $data['from'] }}" class="form-input text-sm"></div>
             <div><label class="form-label text-xs">To</label><input type="date" name="to" value="{{ $data['to'] }}" class="form-input text-sm"></div>
@@ -135,27 +135,35 @@
 @push('styles')
 <style>
 @media print {
-    /* Hide all nav, sidebar, filter bar */
-    nav, aside, header, .no-print,
-    [data-sidebar], .sidebar { display: none !important; }
-
-    body, html { background: white !important; margin: 0; padding: 0; }
+    .no-print { display: none !important; }
+    nav, aside, header, [data-sidebar], .sidebar { display: none !important; }
+    .print-header     { display: flex !important; }
+    .print-block      { display: block !important; }
+    .print-signatures { display: grid !important; }
+    body, html { background: white !important; }
     .py-6 { padding: 0 !important; }
-    .space-y-5 > * + * { margin-top: 12pt; }
-
-    .print-header   { display: block !important; }
-    .print-block     { display: block !important; }
-    .print-signatures{ display: block !important; }
-
-    .bg-white { box-shadow: none !important; border: 1pt solid #e2e8f0 !important; }
-    .rounded-xl { border-radius: 4pt !important; }
-
-    table thead tr { background: #1d4ed8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    table thead th { color: white !important; }
-    tr.bg-gray-50  { background: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    tr.bg-blue-50  { background: #eff6ff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-
+    .space-y-5 > * + * { margin-top: 10pt; }
+    .bg-white { box-shadow: none !important; }
+    table thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tr.bg-gray-50, tr.bg-amber-50, tr.bg-green-50, tr.bg-blue-50 {
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     @page { size: A4 portrait; margin: 15mm 12mm; }
 }
 </style>
+@endpush
+
+
+@push('scripts')
+<script>
+// Hide layout chrome on print, restore after
+window.addEventListener('beforeprint', function() {
+    document.querySelectorAll('nav, aside, header, [data-sidebar], .sidebar, .no-print')
+        .forEach(el => { el.dataset.hiddenForPrint = '1'; el.style.display = 'none'; });
+    document.getElementById('print-area')?.style.setProperty('display', 'block', 'important');
+});
+window.addEventListener('afterprint', function() {
+    document.querySelectorAll('[data-hidden-for-print]')
+        .forEach(el => { el.style.display = ''; delete el.dataset.hiddenForPrint; });
+});
+</script>
 @endpush
