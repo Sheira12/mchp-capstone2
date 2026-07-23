@@ -137,7 +137,7 @@ class LedgerController extends Controller
         ];
         $printedAt = now()->format('F d, Y h:i A');
 
-        if ($request->get('export') === 'pdf') {
+        if ($request->get('export') === 'pdf' || $request->get('export') === 'print') {
             $logoPath = public_path('images/parish-logo.png');
 
             $pdf = Pdf::loadView('admin.ledger.report-pdf', compact(
@@ -146,6 +146,10 @@ class LedgerController extends Controller
             ))
             ->setPaper('A4', 'portrait')
             ->setOption(['defaultFont' => 'DejaVu Sans', 'isHtml5ParserEnabled' => true]);
+
+            if ($request->get('export') === 'print') {
+                return $pdf->stream('financial-report-' . $from . '-to-' . $to . '.pdf');
+            }
 
             return $pdf->download('financial-report-' . $from . '-to-' . $to . '.pdf');
         }

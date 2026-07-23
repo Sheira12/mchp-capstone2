@@ -4,64 +4,78 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <style>
-@page { size: A4 portrait; margin: 0; }
+@page { size: A4 portrait; margin: 20pt 24pt 18pt 24pt; }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family: DejaVu Sans, Arial, sans-serif; font-size:9pt; color:#1a1a2e; background:#fff; }
+body { 
+    font-family: DejaVu Sans, Arial, sans-serif; 
+    font-size:9pt; 
+    color:#1a1a2e; 
+    background:#fff;
+    border: 4pt solid #7c3aed;
+    padding: 12pt 16pt;
+    min-height: 100vh;
+}
 
-.border-outer { position:fixed; top:0;left:0;right:0;bottom:0; border:4pt solid #7c3aed; background:transparent; z-index:999; }
-.border-inner  { position:fixed; top:6pt;left:6pt;right:6pt;bottom:6pt; border:1pt solid #a78bfa; background:transparent; z-index:998; }
+/* Inner decorative border */
+body::before {
+    content: '';
+    position: absolute;
+    top: 16pt;
+    left: 20pt;
+    right: 20pt;
+    bottom: 16pt;
+    border: 1pt solid #a78bfa;
+    pointer-events: none;
+}
 
-.page-content { position:relative; z-index:1; padding:16pt 20pt 14pt 20pt; }
+.page-content { position:relative; z-index:1; }
 
-.hdr { width:100%; border-collapse:collapse; margin-bottom:6pt; padding-bottom:6pt; border-bottom:2pt solid #7c3aed; }
+.hdr { width:100%; border-collapse:collapse; margin-bottom:5pt; padding-bottom:5pt; border-bottom:2pt solid #7c3aed; }
 .hdr td { vertical-align:middle; }
-.hdr-logo { width:52pt; }
-.hdr-logo img { width:46pt; height:46pt; border-radius:50%; border:2pt solid #d4af37; display:block; }
+.hdr-logo { width:46pt; }
+.hdr-logo img { width:42pt; height:42pt; border-radius:50%; border:2pt solid #d4af37; display:block; }
 .hdr-center { text-align:center; }
-.parish-name { font-size:12pt; font-weight:bold; color:#7c3aed; }
-.parish-sub { font-size:7pt; color:#6b7280; margin-top:1pt; }
-.rpt-title { font-size:11pt; font-weight:bold; letter-spacing:2pt; text-transform:uppercase; color:#1e293b; margin-top:4pt; }
-.rpt-meta  { font-size:7pt; color:#6b7280; margin-top:1pt; }
-.accent-bar { height:2pt; background:#7c3aed; margin-bottom:7pt; }
+.parish-name { font-size:11.5pt; font-weight:bold; color:#7c3aed; }
+.parish-sub { font-size:6.5pt; color:#6b7280; margin-top:1pt; }
+.rpt-title { font-size:10.5pt; font-weight:bold; letter-spacing:1.8pt; text-transform:uppercase; color:#1e293b; margin-top:3pt; }
+.rpt-meta  { font-size:6.5pt; color:#6b7280; margin-top:1pt; }
+.accent-bar { height:2pt; background:#7c3aed; margin-bottom:6pt; }
 
-.cards { width:100%; border-collapse:collapse; margin-bottom:9pt; }
-.cards td { padding:0 3pt; text-align:center; }
-.card-inner { padding:8pt 6pt; border-radius:3pt; }
-.card-lbl { font-size:6pt; text-transform:uppercase; font-weight:bold; letter-spacing:0.8pt; display:block; margin-bottom:2pt; }
-.card-val { font-size:16pt; font-weight:bold; line-height:1; display:block; }
-.card-sub { font-size:6pt; display:block; margin-top:2pt; }
+.cards { width:100%; border-collapse:collapse; margin-bottom:7pt; }
+.cards td { padding:0 2.5pt; text-align:center; }
+.card-inner { padding:7pt 5pt; border-radius:3pt; }
+.card-lbl { font-size:5.5pt; text-transform:uppercase; font-weight:bold; letter-spacing:0.7pt; display:block; margin-bottom:1.5pt; }
+.card-val { font-size:15pt; font-weight:bold; line-height:1; display:block; }
+.card-sub { font-size:5.5pt; display:block; margin-top:1.5pt; }
 
-.sec-hdr { padding:4pt 7pt; font-size:8.5pt; font-weight:bold; color:#fff; margin-bottom:0; }
+.sec-hdr { padding:3.5pt 6pt; font-size:8pt; font-weight:bold; color:#fff; margin-bottom:0; margin-top:6pt; }
 
-table.dt { width:100%; border-collapse:collapse; font-size:8pt; }
+table.dt { width:100%; border-collapse:collapse; font-size:7.5pt; }
 table.dt thead tr { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-table.dt th { color:#fff; padding:4pt 5pt; font-weight:bold; font-size:7.5pt; }
-table.dt td { padding:3.5pt 5pt; border-bottom:0.4pt solid #f1f5f9; }
+table.dt th { color:#fff; padding:3.5pt 4.5pt; font-weight:bold; font-size:7pt; }
+table.dt td { padding:3pt 4.5pt; border-bottom:0.4pt solid #f1f5f9; }
 table.dt tbody tr.even td { background:#f8f5ff; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-table.dt tfoot td { font-weight:bold; padding:4pt 5pt; }
+table.dt tfoot td { font-weight:bold; padding:3.5pt 4.5pt; }
 table.dt tfoot tr.subtotal td { background:#ede9fe; border-top:1pt solid #7c3aed; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-table.dt tfoot tr.total td { background:#7c3aed; color:#fff; border-top:1.5pt solid #5b21b6; font-size:9pt; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+table.dt tfoot tr.total td { background:#7c3aed; color:#fff; border-top:1.5pt solid #5b21b6; font-size:8.5pt; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 .tr { text-align:right; }
 .tc { text-align:center; }
 .green { color:#065f46; }
 .red   { color:#991b1b; }
 .blue  { color:#1e40af; }
 
-.divider { border:none; border-top:0.5pt solid #ddd6fe; margin:7pt 0; }
+.divider { border:none; border-top:0.5pt solid #ddd6fe; margin:5pt 0; }
 
-.sig-wrap { width:100%; border-collapse:collapse; margin-top:14pt; }
-.sig-wrap td { width:33.33%; text-align:center; padding:0 8pt; }
-.sig-line { border-top:1pt solid #374151; margin:0 auto; width:86%; padding-top:3pt; font-size:8pt; font-weight:bold; }
-.sig-role { font-size:7pt; color:#6b7280; margin-top:1pt; }
+.sig-wrap { width:100%; border-collapse:collapse; margin-top:8pt; page-break-inside:avoid; }
+.sig-wrap td { width:33.33%; text-align:center; padding:0 6pt; }
+.sig-line { border-top:1pt solid #374151; margin:0 auto; width:86%; padding-top:2.5pt; font-size:7.5pt; font-weight:bold; }
+.sig-role { font-size:6.5pt; color:#6b7280; margin-top:0.8pt; }
 
-.footer { margin-top:8pt; padding-top:4pt; border-top:0.5pt solid #ddd6fe; width:100%; border-collapse:collapse; }
-.footer td { font-size:6.5pt; color:#9ca3af; }
+.footer { margin-top:6pt; padding-top:3pt; border-top:0.5pt solid #ddd6fe; width:100%; border-collapse:collapse; page-break-inside:avoid; }
+.footer td { font-size:6pt; color:#9ca3af; }
 </style>
 </head>
 <body>
-
-<div class="border-outer"></div>
-<div class="border-inner"></div>
 
 <div class="page-content">
 
@@ -74,7 +88,7 @@ table.dt tfoot tr.total td { background:#7c3aed; color:#fff; border-top:1.5pt so
         <div class="rpt-title">Financial Report &mdash; Credit &amp; Debit Statement</div>
         <div class="rpt-meta">Period: {{ \Carbon\Carbon::parse($from)->format('M d, Y') }} &ndash; {{ \Carbon\Carbon::parse($to)->format('M d, Y') }} &nbsp;|&nbsp; Printed: {{ $printedAt }}</div>
     </td>
-    <td style="width:52pt;"></td>
+    <td style="width:46pt;"></td>
 </tr></table>
 
 <div class="accent-bar"></div>
@@ -115,8 +129,8 @@ table.dt tfoot tr.total td { background:#7c3aed; color:#fff; border-top:1.5pt so
         @foreach($byCategory as $cat => $info)
         <tr class="{{ $loop->even ? 'even' : '' }}">
             <td style="font-weight:500;">{{ $cat }}</td>
-            <td style="color:{{ $info['type']==='credit' ? '#065f46' : '#991b1b' }};font-weight:bold;font-size:7.5pt;">
-                {{ $info['type']==='credit' ? '&#8679; Income' : '&#8681; Expense' }}
+            <td style="color:{{ $info['type']==='credit' ? '#065f46' : '#991b1b' }};font-weight:bold;font-size:7pt;white-space:nowrap;">
+                {!! $info['type']==='credit' ? '&#x2191; Income' : '&#x2193; Expense' !!}
             </td>
             <td class="tr">{{ $info['count'] }}</td>
             <td class="tr {{ $info['type']==='credit' ? 'green' : 'red' }}" style="font-weight:bold;">&#8369;{{ number_format($info['total'],2) }}</td>
@@ -128,37 +142,37 @@ table.dt tfoot tr.total td { background:#7c3aed; color:#fff; border-top:1.5pt so
 
 {{-- DETAILED TRANSACTIONS --}}
 @if($entries->count())
-<div class="sec-hdr" style="background:#374151;margin-top:8pt;">Detailed Transactions</div>
+<div class="sec-hdr" style="background:#374151;">Detailed Transactions</div>
 <table class="dt" cellpadding="0" cellspacing="0">
     <thead><tr style="background:#1f2937;">
-        <th style="width:52pt;">Date</th>
-        <th style="width:42pt;">Type</th>
-        <th style="width:65pt;">Category</th>
+        <th style="width:48pt;">Date</th>
+        <th style="width:40pt;">Type</th>
+        <th style="width:62pt;">Category</th>
         <th>Description</th>
-        <th class="tr" style="width:60pt;">Amount</th>
+        <th class="tr" style="width:58pt;">Amount</th>
     </tr></thead>
     <tbody>
         @foreach($entries as $i => $entry)
         <tr class="{{ $i%2===0 ? 'even' : '' }}">
-            <td style="font-size:7.5pt;color:#6b7280;">{{ $entry->entry_date->format('M d, Y') }}</td>
-            <td style="font-size:7.5pt;font-weight:bold;color:{{ $entry->type==='credit' ? '#065f46' : '#991b1b' }};">
-                {{ $entry->type==='credit' ? '&#8679; Income' : '&#8681; Expense' }}
+            <td style="font-size:7pt;color:#6b7280;white-space:nowrap;">{{ $entry->entry_date->format('M d, Y') }}</td>
+            <td style="font-size:7pt;font-weight:bold;color:{{ $entry->type==='credit' ? '#065f46' : '#991b1b' }};white-space:nowrap;">
+                {!! $entry->type==='credit' ? '&#x2191; Income' : '&#x2193; Expense' !!}
             </td>
-            <td style="font-size:7.5pt;color:#6b7280;">{{ $entry->category }}</td>
+            <td style="font-size:7pt;color:#6b7280;">{{ $entry->category }}</td>
             <td>{{ $entry->description }}</td>
-            <td class="tr {{ $entry->type==='credit' ? 'green' : 'red' }}" style="font-weight:bold;">
+            <td class="tr {{ $entry->type==='credit' ? 'green' : 'red' }}" style="font-weight:bold;white-space:nowrap;">
                 {{ $entry->type==='credit' ? '+' : '-' }}&#8369;{{ number_format($entry->amount,2) }}
             </td>
         </tr>
         @endforeach
     </tbody>
     <tfoot>
-        <tr class="subtotal"><td colspan="3"></td><td style="text-align:right;font-size:8pt;">Total Income:</td><td class="tr green">+&#8369;{{ number_format($totalCredit,2) }}</td></tr>
-        <tr class="subtotal"><td colspan="3"></td><td style="text-align:right;font-size:8pt;">Total Expenses:</td><td class="tr red">-&#8369;{{ number_format($totalDebit,2) }}</td></tr>
+        <tr class="subtotal"><td colspan="3"></td><td style="text-align:right;font-size:7.5pt;">Total Income:</td><td class="tr green">+&#8369;{{ number_format($totalCredit,2) }}</td></tr>
+        <tr class="subtotal"><td colspan="3"></td><td style="text-align:right;font-size:7.5pt;">Total Expenses:</td><td class="tr red">-&#8369;{{ number_format($totalDebit,2) }}</td></tr>
         <tr class="total">
             <td colspan="3"></td>
-            <td style="text-align:right;font-size:9pt;">NET BALANCE:</td>
-            <td class="tr" style="font-size:9pt;">{{ $netBalance<0?'-':'+' }}&#8369;{{ number_format(abs($netBalance),2) }}</td>
+            <td style="text-align:right;font-size:8.5pt;">NET BALANCE:</td>
+            <td class="tr" style="font-size:8.5pt;">{{ $netBalance<0?'-':'+' }}&#8369;{{ number_format(abs($netBalance),2) }}</td>
         </tr>
     </tfoot>
 </table>
