@@ -165,6 +165,11 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
     Route::get('/families/search', [FamilyController::class, 'search'])->name('families.search');
     Route::resource('families', FamilyController::class);
 
+    // Ledger (Credit & Debit)
+    Route::get('/ledger/report', [\App\Http\Controllers\Admin\LedgerController::class, 'report'])->name('ledger.report');
+    Route::get('/ledger/categories', [\App\Http\Controllers\Admin\LedgerController::class, 'categories'])->name('ledger.categories');
+    Route::resource('ledger', \App\Http\Controllers\Admin\LedgerController::class);
+
     // Enhanced Reports
     Route::get('/reports', [\App\Http\Controllers\Admin\ReportsController::class, 'index'])->name('reports.index');
     Route::get('/reports/parishioners', [\App\Http\Controllers\Admin\ReportsController::class, 'parishioners'])->name('reports.parishioners');

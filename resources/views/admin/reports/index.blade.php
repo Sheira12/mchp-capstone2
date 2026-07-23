@@ -58,6 +58,16 @@
             <p class="text-sm text-gray-500">Booking counts by type and status, approval rates, date range summaries.</p>
             <span class="inline-block mt-3 text-xs font-semibold text-amber-600">Generate Report →</span>
         </a>
+
+        <a href="{{ route('admin.ledger.index') }}"
+           class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-purple-200 transition group block">
+            <div class="w-12 h-12 rounded-xl bg-purple-100 group-hover:bg-purple-200 flex items-center justify-center mb-4 transition">
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            </div>
+            <h3 class="text-base font-bold text-gray-900 mb-1">Credit &amp; Debit Ledger</h3>
+            <p class="text-sm text-gray-500">Record income &amp; expenses, view financial summaries, print financial reports.</p>
+            <span class="inline-block mt-3 text-xs font-semibold text-purple-600">Manage Ledger →</span>
+        </a>
     </div>
 </div>
 @endsection
