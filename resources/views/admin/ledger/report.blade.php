@@ -102,7 +102,7 @@
 
         {{-- Detailed Transactions --}}
         @if($entries->count())
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden print-section">
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden print-section mb-8">
             <div class="px-5 py-3 border-b border-gray-100 bg-gray-700">
                 <h3 class="font-bold text-white">Detailed Transactions</h3>
             </div>

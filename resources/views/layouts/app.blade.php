@@ -344,8 +344,8 @@
             @yield('content')
         </main>
 
-        <footer class="text-center text-xs text-gray-400 py-4 border-t">
-            © {{ date('Y') }} {{ config('parish.name') }} — All rights reserved.
+        <footer class="text-center text-xs text-gray-400 py-5 mt-4 border-t border-gray-100 bg-white">
+            &copy; {{ date('Y') }} {{ config('parish.name') }} &mdash; All rights reserved.
         </footer>
     </div>
 </div>

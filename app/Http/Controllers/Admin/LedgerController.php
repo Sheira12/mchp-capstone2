@@ -138,9 +138,11 @@ class LedgerController extends Controller
         $printedAt = now()->format('F d, Y h:i A');
 
         if ($request->get('export') === 'pdf') {
+            $logoPath = public_path('images/parish-logo.png');
+
             $pdf = Pdf::loadView('admin.ledger.report-pdf', compact(
                 'entries', 'totalCredit', 'totalDebit', 'netBalance',
-                'byCategory', 'parish', 'printedAt', 'from', 'to'
+                'byCategory', 'parish', 'printedAt', 'from', 'to', 'logoPath'
             ))
             ->setPaper('A4', 'portrait')
             ->setOption(['defaultFont' => 'DejaVu Sans', 'isHtml5ParserEnabled' => true]);

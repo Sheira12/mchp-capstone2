@@ -89,7 +89,7 @@
     @endif
 
     {{-- Table --}}
-    <div id="ledger-table" class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-8">
+    <div id="ledger-table" class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-10">
         <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-100">
                 <tr class="text-left text-gray-500">
