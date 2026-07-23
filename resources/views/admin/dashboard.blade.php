@@ -138,39 +138,51 @@
         <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-5">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="font-semibold text-gray-800">Recent Bookings</h3>
-                <a href="{{ route('admin.bookings.index') }}" class="text-sm text-blue-600 hover:underline">View all</a>
+                <a href="{{ route('admin.bookings.index') }}" class="text-sm text-blue-600 hover:underline">View all →</a>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead>
-                        <tr class="text-left text-gray-500 border-b">
+                        <tr class="text-left text-gray-500 border-b border-gray-100">
                             <th class="pb-2 font-medium">Parishioner</th>
                             <th class="pb-2 font-medium">Service</th>
-                            <th class="pb-2 font-medium">Date</th>
+                            <th class="pb-2 font-medium">Scheduled</th>
                             <th class="pb-2 font-medium">Status</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
-                        @foreach($stats['recentBookings'] as $booking)
+                        @forelse($stats['recentBookings'] as $booking)
                         <tr class="hover:bg-gray-50">
-                            <td class="py-2">
-                                <a href="{{ route('admin.bookings.show', $booking) }}" class="font-medium text-gray-900 hover:text-blue-700">
+                            <td class="py-2.5">
+                                @if($booking->parishioner)
+                                <a href="{{ route('admin.bookings.show', $booking) }}"
+                                   class="font-medium text-gray-900 hover:text-blue-700 leading-tight block">
                                     {{ $booking->parishioner->full_name }}
                                 </a>
+                                <span class="text-xs text-gray-400">Ref: {{ $booking->reference_number }}</span>
+                                @else
+                                <span class="text-gray-400 italic">Walk-in</span>
+                                @endif
                             </td>
-                            <td class="py-2 text-gray-600">{{ $booking->getTypeLabel() }}</td>
-                            <td class="py-2 text-gray-500">{{ $booking->scheduled_date->format('M d, Y') }}</td>
-                            <td class="py-2">
+                            <td class="py-2.5 text-gray-600">{{ $booking->getTypeLabel() }}</td>
+                            <td class="py-2.5 text-gray-500 whitespace-nowrap">
+                                {{ $booking->scheduled_date->format('M d, Y') }}
+                                @if($booking->scheduled_time)
+                                <span class="text-xs text-gray-400 block">{{ \Carbon\Carbon::parse($booking->scheduled_time)->format('g:i A') }}</span>
+                                @endif
+                            </td>
+                            <td class="py-2.5">
                                 @php
-                                    $statusColors = ['pending' => 'amber', 'confirmed' => 'green', 'completed' => 'blue', 'cancelled' => 'red'];
-                                    $color = $statusColors[$booking->status] ?? 'gray';
+                                    $sc = ['pending'=>'amber','confirmed'=>'green','completed'=>'blue','cancelled'=>'red'][$booking->status] ?? 'gray';
                                 @endphp
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-{{ $color }}-100 text-{{ $color }}-800">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-{{ $sc }}-100 text-{{ $sc }}-800">
                                     {{ $booking->getStatusLabel() }}
                                 </span>
                             </td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr><td colspan="4" class="py-6 text-center text-gray-400 text-sm">No bookings yet.</td></tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

@@ -3,7 +3,7 @@
 @section('page-title', 'Financial Report')
 
 @section('content')
-<div class="py-6 space-y-5">
+<div class="py-6 pb-20 space-y-5">
 
     {{-- Filters & Actions --}}
     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 no-print">

@@ -95,7 +95,7 @@
     .abn-item svg { width: 18px; height: 18px; }
     @media (max-width: 1023px) {
         .admin-bottom-nav { display: block; }
-        main.flex-1.px-6 { padding-bottom: 60px; }
+        main.flex-1.px-6 { padding-bottom: 72px; }
     }
     </style>
 </head>
@@ -340,7 +340,7 @@
         </div>
 
         {{-- Page content --}}
-        <main class="flex-1 px-6 pb-8">
+        <main class="flex-1 px-6 pb-8 lg:pb-8 pb-safe">
             @yield('content')
         </main>
 

@@ -90,10 +90,10 @@ class DashboardController extends Controller
         // Pending certificates
         $pendingCertificates = Certificate::where('status', 'draft')->count();
 
-        // Recent bookings
+        // Recent bookings — latest by created_at, eager load parishioner
         $recentBookings = Booking::with('parishioner')
-            ->latest()
-            ->take(5)
+            ->orderByDesc('created_at')
+            ->take(8)
             ->get();
 
         // ── Descriptive Statistics (Objective 4: frequency, percentage, median) ──
