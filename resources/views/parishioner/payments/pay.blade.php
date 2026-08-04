@@ -99,19 +99,10 @@
         <div class="grid grid-cols-4 gap-2 p-4">
             {{-- GCash Tab --}}
             <div class="method-tab active border-2 rounded-xl p-3 text-center cursor-pointer" onclick="switchTab('gcash')" id="tab-gcash">
-                {{-- Real GCash Logo --}}
                 <div class="w-12 h-12 mx-auto mb-2 flex items-center justify-center">
-                    <svg viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto">
-                        <!-- G icon -->
-                        <circle cx="18" cy="20" r="16" fill="none" stroke="#0070E0" stroke-width="3.5"/>
-                        <path d="M18 12 A8 8 0 1 0 26 20 L20 20" stroke="#0070E0" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-                        <line x1="20" y1="20" x2="26" y2="20" stroke="#5BB8F5" stroke-width="3.5" stroke-linecap="round"/>
-                        <!-- Signal waves -->
-                        <path d="M36 14 Q40 20 36 26" stroke="#5BB8F5" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                        <path d="M40 11 Q46 20 40 29" stroke="#0070E0" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                        <!-- GCash text -->
-                        <text x="50" y="26" font-family="Arial,sans-serif" font-weight="900" font-size="18" fill="#0033A0">GCash</text>
-                    </svg>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/GCash_logo.svg/200px-GCash_logo.svg.png"
+                         alt="GCash" class="w-full h-full object-contain"
+                         onerror="this.onerror=null;this.src='https://www.gcash.com/wp-content/uploads/2019/04/GCash-logo.png'">
                 </div>
                 <p class="text-xs font-extrabold text-gray-900">GCash</p>
                 <p class="text-xs font-bold" style="color:#0070E0;">Online</p>
@@ -119,11 +110,10 @@
 
             {{-- Maya Tab --}}
             <div class="method-tab border-2 border-gray-200 rounded-xl p-3 text-center cursor-pointer" onclick="switchTab('maya')" id="tab-maya">
-                {{-- Real Maya Logo --}}
                 <div class="w-12 h-12 mx-auto mb-2 flex items-center justify-center">
-                    <svg viewBox="0 0 80 40" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto">
-                        <text x="4" y="30" font-family="Arial Rounded MT Bold,Arial,sans-serif" font-weight="900" font-size="26" fill="#3DDB84" letter-spacing="-1">maya</text>
-                    </svg>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Maya_%28company%29_logo.svg/200px-Maya_%28company%29_logo.svg.png"
+                         alt="Maya" class="w-full h-full object-contain"
+                         onerror="this.onerror=null;this.style.background='#1A3C34';this.style.borderRadius='8px';this.style.padding='4px'">
                 </div>
                 <p class="text-xs font-extrabold text-gray-900">Maya</p>
                 <p class="text-xs font-bold" style="color:#3DDB84;">Online</p>
@@ -142,10 +132,13 @@
 
             {{-- Card Tab --}}
             <div class="method-tab border-2 border-gray-200 rounded-xl p-3 text-center cursor-pointer" onclick="switchTab('card')" id="tab-card">
-                <div class="w-12 h-12 rounded-xl bg-indigo-100 mx-auto mb-2 flex items-center justify-center">
-                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                    </svg>
+                <div class="w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                    {{-- Visa + Mastercard mini logos --}}
+                    <div class="flex items-center gap-0.5">
+                        <span class="inline-block px-1.5 py-0.5 bg-blue-700 text-white text-xs font-black rounded" style="font-size:9px;">VISA</span>
+                        <span class="inline-block w-5 h-5 rounded-full bg-red-500 -ml-1.5 border-2 border-white opacity-90"></span>
+                        <span class="inline-block w-5 h-5 rounded-full bg-amber-400 -ml-2.5 border-2 border-white opacity-90"></span>
+                    </div>
                 </div>
                 <p class="text-xs font-extrabold text-gray-900">Card</p>
                 <p class="text-xs font-bold text-indigo-600">Credit/Debit</p>
@@ -513,39 +506,55 @@ const PAYMONGO_PUBLIC_KEY = '{{ config('services.paymongo.public_key') }}';
 let paymongo, cardNumber, cardExpiry, cardCvc;
 window._cardMounted = false;
 
+// Mount immediately when page loads so elements are ready
+document.addEventListener('DOMContentLoaded', function () {
+    if (PAYMONGO_PUBLIC_KEY && !PAYMONGO_PUBLIC_KEY.includes('PASTE_YOUR')) {
+        // Slight delay to ensure PayMongo.js is fully loaded
+        setTimeout(mountCardElements, 300);
+    }
+});
+
 function mountCardElements() {
+    if (window._cardMounted) return;
+
     if (!PAYMONGO_PUBLIC_KEY || PAYMONGO_PUBLIC_KEY.includes('PASTE_YOUR')) {
-        document.getElementById('card-errors').textContent = 'PayMongo public key not configured.';
-        document.getElementById('card-errors').classList.remove('hidden');
+        const el = document.getElementById('card-errors');
+        if (el) { el.textContent = 'Card payment not configured. Please use another method.'; el.classList.remove('hidden'); }
         return;
     }
 
-    paymongo = PayMongo(PAYMONGO_PUBLIC_KEY);
-    const elements = paymongo.elements();
+    try {
+        paymongo = PayMongo(PAYMONGO_PUBLIC_KEY);
+        const elements = paymongo.elements();
 
-    const style = {
-        base: {
-            color: '#1f2937',
-            fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-            fontSize: '14px',
-            '::placeholder': { color: '#9ca3af' },
-        },
-        invalid: { color: '#ef4444' },
-    };
+        const style = {
+            base: {
+                color: '#1f2937',
+                fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+                fontSize: '14px',
+                '::placeholder': { color: '#9ca3af' },
+            },
+            invalid: { color: '#ef4444' },
+        };
 
-    cardNumber = elements.create('cardNumber', { style, placeholder: '1234 5678 9012 3456' });
-    cardExpiry = elements.create('cardExpiry', { style, placeholder: 'MM / YY' });
-    cardCvc    = elements.create('cardCvc',    { style, placeholder: 'CVC' });
+        cardNumber = elements.create('cardNumber', { style });
+        cardExpiry = elements.create('cardExpiry', { style });
+        cardCvc    = elements.create('cardCvc',    { style });
 
-    cardNumber.mount('#card-number-element');
-    cardExpiry.mount('#card-expiry-element');
-    cardCvc.mount('#card-cvc-element');
+        cardNumber.mount('#card-number-element');
+        cardExpiry.mount('#card-expiry-element');
+        cardCvc.mount('#card-cvc-element');
 
-    cardNumber.on('change', handleCardChange);
-    cardExpiry.on('change', handleCardChange);
-    cardCvc.on('change', handleCardChange);
+        cardNumber.on('change', handleCardChange);
+        cardExpiry.on('change', handleCardChange);
+        cardCvc.on('change', handleCardChange);
 
-    window._cardMounted = true;
+        window._cardMounted = true;
+    } catch (e) {
+        console.error('PayMongo.js mount error:', e);
+        const el = document.getElementById('card-errors');
+        if (el) { el.textContent = 'Card form failed to load. Please refresh.'; el.classList.remove('hidden'); }
+    }
 }
 
 function handleCardChange(event) {
@@ -588,7 +597,11 @@ async function payWithCard() {
         const intentData = await intentRes.json();
 
         if (!intentData.success) {
-            throw new Error(intentData.error || 'Failed to initialize payment.');
+            // use_qr means PayMongo keys not working — show specific card error
+            const msg = intentData.use_qr
+                ? 'Card payment gateway unavailable. Please contact the parish office or try GCash/Maya.'
+                : (intentData.error || 'Failed to initialize payment.');
+            throw new Error(msg);
         }
 
         // Step 2 — Create PaymentMethod using PayMongo.js
