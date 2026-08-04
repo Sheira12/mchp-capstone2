@@ -39,7 +39,18 @@ class Event extends Model
 
     public function scopeUpcoming(Builder $query): Builder
     {
-        return $query->where('event_start', '>=', now())->orderBy('event_start');
+        return $query->where(function ($q) {
+            // Future events that haven't started yet
+            $q->where('event_start', '>=', now())
+              // OR ongoing events (started but not ended yet)
+              ->orWhere(function ($q2) {
+                  $q2->where('event_start', '<', now())
+                     ->where(function ($q3) {
+                         $q3->whereNull('event_end')
+                            ->orWhere('event_end', '>=', now());
+                     });
+              });
+        })->orderBy('event_start');
     }
 
     public function scopeFeatured(Builder $query): Builder

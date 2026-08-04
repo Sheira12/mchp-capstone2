@@ -48,7 +48,7 @@ class EventController extends Controller
             'category'    => ['required', 'in:' . implode(',', array_keys(Event::CATEGORIES))],
             'status'      => ['required', 'in:draft,published,cancelled'],
             'is_featured' => ['boolean'],
-            'image'       => ['nullable', 'image', 'max:4096'],
+            'image'       => ['nullable', 'image', 'max:10240'],
         ]);
 
         $imagePath = null;
@@ -90,7 +90,7 @@ class EventController extends Controller
             'category'    => ['required', 'in:' . implode(',', array_keys(Event::CATEGORIES))],
             'status'      => ['required', 'in:draft,published,cancelled'],
             'is_featured' => ['boolean'],
-            'image'       => ['nullable', 'image', 'max:4096'],
+            'image'       => ['nullable', 'image', 'max:10240'],
         ]);
 
         $old = $event->toArray();

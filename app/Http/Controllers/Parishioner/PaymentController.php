@@ -28,7 +28,7 @@ class PaymentController extends Controller
     public function initiate(Request $request)
     {
         $validated = $request->validate([
-            'method'     => ['required', 'in:gcash,paymaya'],
+            'method'     => ['required', 'in:gcash,paymaya,card'],
             'booking_id' => ['nullable', 'exists:bookings,id'],
             'amount'     => ['required', 'numeric', 'min:1'],
         ]);
@@ -45,29 +45,43 @@ class PaymentController extends Controller
             return response()->json(['success' => false, 'error' => 'Unauthorized.'], 403);
         }
 
-        $secretKey = config('services.paymongo.secret_key');
+        $secretKey    = config('services.paymongo.secret_key');
         $isConfigured = $secretKey
             && !str_contains($secretKey, 'xxxxxxxxxxxx')
             && !str_contains($secretKey, 'PASTE_YOUR');
 
         if ($isConfigured) {
-            // Try PayMongo
             try {
+                $description = $booking
+                    ? 'Payment for ' . $booking->getTypeLabel()
+                    : 'Parish service payment';
+
+                // Card uses Payment Intent flow
+                if ($validated['method'] === 'card') {
+                    $result = $this->paymentService->createCardPaymentIntent(
+                        parishioner: $parishioner,
+                        amount:      $validated['amount'],
+                        description: $description,
+                        booking:     $booking,
+                    );
+                    return response()->json($result);
+                }
+
+                // GCash / Maya use Source flow
                 $result = $this->paymentService->createPaymentLink(
                     parishioner: $parishioner,
                     amount:      $validated['amount'],
-                    description: $booking ? 'Payment for ' . $booking->getTypeLabel() : 'Parish service payment',
+                    description: $description,
                     method:      $validated['method'],
                     booking:     $booking,
                 );
                 return response()->json($result);
+
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error('PayMongo failed: ' . $e->getMessage());
-                // Fall through to QR method
             }
         }
 
-        // PayMongo not available — use QR/manual method
         return response()->json([
             'success' => false,
             'use_qr'  => true,
@@ -307,6 +321,105 @@ class PaymentController extends Controller
         ])->setPaper('A4', 'portrait');
 
         return $pdf->download('OR-' . $payment->receipt_number . '.pdf');
+    }
+
+    /**
+     * Confirm card payment — receives paymentMethodId from PayMongo.js frontend.
+     */
+    public function confirmCard(Request $request)
+    {
+        $validated = $request->validate([
+            'payment_intent_id' => ['required', 'string'],
+            'payment_method_id' => ['required', 'string'],
+            'reference_number'  => ['required', 'string'],
+        ]);
+
+        $result = $this->paymentService->confirmCardPayment(
+            $validated['payment_intent_id'],
+            $validated['payment_method_id']
+        );
+
+        if (!$result['success']) {
+            return response()->json(['success' => false, 'error' => $result['error']], 422);
+        }
+
+        $status = $result['status'];
+
+        // If 3DS required, return the redirect URL
+        if ($status === 'awaiting_next_action') {
+            $redirectUrl = $result['next_action']['redirect']['url'] ?? null;
+            return response()->json([
+                'success'      => true,
+                'status'       => $status,
+                'redirect_url' => $redirectUrl,
+            ]);
+        }
+
+        // Payment succeeded immediately (no 3DS)
+        if ($status === 'succeeded') {
+            $payment = Payment::where('reference_number', $validated['reference_number'])->first();
+            if ($payment) {
+                $payment->update(['status' => 'paid', 'paid_at' => now()]);
+                if ($payment->booking) {
+                    $payment->booking->update(['status' => 'confirmed']);
+                }
+            }
+            return response()->json([
+                'success'     => true,
+                'status'      => 'succeeded',
+                'receipt_url' => $payment ? route('parishioner.payments.receipt', $payment) : route('parishioner.bookings.index'),
+            ]);
+        }
+
+        return response()->json(['success' => true, 'status' => $status]);
+    }
+
+    /**
+     * 3DS return URL — PayMongo redirects here after 3D Secure authentication.
+     */
+    public function threeDsReturn(Request $request)
+    {
+        $paymentIntentId = $request->get('payment_intent_id');
+        $ref             = $request->get('ref');
+
+        if (!$paymentIntentId) {
+            return redirect()->route('parishioner.bookings.index')->with('error', 'Payment verification failed.');
+        }
+
+        // Retrieve the intent to check its final status
+        try {
+            $client   = new \GuzzleHttp\Client([
+                'base_uri' => 'https://api.paymongo.com/v1',
+                'headers'  => [
+                    'Authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),
+                    'Content-Type'  => 'application/json',
+                    'Accept'        => 'application/json',
+                ],
+            ]);
+            $response = $client->get("/payment_intents/{$paymentIntentId}");
+            $data     = json_decode($response->getBody()->getContents(), true);
+            $status   = $data['data']['attributes']['status'] ?? null;
+
+            if ($status === 'succeeded') {
+                $payment = Payment::where('reference_number', $ref)->first();
+                if ($payment && $payment->status !== 'paid') {
+                    $payment->update(['status' => 'paid', 'paid_at' => now()]);
+                    if ($payment->booking) {
+                        $payment->booking->update(['status' => 'confirmed']);
+                    }
+                }
+                return redirect()->route('parishioner.payments.receipt', $payment)
+                    ->with('success', 'Card payment successful!');
+            }
+
+            return redirect()->route('payment.failed', ['ref' => $ref])
+                ->with('error', 'Card payment was not completed.');
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('3DS return check failed: ' . $e->getMessage());
+            return redirect()->route('parishioner.bookings.index')
+                ->with('error', 'Could not verify payment. Please contact the parish office.');
+        }
     }
 
     /**

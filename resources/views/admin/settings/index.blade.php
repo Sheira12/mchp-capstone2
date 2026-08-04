@@ -53,6 +53,21 @@
                        class="form-input w-full" placeholder="Rev. Fr. Name">
             </div>
 
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="form-label">Parish Secretary</label>
+                    <input type="text" name="parish_secretary" value="{{ old('parish_secretary', $settings['parish_secretary']) }}"
+                           class="form-input w-full" placeholder="Full name of the Parish Secretary">
+                    <p class="text-xs text-gray-400 mt-1">Appears on the signature line of all certificates.</p>
+                </div>
+                <div>
+                    <label class="form-label">Finance Officer</label>
+                    <input type="text" name="parish_finance_officer" value="{{ old('parish_finance_officer', $settings['parish_finance_officer']) }}"
+                           class="form-input w-full" placeholder="Full name of the Finance Officer">
+                    <p class="text-xs text-gray-400 mt-1">Appears on financial report signatures.</p>
+                </div>
+            </div>
+
             <div class="pt-2">
                 <button type="submit" class="btn-primary">Save Parish Settings</button>
             </div>

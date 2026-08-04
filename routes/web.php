@@ -102,6 +102,7 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
     Route::get('/payments/receipt/{payment}', [ParishionerPaymentController::class, 'receipt'])->name('payments.receipt');
     Route::get('/payments/receipt/{payment}/pdf', [ParishionerPaymentController::class, 'receiptPdf'])->name('payments.receipt-pdf');
     Route::post('/payments/initiate', [ParishionerPaymentController::class, 'initiate'])->name('payments.initiate');
+    Route::post('/payments/card/confirm', [ParishionerPaymentController::class, 'confirmCard'])->name('payments.card-confirm');
     Route::get('/payments/success', [ParishionerPaymentController::class, 'success'])->name('payments.success');
     Route::get('/payments/failed', [ParishionerPaymentController::class, 'failed'])->name('payments.failed');
 
@@ -258,7 +259,9 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
     Route::resource('mass-schedules', \App\Http\Controllers\Admin\MassScheduleController::class);
 
     // Events (CMS)
-    Route::resource('events', \App\Http\Controllers\Admin\EventController::class);
+    Route::middleware(\App\Http\Middleware\IncreasePostSize::class)->group(function () {
+        Route::resource('events', \App\Http\Controllers\Admin\EventController::class);
+    });
 
     // Gallery
     Route::middleware(\App\Http\Middleware\IncreasePostSize::class)->group(function () {
@@ -297,3 +300,8 @@ Route::get('/payment/success', function () {
 Route::get('/payment/failed', function () {
     return view('payment.failed');
 })->name('payment.failed');
+
+// 3D Secure return URL (must be public — PayMongo redirects here)
+Route::get('/payment/3ds-return', [App\Http\Controllers\Parishioner\PaymentController::class, 'threeDsReturn'])
+    ->middleware(['auth', 'role:parishioner'])
+    ->name('payment.3ds-return');

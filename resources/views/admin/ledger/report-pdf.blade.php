@@ -182,8 +182,8 @@ table.dt tfoot tr.total td { background:#7c3aed; color:#fff; border-top:1.5pt so
 
 {{-- SIGNATURES --}}
 <table class="sig-wrap" cellpadding="0" cellspacing="0"><tr>
-    <td><div class="sig-line">Prepared by</div><div class="sig-role">Parish Secretary</div></td>
-    <td><div class="sig-line">Verified by</div><div class="sig-role">Finance Officer</div></td>
+    <td><div class="sig-line">{{ $parish['secretary'] }}</div><div class="sig-role">Parish Secretary</div></td>
+    <td><div class="sig-line">{{ $parish['finance_officer'] }}</div><div class="sig-role">Finance Officer</div></td>
     <td><div class="sig-line">{{ $parish['priest'] }}</div><div class="sig-role">Parish Priest</div></td>
 </tr></table>
 

@@ -47,7 +47,7 @@ $ornSm = '<svg width="130" height="7" viewBox="0 0 130 7" xmlns="http://www.w3.o
     </tr></table></div>
     <div class="issuance-wrap">Issued this <b>{{ $certificate->issued_date->format('jS') }}</b> day of <b>{{ $certificate->issued_date->format('F Y') }}</b>, at <b>Mary Help of Christians Parish</b>, Cabuyao, Laguna, for the purpose of <b>{{ $certificate->purpose ?? 'official use' }}</b>.</div>
     <div class="sig-wrap"><table class="sig-tbl" cellpadding="0" cellspacing="0"><tr>
-        <td class="sig-cell"><div class="sig-line"><div class="sig-name">{{ $certificate->issuedBy?->name ?? 'Parish Secretary' }}</div><div class="sig-title">Parish Secretary</div></div></td>
+        <td class="sig-cell"><div class="sig-line"><div class="sig-name">{{ $parish['secretary'] }}</div><div class="sig-title">Parish Secretary</div></div></td>
         <td class="sig-cell"><div class="seal-circle"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin:12pt auto 0;display:block;"><circle cx="13" cy="13" r="10" stroke="#D4AF37" stroke-width="1.2"/><circle cx="13" cy="13" r="6" stroke="#D4AF37" stroke-width="0.5" opacity="0.5"/><path d="M13 8v10M8 13h10" stroke="#D4AF37" stroke-width="1.2"/></svg></div><div class="seal-label">Official Seal</div></td>
         <td class="sig-cell"><div class="sig-line"><div class="sig-name">{{ $parish['priest'] }}</div><div class="sig-title">Parish Priest</div></div></td>
     </tr></table></div>

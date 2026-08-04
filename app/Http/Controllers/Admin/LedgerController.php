@@ -129,11 +129,13 @@ class LedgerController extends Controller
         ])->sortByDesc('total');
 
         $parish    = [
-            'name'    => config('parish.name'),
-            'address' => config('parish.address'),
-            'phone'   => config('parish.phone'),
-            'email'   => config('parish.email'),
-            'priest'  => config('parish.priest'),
+            'name'           => config('parish.name'),
+            'address'        => config('parish.address'),
+            'phone'          => config('parish.phone'),
+            'email'          => config('parish.email'),
+            'priest'         => config('parish.priest'),
+            'secretary'      => \App\Models\Setting::get('parish_secretary', 'Parish Secretary'),
+            'finance_officer'=> \App\Models\Setting::get('parish_finance_officer', 'Finance Officer'),
         ];
         $printedAt = now()->format('F d, Y h:i A');
 

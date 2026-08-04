@@ -93,4 +93,49 @@
     </div>
     @endif
 </section>
+
+{{-- Past Events --}}
+@if(isset($pastEvents) && $pastEvents->count())
+<section class="max-w-5xl mx-auto px-4 pb-16">
+    <div class="flex items-center gap-3 mb-6">
+        <h2 class="text-xl font-bold text-gray-900">Past Events</h2>
+        <span class="h-px flex-1 bg-gray-200"></span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        @foreach($pastEvents as $event)
+        <article class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group opacity-80 hover:opacity-100">
+            @if($event->image_path)
+                <div class="relative">
+                    <img src="{{ Storage::url($event->image_path) }}" class="w-full h-40 object-cover grayscale group-hover:grayscale-0 transition duration-300">
+                    <div class="absolute top-2 left-2">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-800/70 text-white">Past</span>
+                    </div>
+                </div>
+            @else
+                <div class="w-full h-40 bg-gray-100 flex items-center justify-center relative">
+                    <span class="text-3xl opacity-40">📅</span>
+                    <div class="absolute top-2 left-2">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-400/70 text-white">Past</span>
+                    </div>
+                </div>
+            @endif
+            <div class="p-4">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 mb-2">
+                    {{ $event->category_label }}
+                </span>
+                <h3 class="font-semibold text-gray-700 mb-1 leading-snug text-sm">{{ $event->title }}</h3>
+                <p class="text-xs text-gray-400">📅 {{ $event->event_start->format('M d, Y') }}</p>
+                @if($event->location)
+                    <p class="text-xs text-gray-400">📍 {{ $event->location }}</p>
+                @endif
+                <a href="{{ route('events.show', $event) }}"
+                   class="inline-block mt-2 text-xs font-medium text-gray-500 hover:text-indigo-600 hover:underline">
+                    View details →
+                </a>
+            </div>
+        </article>
+        @endforeach
+    </div>
+</section>
+@endif
 @endsection

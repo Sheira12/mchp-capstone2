@@ -43,10 +43,12 @@ class CertificateService
             'qrImageUrl'  => Storage::disk('public')->url($qrImagePath),
             'logoPath'    => public_path('images/parish-logo.png'),
             'parish'      => [
-                'name'    => config('parish.name'),
-                'address' => config('parish.address'),
-                'phone'   => config('parish.phone'),
-                'priest'  => config('parish.priest'),
+                'name'           => config('parish.name'),
+                'address'        => config('parish.address'),
+                'phone'          => config('parish.phone'),
+                'priest'         => config('parish.priest'),
+                'secretary'      => \App\Models\Setting::get('parish_secretary', 'Parish Secretary'),
+                'finance_officer'=> \App\Models\Setting::get('parish_finance_officer', 'Finance Officer'),
             ],
         ])
         ->setPaper('A4', 'portrait')
@@ -106,10 +108,12 @@ class CertificateService
             'certData'  => $certData,
             'logoPath'  => public_path('images/parish-logo.png'),
             'parish'    => [
-                'name'    => config('parish.name'),
-                'address' => config('parish.address'),
-                'phone'   => config('parish.phone'),
-                'priest'  => config('parish.priest'),
+                'name'           => config('parish.name'),
+                'address'        => config('parish.address'),
+                'phone'          => config('parish.phone'),
+                'priest'         => config('parish.priest'),
+                'secretary'      => \App\Models\Setting::get('parish_secretary', 'Parish Secretary'),
+                'finance_officer'=> \App\Models\Setting::get('parish_finance_officer', 'Finance Officer'),
             ],
         ])
         ->setPaper('A4', 'portrait')

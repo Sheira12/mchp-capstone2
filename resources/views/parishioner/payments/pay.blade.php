@@ -8,6 +8,7 @@
 #tab-gcash.active  { border-color:#007DFE !important; background:#EFF6FF; }
 #tab-maya.active   { border-color:#00B140 !important; background:#F0FDF4; }
 #tab-cash.active   { border-color:#F59E0B !important; background:#FFFBEB; }
+#tab-card.active   { border-color:#6366f1 !important; background:#EEF2FF; }
 .method-panel { display:none; }
 .method-panel.active { display:block; }
 
@@ -95,7 +96,7 @@
         </div>
 
         {{-- Tab buttons --}}
-        <div class="grid grid-cols-3 gap-3 p-4">
+        <div class="grid grid-cols-4 gap-2 p-4">
             {{-- GCash Tab --}}
             <div class="method-tab active border-2 rounded-xl p-3 text-center cursor-pointer" onclick="switchTab('gcash')" id="tab-gcash">
                 {{-- Real GCash Logo --}}
@@ -137,6 +138,17 @@
                 </div>
                 <p class="text-xs font-extrabold text-gray-900">Cash</p>
                 <p class="text-xs font-bold text-amber-600">In-Person</p>
+            </div>
+
+            {{-- Card Tab --}}
+            <div class="method-tab border-2 border-gray-200 rounded-xl p-3 text-center cursor-pointer" onclick="switchTab('card')" id="tab-card">
+                <div class="w-12 h-12 rounded-xl bg-indigo-100 mx-auto mb-2 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                </div>
+                <p class="text-xs font-extrabold text-gray-900">Card</p>
+                <p class="text-xs font-bold text-indigo-600">Credit/Debit</p>
             </div>
         </div>
 
@@ -368,7 +380,81 @@
                 </button>
             </form>
         </div>
-    </div>
+
+        {{-- Card Panel --}}
+        <div id="panel-card" class="method-panel px-5 pb-5">
+            {{-- Amount --}}
+            <div class="text-center mb-4">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Amount to Pay</p>
+                <span class="amount-badge" style="background:#6366f1;color:#fff;">₱{{ number_format($booking->service_fee, 2) }}</span>
+                <p class="text-xs text-gray-500 mt-2">For: <strong>{{ $booking->getTypeLabel() }}</strong></p>
+            </div>
+
+            {{-- PayMongo.js card form --}}
+            <div id="card-errors" class="hidden mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700"></div>
+            <div id="card-success" class="hidden mb-3 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700"></div>
+
+            <div class="space-y-4">
+                {{-- Card Number --}}
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1.5">Card Number</label>
+                    <div id="card-number-element"
+                         class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition min-h-[46px]">
+                    </div>
+                </div>
+
+                {{-- Expiry & CVC --}}
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1.5">Expiry Date</label>
+                        <div id="card-expiry-element"
+                             class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus-within:border-indigo-400 transition min-h-[46px]">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1.5">CVC</label>
+                        <div id="card-cvc-element"
+                             class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus-within:border-indigo-400 transition min-h-[46px]">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Cardholder Name --}}
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1.5">Cardholder Name</label>
+                    <input type="text" id="card-name"
+                           class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                           placeholder="As printed on card"
+                           value="{{ auth()->user()->parishioner?->full_name }}">
+                </div>
+
+                {{-- Accepted cards --}}
+                <div class="flex items-center gap-3 py-2">
+                    <span class="text-xs text-gray-400">Accepted:</span>
+                    <span class="px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded">VISA</span>
+                    <span class="px-2 py-1 bg-red-600 text-white text-xs font-bold rounded">MC</span>
+                    <span class="px-2 py-1 bg-blue-800 text-white text-xs font-bold rounded">AMEX</span>
+                    <span class="px-2 py-1 bg-gray-600 text-white text-xs font-bold rounded">JCB</span>
+                </div>
+
+                <button id="pay-card-btn"
+                        onclick="payWithCard()"
+                        class="w-full flex items-center justify-center gap-2 text-white font-bold py-3.5 rounded-xl transition shadow-md text-sm"
+                        style="background:#6366f1;">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                    <span id="pay-card-btn-text">Pay ₱{{ number_format($booking->service_fee, 2) }} with Card</span>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-2 mt-3 justify-center text-xs text-gray-400">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                Secured by PayMongo · 3D Secure Enabled
+            </div>
+        </div>
+
+    </div>{{-- /.method panels container --}}
 
     {{-- Security note --}}
     <div class="flex items-center gap-2 text-xs text-gray-400 justify-center">
@@ -380,10 +466,12 @@
 @endsection
 
 @push('scripts')
+{{-- PayMongo.js for card payments --}}
+<script src="https://js.paymongo.com/v2/paymongo.js"></script>
 <script>
+// ── Tab switching ──────────────────────────────────────────────────────────
 function switchTab(method) {
-    // Reset all tabs
-    ['gcash','maya','cash'].forEach(m => {
+    ['gcash','maya','cash','card'].forEach(m => {
         const tab = document.getElementById('tab-' + m);
         if (tab) {
             tab.classList.remove('active');
@@ -394,12 +482,16 @@ function switchTab(method) {
         if (panel) panel.classList.remove('active');
     });
 
-    // Activate selected tab
     const tab = document.getElementById('tab-' + method);
     if (tab) tab.classList.add('active');
 
     const panel = document.getElementById('panel-' + method);
     if (panel) panel.classList.add('active');
+
+    // Mount PayMongo elements when card tab is opened
+    if (method === 'card' && !window._cardMounted) {
+        mountCardElements();
+    }
 }
 
 function showFileName(input, textId) {
@@ -413,6 +505,150 @@ function showFileName(input, textId) {
 function confirmCash() {
     if (confirm('You selected Cash payment.\n\nPlease bring ₱{{ number_format($booking->service_fee, 2) }} to the parish office.\n\nBooking Reference: {{ $booking->reference_number }}\n\nProceed?')) {
         document.getElementById('cash-form').submit();
+    }
+}
+
+// ── PayMongo Card Payment ──────────────────────────────────────────────────
+const PAYMONGO_PUBLIC_KEY = '{{ config('services.paymongo.public_key') }}';
+let paymongo, cardNumber, cardExpiry, cardCvc;
+window._cardMounted = false;
+
+function mountCardElements() {
+    if (!PAYMONGO_PUBLIC_KEY || PAYMONGO_PUBLIC_KEY.includes('PASTE_YOUR')) {
+        document.getElementById('card-errors').textContent = 'PayMongo public key not configured.';
+        document.getElementById('card-errors').classList.remove('hidden');
+        return;
+    }
+
+    paymongo = PayMongo(PAYMONGO_PUBLIC_KEY);
+    const elements = paymongo.elements();
+
+    const style = {
+        base: {
+            color: '#1f2937',
+            fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+            fontSize: '14px',
+            '::placeholder': { color: '#9ca3af' },
+        },
+        invalid: { color: '#ef4444' },
+    };
+
+    cardNumber = elements.create('cardNumber', { style, placeholder: '1234 5678 9012 3456' });
+    cardExpiry = elements.create('cardExpiry', { style, placeholder: 'MM / YY' });
+    cardCvc    = elements.create('cardCvc',    { style, placeholder: 'CVC' });
+
+    cardNumber.mount('#card-number-element');
+    cardExpiry.mount('#card-expiry-element');
+    cardCvc.mount('#card-cvc-element');
+
+    cardNumber.on('change', handleCardChange);
+    cardExpiry.on('change', handleCardChange);
+    cardCvc.on('change', handleCardChange);
+
+    window._cardMounted = true;
+}
+
+function handleCardChange(event) {
+    const errorEl = document.getElementById('card-errors');
+    if (event.error) {
+        errorEl.textContent = event.error.message;
+        errorEl.classList.remove('hidden');
+    } else {
+        errorEl.classList.add('hidden');
+    }
+}
+
+async function payWithCard() {
+    const btn     = document.getElementById('pay-card-btn');
+    const btnText = document.getElementById('pay-card-btn-text');
+    const errorEl = document.getElementById('card-errors');
+    const successEl = document.getElementById('card-success');
+
+    errorEl.classList.add('hidden');
+    successEl.classList.add('hidden');
+    btn.disabled = true;
+    btnText.textContent = 'Processing…';
+
+    try {
+        // Step 1 — Create Payment Intent via our backend
+        const intentRes = await fetch('{{ route('parishioner.payments.initiate') }}', {
+            method:  'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept':       'application/json',
+            },
+            body: JSON.stringify({
+                method:     'card',
+                booking_id: '{{ $booking->id }}',
+                amount:     '{{ $booking->service_fee }}',
+            }),
+        });
+
+        const intentData = await intentRes.json();
+
+        if (!intentData.success) {
+            throw new Error(intentData.error || 'Failed to initialize payment.');
+        }
+
+        // Step 2 — Create PaymentMethod using PayMongo.js
+        const { paymentMethod, error } = await paymongo.createPaymentMethod({
+            type:            'card',
+            card:            cardNumber,
+            billing_details: {
+                name:  document.getElementById('card-name').value || '{{ auth()->user()->parishioner?->full_name }}',
+                email: '{{ auth()->user()->email ?? '' }}',
+                phone: '{{ auth()->user()->parishioner?->contact_number ?? '' }}',
+            },
+        });
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        // Step 3 — Attach PaymentMethod to Intent via our backend
+        const confirmRes = await fetch('{{ route('parishioner.payments.card-confirm') }}', {
+            method:  'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept':       'application/json',
+            },
+            body: JSON.stringify({
+                payment_intent_id: intentData.payment_intent_id,
+                payment_method_id: paymentMethod.id,
+                reference_number:  intentData.reference_number,
+            }),
+        });
+
+        const confirmData = await confirmRes.json();
+
+        if (!confirmData.success) {
+            throw new Error(confirmData.error || 'Payment confirmation failed.');
+        }
+
+        // Step 4 — Handle result
+        if (confirmData.status === 'awaiting_next_action' && confirmData.redirect_url) {
+            // 3D Secure required — redirect to bank's auth page
+            btnText.textContent = 'Redirecting to 3D Secure…';
+            window.location.href = confirmData.redirect_url;
+            return;
+        }
+
+        if (confirmData.status === 'succeeded') {
+            successEl.textContent = '✓ Payment successful! Redirecting…';
+            successEl.classList.remove('hidden');
+            setTimeout(() => { window.location.href = confirmData.receipt_url; }, 1500);
+            return;
+        }
+
+        throw new Error('Unexpected payment status: ' + confirmData.status);
+
+    } catch (err) {
+        errorEl.textContent = err.message || 'Payment failed. Please try again.';
+        errorEl.classList.remove('hidden');
+        btn.disabled = false;
+        btnText.textContent = 'Pay ₱{{ number_format($booking->service_fee, 2) }} with Card';
     }
 }
 </script>

@@ -87,10 +87,50 @@ class PublicController extends Controller
 
     public function events()
     {
-        $upcomingEvents = Event::published()->upcoming()->paginate(9);
-        $featuredEvent  = Event::published()->featured()->upcoming()->first();
+        $upcomingEvents = Event::published()
+            ->where(function ($q) {
+                $q->where('event_start', '>=', now())
+                  ->orWhere(function ($q2) {
+                      $q2->where('event_start', '<', now())
+                         ->where(function ($q3) {
+                             $q3->whereNull('event_end')
+                                ->orWhere('event_end', '>=', now());
+                         });
+                  });
+            })
+            ->orderBy('event_start')
+            ->paginate(9);
 
-        return view('public.events', compact('upcomingEvents', 'featuredEvent'));
+        $featuredEvent = Event::published()
+            ->featured()
+            ->where(function ($q) {
+                $q->where('event_start', '>=', now())
+                  ->orWhere(function ($q2) {
+                      $q2->where('event_start', '<', now())
+                         ->where(function ($q3) {
+                             $q3->whereNull('event_end')
+                                ->orWhere('event_end', '>=', now());
+                         });
+                  });
+            })
+            ->orderBy('event_start')
+            ->first();
+
+        // Fall back to featured without date filter if none found
+        if (!$featuredEvent) {
+            $featuredEvent = Event::published()->featured()->orderByDesc('event_start')->first();
+        }
+
+        $pastEvents = Event::published()
+            ->where('event_start', '<', now())
+            ->where(function ($q) {
+                $q->whereNotNull('event_end')->where('event_end', '<', now());
+            })
+            ->orderByDesc('event_start')
+            ->take(6)
+            ->get();
+
+        return view('public.events', compact('upcomingEvents', 'featuredEvent', 'pastEvents'));
     }
 
     public function event(Event $event)
@@ -101,7 +141,7 @@ class PublicController extends Controller
         $relatedEvents = Event::published()
             ->where('category', $event->category)
             ->where('id', '!=', $event->id)
-            ->upcoming()
+            ->orderBy('event_start')
             ->take(3)
             ->get();
 

@@ -12,11 +12,13 @@ class SettingsController extends Controller
     public function index()
     {
         $settings = [
-            'parish_name'    => config('parish.name'),
-            'parish_address' => config('parish.address'),
-            'parish_phone'   => config('parish.phone'),
-            'parish_email'   => config('parish.email'),
-            'parish_priest'  => config('parish.priest'),
+            'parish_name'            => config('parish.name'),
+            'parish_address'         => config('parish.address'),
+            'parish_phone'           => config('parish.phone'),
+            'parish_email'           => config('parish.email'),
+            'parish_priest'          => config('parish.priest'),
+            'parish_secretary'       => Setting::get('parish_secretary', ''),
+            'parish_finance_officer' => Setting::get('parish_finance_officer', ''),
         ];
 
         $socials = Setting::socials();
@@ -27,16 +29,24 @@ class SettingsController extends Controller
     public function update(Request $request)
     {
         $validated = $request->validate([
-            'parish_name'    => ['required', 'string', 'max:255'],
-            'parish_address' => ['required', 'string', 'max:255'],
-            'parish_phone'   => ['nullable', 'string', 'max:50'],
-            'parish_email'   => ['nullable', 'email'],
-            'parish_priest'  => ['nullable', 'string', 'max:255'],
+            'parish_name'            => ['required', 'string', 'max:255'],
+            'parish_address'         => ['required', 'string', 'max:255'],
+            'parish_phone'           => ['nullable', 'string', 'max:50'],
+            'parish_email'           => ['nullable', 'email'],
+            'parish_priest'          => ['nullable', 'string', 'max:255'],
+            'parish_secretary'       => ['nullable', 'string', 'max:255'],
+            'parish_finance_officer' => ['nullable', 'string', 'max:255'],
         ]);
 
-        foreach ($validated as $key => $value) {
-            $this->updateEnv(strtoupper($key), $value ?? '');
+        // .env fields (config-based)
+        $envFields = ['parish_name', 'parish_address', 'parish_phone', 'parish_email', 'parish_priest'];
+        foreach ($envFields as $key) {
+            $this->updateEnv(strtoupper($key), $validated[$key] ?? '');
         }
+
+        // DB-based settings
+        Setting::set('parish_secretary',       $validated['parish_secretary'] ?? '');
+        Setting::set('parish_finance_officer', $validated['parish_finance_officer'] ?? '');
 
         Artisan::call('config:clear');
 

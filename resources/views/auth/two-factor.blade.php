@@ -69,18 +69,7 @@
         @endif
 
         {{-- ── Fallback: show code on screen if email failed ── --}}
-        @if($devCode)
-        <div class="mb-5 bg-amber-50 border-2 border-amber-400 rounded-xl px-5 py-4">
-            <div class="flex items-center gap-2 mb-2">
-                <svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                <p class="font-bold text-amber-800 text-sm">Email delivery failed — use this code to sign in:</p>
-            </div>
-            <div class="text-center">
-                <span class="inline-block font-mono font-black text-3xl tracking-widest text-amber-900 bg-white border border-amber-300 rounded-lg px-6 py-2 select-all">{{ $devCode }}</span>
-            </div>
-            <p class="text-xs text-amber-600 mt-2 text-center">Enter the code above in the boxes below. Check SMTP settings in Admin → Settings.</p>
-        </div>
-        @endif
+        
 
         @if($errors->any())
         <div id="error-box" class="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
