@@ -99,21 +99,19 @@
         <div class="grid grid-cols-4 gap-2 p-4">
             {{-- GCash Tab --}}
             <div class="method-tab active border-2 rounded-xl p-3 text-center cursor-pointer" onclick="switchTab('gcash')" id="tab-gcash">
-                <div class="w-12 h-12 mx-auto mb-2 flex items-center justify-center">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/GCash_logo.svg/200px-GCash_logo.svg.png"
-                         alt="GCash" class="w-full h-full object-contain"
-                         onerror="this.onerror=null;this.src='https://www.gcash.com/wp-content/uploads/2019/04/GCash-logo.png'">
+                <div class="w-14 h-9 mx-auto mb-2 flex items-center justify-center">
+                    <img src="{{ asset('images/payment/gcash.svg') }}" alt="GCash"
+                         class="w-full h-full object-contain rounded-lg">
                 </div>
                 <p class="text-xs font-extrabold text-gray-900">GCash</p>
-                <p class="text-xs font-bold" style="color:#0070E0;">Online</p>
+                <p class="text-xs font-bold" style="color:#007DFE;">Online</p>
             </div>
 
             {{-- Maya Tab --}}
             <div class="method-tab border-2 border-gray-200 rounded-xl p-3 text-center cursor-pointer" onclick="switchTab('maya')" id="tab-maya">
-                <div class="w-12 h-12 mx-auto mb-2 flex items-center justify-center">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Maya_%28company%29_logo.svg/200px-Maya_%28company%29_logo.svg.png"
-                         alt="Maya" class="w-full h-full object-contain"
-                         onerror="this.onerror=null;this.style.background='#1A3C34';this.style.borderRadius='8px';this.style.padding='4px'">
+                <div class="w-14 h-9 mx-auto mb-2 flex items-center justify-center">
+                    <img src="{{ asset('images/payment/maya.svg') }}" alt="Maya"
+                         class="w-full h-full object-contain rounded-lg">
                 </div>
                 <p class="text-xs font-extrabold text-gray-900">Maya</p>
                 <p class="text-xs font-bold" style="color:#3DDB84;">Online</p>
@@ -121,7 +119,7 @@
 
             {{-- Cash Tab --}}
             <div class="method-tab border-2 border-gray-200 rounded-xl p-3 text-center cursor-pointer" onclick="switchTab('cash')" id="tab-cash">
-                <div class="w-12 h-12 rounded-xl bg-amber-100 mx-auto mb-2 flex items-center justify-center">
+                <div class="w-10 h-9 rounded-xl bg-amber-100 mx-auto mb-2 flex items-center justify-center">
                     <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
@@ -132,13 +130,11 @@
 
             {{-- Card Tab --}}
             <div class="method-tab border-2 border-gray-200 rounded-xl p-3 text-center cursor-pointer" onclick="switchTab('card')" id="tab-card">
-                <div class="w-12 h-12 mx-auto mb-2 flex items-center justify-center">
-                    {{-- Visa + Mastercard mini logos --}}
-                    <div class="flex items-center gap-0.5">
-                        <span class="inline-block px-1.5 py-0.5 bg-blue-700 text-white text-xs font-black rounded" style="font-size:9px;">VISA</span>
-                        <span class="inline-block w-5 h-5 rounded-full bg-red-500 -ml-1.5 border-2 border-white opacity-90"></span>
-                        <span class="inline-block w-5 h-5 rounded-full bg-amber-400 -ml-2.5 border-2 border-white opacity-90"></span>
-                    </div>
+                <div class="w-14 h-9 mx-auto mb-2 flex items-center justify-center gap-1">
+                    <img src="{{ asset('images/payment/visa.svg') }}" alt="Visa"
+                         class="h-7 rounded object-contain">
+                    <img src="{{ asset('images/payment/mastercard.svg') }}" alt="MC"
+                         class="h-7 rounded object-contain">
                 </div>
                 <p class="text-xs font-extrabold text-gray-900">Card</p>
                 <p class="text-xs font-bold text-indigo-600">Credit/Debit</p>
@@ -422,12 +418,12 @@
                 </div>
 
                 {{-- Accepted cards --}}
-                <div class="flex items-center gap-3 py-2">
+                <div class="flex items-center gap-2 py-2">
                     <span class="text-xs text-gray-400">Accepted:</span>
-                    <span class="px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded">VISA</span>
-                    <span class="px-2 py-1 bg-red-600 text-white text-xs font-bold rounded">MC</span>
-                    <span class="px-2 py-1 bg-blue-800 text-white text-xs font-bold rounded">AMEX</span>
-                    <span class="px-2 py-1 bg-gray-600 text-white text-xs font-bold rounded">JCB</span>
+                    <img src="{{ asset('images/payment/visa.svg') }}" alt="Visa" class="h-6 rounded object-contain">
+                    <img src="{{ asset('images/payment/mastercard.svg') }}" alt="Mastercard" class="h-6 rounded object-contain">
+                    <span class="px-2 py-0.5 bg-blue-800 text-white text-xs font-bold rounded">AMEX</span>
+                    <span class="px-2 py-0.5 bg-gray-600 text-white text-xs font-bold rounded">JCB</span>
                 </div>
 
                 <button id="pay-card-btn"
