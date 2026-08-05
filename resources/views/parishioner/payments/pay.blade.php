@@ -131,7 +131,7 @@
             {{-- Card Tab --}}
             <div class="method-tab border-2 border-gray-200 rounded-xl p-3 text-center cursor-pointer" onclick="switchTab('card')" id="tab-card">
                 <div class="w-14 h-9 mx-auto mb-2 flex items-center justify-center gap-1">
-                    <img src="{{ asset('images/payment/visa.svg') }}" alt="Visa"
+                    <img src="{{ asset('images/payment/visa.png') }}" alt="Visa"
                          style="height:22px;width:auto;display:inline-block;">
                     <img src="{{ asset('images/payment/mastercard.svg') }}" alt="MC"
                          style="height:22px;width:auto;display:inline-block;">
@@ -379,32 +379,32 @@
                 <p class="text-xs text-gray-500 mt-2">For: <strong>{{ $booking->getTypeLabel() }}</strong></p>
             </div>
 
-            {{-- PayMongo.js card form --}}
             <div id="card-errors" class="hidden mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700"></div>
             <div id="card-success" class="hidden mb-3 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700"></div>
 
-            <div class="space-y-4">
+            <div class="space-y-3">
                 {{-- Card Number --}}
                 <div>
                     <label class="block text-xs font-bold text-gray-700 mb-1.5">Card Number</label>
-                    <div id="card-number-element"
-                         class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition min-h-[46px]">
-                    </div>
+                    <input type="text" id="card-number" maxlength="19" inputmode="numeric"
+                           class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition"
+                           placeholder="1234 5678 9012 3456"
+                           autocomplete="cc-number">
                 </div>
 
                 {{-- Expiry & CVC --}}
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-1.5">Expiry Date</label>
-                        <div id="card-expiry-element"
-                             class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus-within:border-indigo-400 transition min-h-[46px]">
-                        </div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1.5">Expiry (MM/YY)</label>
+                        <input type="text" id="card-expiry" maxlength="5" inputmode="numeric"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition"
+                               placeholder="MM/YY" autocomplete="cc-exp">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1.5">CVC</label>
-                        <div id="card-cvc-element"
-                             class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus-within:border-indigo-400 transition min-h-[46px]">
-                        </div>
+                        <input type="text" id="card-cvc" maxlength="4" inputmode="numeric"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition"
+                               placeholder="123" autocomplete="cc-csc">
                     </div>
                 </div>
 
@@ -412,24 +412,22 @@
                 <div>
                     <label class="block text-xs font-bold text-gray-700 mb-1.5">Cardholder Name</label>
                     <input type="text" id="card-name"
-                           class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                           class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition"
                            placeholder="As printed on card"
-                           value="{{ auth()->user()->parishioner?->full_name }}">
+                           value="{{ auth()->user()->parishioner?->full_name }}"
+                           autocomplete="cc-name">
                 </div>
 
                 {{-- Accepted cards --}}
-                <div class="flex items-center gap-2 py-2">
+                <div class="flex items-center gap-2 py-1">
                     <span class="text-xs text-gray-400">Accepted:</span>
                     <img src="{{ asset('images/payment/visa.svg') }}" alt="Visa"
                          style="height:20px;width:auto;display:inline-block;">
                     <img src="{{ asset('images/payment/mastercard.svg') }}" alt="Mastercard"
                          style="height:20px;width:auto;display:inline-block;">
-                    <span class="px-2 py-0.5 bg-blue-800 text-white text-xs font-bold rounded">AMEX</span>
-                    <span class="px-2 py-0.5 bg-gray-600 text-white text-xs font-bold rounded">JCB</span>
                 </div>
 
-                <button id="pay-card-btn"
-                        onclick="payWithCard()"
+                <button id="pay-card-btn" onclick="payWithCard()"
                         class="w-full flex items-center justify-center gap-2 text-white font-bold py-3.5 rounded-xl transition shadow-md text-sm"
                         style="background:#6366f1;">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
@@ -457,40 +455,24 @@
 @endsection
 
 @push('scripts')
-{{-- PayMongo.js for card payments --}}
-<script src="https://js.paymongo.com/v2/paymongo.js"></script>
 <script>
 // ── Tab switching ──────────────────────────────────────────────────────────
 function switchTab(method) {
     ['gcash','maya','cash','card'].forEach(m => {
         const tab = document.getElementById('tab-' + m);
-        if (tab) {
-            tab.classList.remove('active');
-            tab.style.borderColor = '';
-            tab.style.background  = '';
-        }
+        if (tab) { tab.classList.remove('active'); tab.style.borderColor = ''; tab.style.background = ''; }
         const panel = document.getElementById('panel-' + m);
         if (panel) panel.classList.remove('active');
     });
-
     const tab = document.getElementById('tab-' + method);
     if (tab) tab.classList.add('active');
-
     const panel = document.getElementById('panel-' + method);
     if (panel) panel.classList.add('active');
-
-    // Mount PayMongo elements when card tab is opened
-    if (method === 'card' && !window._cardMounted) {
-        mountCardElements();
-    }
 }
 
 function showFileName(input, textId) {
     const el = document.getElementById(textId);
-    if (input.files && input.files[0]) {
-        el.textContent = '✓ ' + input.files[0].name;
-        el.style.color = '#16a34a';
-    }
+    if (input.files && input.files[0]) { el.textContent = '✓ ' + input.files[0].name; el.style.color = '#16a34a'; }
 }
 
 function confirmCash() {
@@ -499,71 +481,27 @@ function confirmCash() {
     }
 }
 
-// ── PayMongo Card Payment ──────────────────────────────────────────────────
-const PAYMONGO_PUBLIC_KEY = '{{ config('services.paymongo.public_key') }}';
-let paymongo, cardNumber, cardExpiry, cardCvc;
-window._cardMounted = false;
-
-// Mount immediately when page loads so elements are ready
+// ── Card input formatting ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
-    if (PAYMONGO_PUBLIC_KEY && !PAYMONGO_PUBLIC_KEY.includes('PASTE_YOUR')) {
-        // Slight delay to ensure PayMongo.js is fully loaded
-        setTimeout(mountCardElements, 300);
+    const numEl = document.getElementById('card-number');
+    const expEl = document.getElementById('card-expiry');
+    if (numEl) {
+        numEl.addEventListener('input', function () {
+            let v = this.value.replace(/\D/g, '').substring(0, 16);
+            this.value = v.replace(/(.{4})/g, '$1 ').trim();
+        });
+    }
+    if (expEl) {
+        expEl.addEventListener('input', function () {
+            let v = this.value.replace(/\D/g, '').substring(0, 4);
+            if (v.length >= 3) v = v.substring(0,2) + '/' + v.substring(2);
+            this.value = v;
+        });
     }
 });
 
-function mountCardElements() {
-    if (window._cardMounted) return;
-
-    if (!PAYMONGO_PUBLIC_KEY || PAYMONGO_PUBLIC_KEY.includes('PASTE_YOUR')) {
-        const el = document.getElementById('card-errors');
-        if (el) { el.textContent = 'Card payment not configured. Please use another method.'; el.classList.remove('hidden'); }
-        return;
-    }
-
-    try {
-        paymongo = Paymongo(PAYMONGO_PUBLIC_KEY);
-        const elements = paymongo.elements();
-
-        const style = {
-            base: {
-                color: '#1f2937',
-                fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-                fontSize: '14px',
-                '::placeholder': { color: '#9ca3af' },
-            },
-            invalid: { color: '#ef4444' },
-        };
-
-        cardNumber = elements.create('cardNumber', { style });
-        cardExpiry = elements.create('cardExpiry', { style });
-        cardCvc    = elements.create('cardCvc',    { style });
-
-        cardNumber.mount('#card-number-element');
-        cardExpiry.mount('#card-expiry-element');
-        cardCvc.mount('#card-cvc-element');
-
-        cardNumber.on('change', handleCardChange);
-        cardExpiry.on('change', handleCardChange);
-        cardCvc.on('change', handleCardChange);
-
-        window._cardMounted = true;
-    } catch (e) {
-        console.error('PayMongo.js mount error:', e);
-        const el = document.getElementById('card-errors');
-        if (el) { el.textContent = 'Card form failed to load. Please refresh.'; el.classList.remove('hidden'); }
-    }
-}
-
-function handleCardChange(event) {
-    const errorEl = document.getElementById('card-errors');
-    if (event.error) {
-        errorEl.textContent = event.error.message;
-        errorEl.classList.remove('hidden');
-    } else {
-        errorEl.classList.add('hidden');
-    }
-}
+// ── Card payment via PayMongo REST API ─────────────────────────────────────
+const PAYMONGO_PK = '{{ config('services.paymongo.public_key') }}';
 
 async function payWithCard() {
     const btn     = document.getElementById('pay-card-btn');
@@ -577,13 +515,27 @@ async function payWithCard() {
     btnText.textContent = 'Processing…';
 
     try {
-        // Step 1 — Create Payment Intent via our backend
+        // ── Validate inputs ────────────────────────────────────────────────
+        const rawNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+        const rawExpiry = document.getElementById('card-expiry').value;
+        const rawCvc    = document.getElementById('card-cvc').value.trim();
+        const cardName  = document.getElementById('card-name').value.trim();
+
+        if (!rawNumber || rawNumber.length < 13) throw new Error('Please enter a valid card number.');
+        if (!rawExpiry || !rawExpiry.includes('/')) throw new Error('Please enter a valid expiry date (MM/YY).');
+        if (!rawCvc || rawCvc.length < 3) throw new Error('Please enter a valid CVC.');
+        if (!cardName) throw new Error('Please enter the cardholder name.');
+
+        const [expMonth, expYear] = rawExpiry.split('/');
+        const fullYear = parseInt('20' + expYear.trim());
+
+        // ── Step 1: Create Payment Intent (backend) ────────────────────────
         const intentRes = await fetch('{{ route('parishioner.payments.initiate') }}', {
-            method:  'POST',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept':       'application/json',
+                'Accept': 'application/json',
             },
             body: JSON.stringify({
                 method:     'card',
@@ -593,54 +545,69 @@ async function payWithCard() {
         });
 
         const intentData = await intentRes.json();
-
         if (!intentData.success) {
-            // use_qr means PayMongo keys not working — show specific card error
-            const msg = intentData.use_qr
-                ? 'Card payment gateway unavailable. Please contact the parish office or try GCash/Maya.'
-                : (intentData.error || 'Failed to initialize payment.');
-            throw new Error(msg);
+            throw new Error(intentData.use_qr
+                ? 'Card payments are currently unavailable. Please use GCash, Maya, or Cash.'
+                : (intentData.error || 'Failed to create payment.'));
         }
 
-        // Step 2 — Create PaymentMethod using PayMongo.js
-        const { paymentMethod, error } = await paymongo.createPaymentMethod({
-            type: 'card',
-            card: cardNumber,
-            billing_details: {
-                name:  document.getElementById('card-name').value.trim() || '{{ auth()->user()->parishioner?->full_name }}',
-                email: '{{ auth()->user()->email ?? "" }}',
-                phone: '{{ auth()->user()->parishioner?->contact_number ?? "" }}',
+        // ── Step 2: Create PaymentMethod (client-side, direct REST) ────────
+        btnText.textContent = 'Securing card details…';
+        const pmRes = await fetch('https://api.paymongo.com/v1/payment_methods', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic ' + btoa(PAYMONGO_PK + ':'),
             },
+            body: JSON.stringify({
+                data: {
+                    attributes: {
+                        type: 'card',
+                        details: {
+                            card_number: rawNumber,
+                            exp_month:   parseInt(expMonth),
+                            exp_year:    fullYear,
+                            cvc:         rawCvc,
+                        },
+                        billing: {
+                            name:  cardName,
+                            email: '{{ auth()->user()->email ?? "" }}',
+                            phone: '{{ auth()->user()->parishioner?->contact_number ?? "" }}',
+                        },
+                    },
+                },
+            }),
         });
 
-        if (error) {
-            throw new Error(error.message);
+        const pmData = await pmRes.json();
+        if (pmData.errors) {
+            const msg = pmData.errors[0]?.detail || 'Card details are invalid.';
+            throw new Error(msg);
         }
+        const paymentMethodId = pmData.data?.id;
+        if (!paymentMethodId) throw new Error('Failed to tokenize card.');
 
-        // Step 3 — Attach PaymentMethod to Intent via our backend
+        // ── Step 3: Attach PaymentMethod to Intent (backend) ───────────────
+        btnText.textContent = 'Confirming payment…';
         const confirmRes = await fetch('{{ route('parishioner.payments.card-confirm') }}', {
-            method:  'POST',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept':       'application/json',
+                'Accept': 'application/json',
             },
             body: JSON.stringify({
                 payment_intent_id: intentData.payment_intent_id,
-                payment_method_id: paymentMethod.id,
+                payment_method_id: paymentMethodId,
                 reference_number:  intentData.reference_number,
             }),
         });
 
         const confirmData = await confirmRes.json();
+        if (!confirmData.success) throw new Error(confirmData.error || 'Payment confirmation failed.');
 
-        if (!confirmData.success) {
-            throw new Error(confirmData.error || 'Payment confirmation failed.');
-        }
-
-        // Step 4 — Handle result
+        // ── Step 4: Handle 3DS or success ──────────────────────────────────
         if (confirmData.status === 'awaiting_next_action' && confirmData.redirect_url) {
-            // 3D Secure required — redirect to bank's auth page
             btnText.textContent = 'Redirecting to 3D Secure…';
             window.location.href = confirmData.redirect_url;
             return;
@@ -653,7 +620,7 @@ async function payWithCard() {
             return;
         }
 
-        throw new Error('Unexpected payment status: ' + confirmData.status);
+        throw new Error('Unexpected status: ' + confirmData.status + '. Please try again.');
 
     } catch (err) {
         errorEl.textContent = err.message || 'Payment failed. Please try again.';
