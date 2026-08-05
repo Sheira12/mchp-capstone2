@@ -42,7 +42,7 @@
 
     @else
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.25rem;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:1.25rem;">
         @foreach($certificates as $cert)
         @php
             $statusMap = [

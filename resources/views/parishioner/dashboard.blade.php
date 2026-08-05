@@ -206,7 +206,7 @@
         </div>
 
         {{-- RIGHT: Actions --}}
-        <div style="display:flex;align-items:center;gap:0.625rem;flex-wrap:wrap;width:100%;">
+        <div style="display:flex;align-items:center;gap:0.625rem;flex-wrap:wrap;">
             <a href="{{ route('parishioner.bookings.create') }}"
                style="display:inline-flex;align-items:center;gap:8px;background:#fff;color:#1e3a8a;font-weight:800;font-size:0.8125rem;padding:0.625rem 1.25rem;border-radius:0.875rem;box-shadow:0 4px 16px rgba(0,0,0,0.2);text-decoration:none;transition:all 0.2s;white-space:nowrap;"
                onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.25)';"

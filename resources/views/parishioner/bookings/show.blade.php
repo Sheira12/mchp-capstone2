@@ -36,7 +36,7 @@
                 </div>
             </div>
 
-            <dl class="grid grid-cols-2 gap-4 text-sm">
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div class="bg-gray-50 rounded-xl p-4">
                     <dt class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Date</dt>
                     <dd class="font-bold text-gray-900">{{ $booking->scheduled_date->format('F d, Y') }}</dd>
@@ -58,13 +58,13 @@
                     <dd class="font-bold text-gray-900">{{ $booking->created_at->format('M d, Y') }}</dd>
                 </div>
                 @if($booking->address)
-                <div class="col-span-2 bg-gray-50 rounded-xl p-4">
+                <div class="sm:col-span-2 bg-gray-50 rounded-xl p-4">
                     <dt class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Address</dt>
                     <dd class="font-bold text-gray-900">{{ $booking->address }}</dd>
                 </div>
                 @endif
                 @if($booking->notes)
-                <div class="col-span-2 bg-gray-50 rounded-xl p-4">
+                <div class="sm:col-span-2 bg-gray-50 rounded-xl p-4">
                     <dt class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Your Notes</dt>
                     <dd class="text-gray-700">{{ $booking->notes }}</dd>
                 </div>

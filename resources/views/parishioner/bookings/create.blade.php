@@ -186,7 +186,7 @@
 @endpush
 
 @section('content')
-<div class="space-y-6 max-w-3xl">
+<div class="space-y-6 max-w-3xl w-full">
 
     {{-- Header --}}
     <div class="flex items-center gap-3">

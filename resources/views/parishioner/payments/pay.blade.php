@@ -421,10 +421,12 @@
                 {{-- Accepted cards --}}
                 <div class="flex items-center gap-2 py-1">
                     <span class="text-xs text-gray-400">Accepted:</span>
-                    <img src="{{ asset('images/payment/visa.svg') }}" alt="Visa"
+                    <img src="{{ asset('images/payment/visa.png') }}" alt="Visa"
                          style="height:20px;width:auto;display:inline-block;">
                     <img src="{{ asset('images/payment/mastercard.svg') }}" alt="Mastercard"
                          style="height:20px;width:auto;display:inline-block;">
+                    <span class="px-1.5 py-0.5 bg-blue-800 text-white text-xs font-bold rounded" style="font-size:9px;">AMEX</span>
+                    <span class="px-1.5 py-0.5 bg-gray-700 text-white text-xs font-bold rounded" style="font-size:9px;">JCB</span>
                 </div>
 
                 <button id="pay-card-btn" onclick="payWithCard()"
