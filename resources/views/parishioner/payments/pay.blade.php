@@ -132,9 +132,9 @@
             <div class="method-tab border-2 border-gray-200 rounded-xl p-3 text-center cursor-pointer" onclick="switchTab('card')" id="tab-card">
                 <div class="w-14 h-9 mx-auto mb-2 flex items-center justify-center gap-1">
                     <img src="{{ asset('images/payment/visa.svg') }}" alt="Visa"
-                         class="h-7 rounded object-contain">
+                         style="height:22px;width:auto;display:inline-block;">
                     <img src="{{ asset('images/payment/mastercard.svg') }}" alt="MC"
-                         class="h-7 rounded object-contain">
+                         style="height:22px;width:auto;display:inline-block;">
                 </div>
                 <p class="text-xs font-extrabold text-gray-900">Card</p>
                 <p class="text-xs font-bold text-indigo-600">Credit/Debit</p>
@@ -420,8 +420,10 @@
                 {{-- Accepted cards --}}
                 <div class="flex items-center gap-2 py-2">
                     <span class="text-xs text-gray-400">Accepted:</span>
-                    <img src="{{ asset('images/payment/visa.svg') }}" alt="Visa" class="h-6 rounded object-contain">
-                    <img src="{{ asset('images/payment/mastercard.svg') }}" alt="Mastercard" class="h-6 rounded object-contain">
+                    <img src="{{ asset('images/payment/visa.svg') }}" alt="Visa"
+                         style="height:20px;width:auto;display:inline-block;">
+                    <img src="{{ asset('images/payment/mastercard.svg') }}" alt="Mastercard"
+                         style="height:20px;width:auto;display:inline-block;">
                     <span class="px-2 py-0.5 bg-blue-800 text-white text-xs font-bold rounded">AMEX</span>
                     <span class="px-2 py-0.5 bg-gray-600 text-white text-xs font-bold rounded">JCB</span>
                 </div>
@@ -520,7 +522,7 @@ function mountCardElements() {
     }
 
     try {
-        paymongo = PayMongo(PAYMONGO_PUBLIC_KEY);
+        paymongo = Paymongo(PAYMONGO_PUBLIC_KEY);
         const elements = paymongo.elements();
 
         const style = {
@@ -602,12 +604,12 @@ async function payWithCard() {
 
         // Step 2 — Create PaymentMethod using PayMongo.js
         const { paymentMethod, error } = await paymongo.createPaymentMethod({
-            type:            'card',
-            card:            cardNumber,
+            type: 'card',
+            card: cardNumber,
             billing_details: {
-                name:  document.getElementById('card-name').value || '{{ auth()->user()->parishioner?->full_name }}',
-                email: '{{ auth()->user()->email ?? '' }}',
-                phone: '{{ auth()->user()->parishioner?->contact_number ?? '' }}',
+                name:  document.getElementById('card-name').value.trim() || '{{ auth()->user()->parishioner?->full_name }}',
+                email: '{{ auth()->user()->email ?? "" }}',
+                phone: '{{ auth()->user()->parishioner?->contact_number ?? "" }}',
             },
         });
 
