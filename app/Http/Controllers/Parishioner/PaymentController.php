@@ -48,7 +48,8 @@ class PaymentController extends Controller
         $secretKey    = config('services.paymongo.secret_key');
         $isConfigured = $secretKey
             && !str_contains($secretKey, 'xxxxxxxxxxxx')
-            && !str_contains($secretKey, 'PASTE_YOUR');
+            && !str_contains($secretKey, 'PASTE_YOUR')
+            && !str_contains($secretKey, 'your_secret');
 
         if ($isConfigured) {
             try {
@@ -79,7 +80,20 @@ class PaymentController extends Controller
 
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error('PayMongo failed: ' . $e->getMessage());
+
+                // For card, return the actual error — don't silently fall through to QR
+                if ($validated['method'] === 'card') {
+                    return response()->json([
+                        'success' => false,
+                        'error'   => 'Card payment failed: ' . $e->getMessage(),
+                    ], 422);
+                }
             }
+        } elseif ($validated['method'] === 'card') {
+            return response()->json([
+                'success' => false,
+                'error'   => 'Card payment is not configured. Please contact the parish office or use GCash/Maya.',
+            ], 422);
         }
 
         return response()->json([

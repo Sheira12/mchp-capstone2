@@ -20,6 +20,7 @@ class Payment extends Model
     const METHODS = [
         'gcash'     => 'GCash',
         'maya'      => 'Maya (PayMaya)',
+        'card'      => 'Credit/Debit Card',
         'cash'      => 'Cash',
         'bank'      => 'Bank Transfer',
     ];
