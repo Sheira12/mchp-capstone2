@@ -137,13 +137,14 @@ class PaymentController extends Controller
 
         // Create a pending cash payment — admin will mark as paid when cash is received
         $payment = Payment::create([
-            'parishioner_id' => $booking->parishioner_id,
-            'booking_id'     => $booking->id,
-            'amount'         => $booking->service_fee,
-            'payment_method' => 'cash',
-            'status'         => 'pending',
-            'payer_contact'  => $booking->parishioner->contact_number,
-            'notes'          => 'Cash payment — to be collected at parish office.',
+            'parishioner_id'  => $booking->parishioner_id,
+            'booking_id'      => $booking->id,
+            'amount'          => $booking->service_fee,
+            'payment_method'  => 'cash',
+            'transaction_type'=> 'debit',
+            'status'          => 'pending',
+            'payer_contact'   => $booking->parishioner->contact_number,
+            'notes'           => 'Cash payment — to be collected at parish office.',
         ]);
 
         return redirect()->route('parishioner.bookings.show', $booking)
@@ -190,6 +191,7 @@ class PaymentController extends Controller
             'booking_id'          => $booking->id,
             'amount'              => $booking->service_fee,
             'payment_method'      => $validated['payment_method'],
+            'transaction_type'    => 'debit',
             'status'              => 'pending', // Admin must verify
             'submitted_reference' => $validated['submitted_reference'],
             'payer_contact'       => $validated['payer_contact'] ?? $booking->parishioner->contact_number,
@@ -272,6 +274,7 @@ class PaymentController extends Controller
             'booking_id'          => $booking->id,
             'amount'              => $booking->service_fee,
             'payment_method'      => $method === 'gcash' ? 'gcash' : 'maya',
+            'transaction_type'    => 'debit',
             'status'              => 'paid',
             'submitted_reference' => $request->get('demo_reference'),
             'payer_contact'       => $booking->parishioner->contact_number,
@@ -335,6 +338,53 @@ class PaymentController extends Controller
         ])->setPaper('A4', 'portrait');
 
         return $pdf->download('OR-' . $payment->receipt_number . '.pdf');
+    }
+
+    /**
+     * Complete a simulated card payment — marks as paid instantly for demo.
+     */
+    public function demoCardComplete(Request $request, Booking $booking)
+    {
+        if ($booking->parishioner_id !== auth()->user()->parishioner?->id) {
+            abort(403);
+        }
+
+        if ($booking->payment?->status === 'paid') {
+            return redirect()->route('parishioner.payments.receipt', $booking->payment)
+                ->with('info', 'This booking has already been paid.');
+        }
+
+        $last4 = substr(preg_replace('/\D/', '', $request->get('card_last4', '')), -4) ?: '****';
+
+        $payment = Payment::create([
+            'parishioner_id'      => $booking->parishioner_id,
+            'booking_id'          => $booking->id,
+            'amount'              => $booking->service_fee,
+            'payment_method'      => 'card',
+            'transaction_type'    => 'debit',
+            'status'              => 'paid',
+            'submitted_reference' => 'DEMO-CARD-' . strtoupper(\Illuminate\Support\Str::random(8)),
+            'payer_contact'       => $booking->parishioner->contact_number,
+            'paid_at'             => now(),
+            'notes'               => 'Demo card payment (••••' . $last4 . ') — simulated for capstone presentation.',
+            'verified_at'         => now(),
+        ]);
+
+        if ($booking->status === 'pending') {
+            $booking->update(['status' => 'confirmed']);
+        }
+
+        $linkedUser = \App\Models\User::where('parishioner_id', $booking->parishioner_id)->first();
+        if ($linkedUser) {
+            try {
+                $linkedUser->notify(new \App\Notifications\PaymentReceiptNotification($payment));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning('Receipt notification failed: ' . $e->getMessage());
+            }
+        }
+
+        return redirect()->route('parishioner.payments.receipt', $payment)
+            ->with('success', 'Card payment successful!');
     }
 
     /**

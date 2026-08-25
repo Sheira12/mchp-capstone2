@@ -10,6 +10,10 @@
     <div class="flex flex-wrap items-center justify-between gap-3">
         <a href="{{ route('admin.parishioners.index') }}" class="text-sm text-blue-600 hover:underline">← Back to Parishioners</a>
         <div class="flex gap-2">
+            <a href="{{ route('admin.parishioners.soa', $parishioner) }}" class="btn-secondary text-sm flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                Statement of Account
+            </a>
             <a href="{{ route('admin.sacramental-records.create', ['parishioner_id' => $parishioner->id]) }}" class="btn-secondary text-sm">+ Add Record</a>
             <a href="{{ route('admin.bookings.create') }}?parishioner_id={{ $parishioner->id }}" class="btn-secondary text-sm">+ New Booking</a>
             <a href="{{ route('admin.parishioners.edit', $parishioner) }}" class="btn-primary text-sm">Edit Profile</a>

@@ -134,8 +134,8 @@ table.txn tfoot td { font-weight:bold; background:#dbeafe; border-top:1.5pt soli
         <tr>
             <td class="info-key">Parishioner Name:</td>
             <td class="info-val"><strong>{{ $parishioner->full_name }}</strong></td>
-            <td class="info-key">Parishioner ID:</td>
-            <td class="info-val">#{{ $parishioner->id }}</td>
+            <td class="info-key">Contact:</td>
+            <td class="info-val">{{ $parishioner->contact_number ?? '—' }}</td>
         </tr>
         <tr>
             <td class="info-key">Address:</td>
@@ -150,14 +150,14 @@ table.txn tfoot td { font-weight:bold; background:#dbeafe; border-top:1.5pt soli
                     echo implode(', ', $addrParts) ?: '&mdash;';
                 @endphp
             </td>
-            <td class="info-key">Contact:</td>
-            <td class="info-val">{{ $parishioner->contact_number ?? '—' }}</td>
+            <td class="info-key">Email:</td>
+            <td class="info-val">{{ $parishioner->email ?? '—' }}</td>
         </tr>
         <tr>
             <td class="info-key">Date of Birth:</td>
             <td class="info-val">{{ $parishioner->birthdate?->format('F d, Y') ?? '&mdash;' }}</td>
-            <td class="info-key">Email:</td>
-            <td class="info-val">{{ $parishioner->email ?? '&mdash;' }}</td>
+            <td class="info-key">Contact No.:</td>
+            <td class="info-val">{{ $parishioner->contact_number ?? '—' }}</td>
         </tr>
     </table>
 </div>
@@ -192,9 +192,9 @@ table.txn tfoot td { font-weight:bold; background:#dbeafe; border-top:1.5pt soli
     <thead>
         <tr>
             <th style="width:52pt;">Date</th>
-            <th style="width:78pt;">Reference</th>
             <th>Description</th>
-            <th style="width:52pt;">Method</th>
+            <th style="width:42pt;">Method</th>
+            <th class="tc" style="width:32pt;">Type</th>
             <th class="tr" style="width:44pt;">Amount Due</th>
             <th class="tr" style="width:44pt;">Amount Paid</th>
             <th class="tr" style="width:38pt;">Balance</th>
@@ -215,10 +215,13 @@ table.txn tfoot td { font-weight:bold; background:#dbeafe; border-top:1.5pt soli
                 'refunded' => 'badge-refunded',
                 default    => 'badge-failed',
             };
+            $txType  = $payment->transaction_type ?? 'debit';
+            $txColor = $txType === 'credit' ? '#065f46' : '#991b1b';
+            $txBg    = $txType === 'credit' ? '#d1fae5'  : '#fee2e2';
+            $txArrow = $txType === 'credit' ? '&#9650;'  : '&#9660;';
         @endphp
         <tr>
             <td>{{ $payment->created_at->format('M d, Y') }}</td>
-            <td class="mono">{{ $payment->reference_number ?? '—' }}</td>
             <td>
                 @php
                     if ($payment->booking) {
@@ -231,6 +234,11 @@ table.txn tfoot td { font-weight:bold; background:#dbeafe; border-top:1.5pt soli
                 @endphp
             </td>
             <td>{{ \App\Models\Payment::METHODS[$payment->payment_method] ?? ucfirst($payment->payment_method) }}</td>
+            <td class="tc">
+                <span class="badge" style="background:{{ $txBg }};color:{{ $txColor }};">
+                    {!! $txArrow !!} {{ strtoupper($txType) }}
+                </span>
+            </td>
             <td class="tr">&#8369;{{ number_format($due, 2) }}</td>
             <td class="tr">{{ $paid > 0 ? '&#8369;' . number_format($paid, 2) : '—' }}</td>
             <td class="tr">&#8369;{{ number_format(max(0,$runningBal), 2) }}</td>

@@ -103,7 +103,15 @@
             </div>
             <div class="flex-1">
                 <p class="font-bold text-green-800">Payment Confirmed</p>
-                <p class="text-sm text-green-700">₱{{ number_format($booking->payment->amount, 2) }} via {{ ucfirst($booking->payment->payment_method) }}</p>
+                <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <p class="text-sm text-green-700">₱{{ number_format($booking->payment->amount, 2) }} via {{ \App\Models\Payment::METHODS[$booking->payment->payment_method] ?? ucfirst($booking->payment->payment_method) }}</p>
+                    @php $txBadge = $booking->payment->transaction_type_badge; @endphp
+                    <span style="display:inline-flex;align-items:center;padding:1px 7px;border-radius:9999px;font-size:0.65rem;font-weight:700;
+                        background:{{ $txBadge['color'] === 'green' ? '#dcfce7' : '#fee2e2' }};
+                        color:{{ $txBadge['color'] === 'green' ? '#166534' : '#991b1b' }};">
+                        {{ $txBadge['label'] === 'Debit' ? '▼' : '▲' }} {{ $txBadge['label'] }}
+                    </span>
+                </div>
                 @if($booking->payment->receipt_number)
                 <p class="text-xs text-green-600 font-mono mt-0.5">Receipt: {{ $booking->payment->receipt_number }}</p>
                 @endif

@@ -40,7 +40,7 @@ $sc = $statusConfig[$booking->status] ?? $statusConfig['pending'];
     <div>
         <p class="font-bold text-amber-900">Action Required — Booking Awaiting Approval</p>
         <p class="text-sm text-amber-700 mt-0.5">
-            <strong>{{ $booking->parishioner->full_name }}</strong> has requested
+            <strong>{{ $booking->parishioner?->full_name ?? 'Walk-in' }}</strong> has requested
             <strong>{{ $booking->getTypeLabel() }}</strong> on
             <strong>{{ $booking->scheduled_date->format('F d, Y') }}</strong>.
             Please confirm or decline below.
@@ -152,6 +152,7 @@ $sc = $statusConfig[$booking->status] ?? $statusConfig['pending'];
     {{-- Parishioner Card --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
         <h3 class="font-bold text-gray-800 text-sm mb-3">Parishioner</h3>
+        @if($booking->parishioner)
         <div class="flex items-center gap-3 mb-4">
             @if($booking->parishioner->photo_path)
             <img src="{{ Storage::url($booking->parishioner->photo_path) }}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-100">
@@ -170,6 +171,17 @@ $sc = $statusConfig[$booking->status] ?? $statusConfig['pending'];
            class="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-blue-600 border border-blue-200 bg-blue-50 hover:bg-blue-100 py-2 rounded-lg transition">
             View Full Profile →
         </a>
+        @else
+        <div class="flex items-center gap-3 py-2">
+            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            </div>
+            <div>
+                <p class="font-semibold text-gray-700">Walk-in Booking</p>
+                <p class="text-xs text-gray-400">No parishioner account linked</p>
+            </div>
+        </div>
+        @endif
     </div>
 
     {{-- ── ACTION PANEL ── --}}
@@ -205,7 +217,7 @@ $sc = $statusConfig[$booking->status] ?? $statusConfig['pending'];
                               placeholder="e.g. Please bring your documents. See you on {{ $booking->scheduled_date->format('M d') }}!"></textarea>
                 </div>
                 <button type="button"
-                        onclick="showConfirmModal('confirm-form','Confirm Booking','Are you sure you want to confirm this booking for {{ addslashes($booking->parishioner->full_name) }}?','Confirm','green')"
+                        onclick="showConfirmModal('confirm-form','Confirm Booking','Are you sure you want to confirm this booking for {{ addslashes($booking->parishioner?->full_name ?? 'this walk-in') }}?','Confirm','green')"
                         class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-bold text-sm py-2.5 px-4 rounded-lg transition-all shadow hover:shadow-md">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     Confirm Booking

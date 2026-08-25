@@ -42,7 +42,9 @@ class BookingController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.bookings.index', compact('bookings'));
+        $pendingCount = Booking::pending()->count();
+
+        return view('admin.bookings.index', compact('bookings', 'pendingCount'));
     }
 
     public function show(Booking $booking)

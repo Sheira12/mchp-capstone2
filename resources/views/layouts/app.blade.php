@@ -112,7 +112,7 @@
                 <span class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-400 rounded-full border-2 border-blue-950"></span>
             </div>
             <div class="leading-tight min-w-0">
-                <p class="text-sm font-bold text-white truncate">MHC Parish</p>
+                <p class="text-sm font-bold text-white truncate">{{ config('parish.name', 'MHC Parish') }}</p>
                 <p class="text-xs text-yellow-300 font-medium">Admin Portal</p>
                 <p class="text-xs text-blue-400 truncate">{{ auth()->user()->name }}</p>
             </div>
@@ -251,7 +251,7 @@
                     {{-- Mobile logo (hidden on desktop since sidebar is visible) --}}
                     <div class="flex items-center gap-2 lg:hidden">
                         <img src="{{ asset('images/parish-logo.png') }}" alt="Parish Logo" class="w-8 h-8 rounded-full object-cover border border-blue-200">
-                        <span class="text-sm font-bold text-blue-900 hidden sm:block">MHC Parish</span>
+                        <span class="text-sm font-bold text-blue-900 hidden sm:block">{{ config('parish.name', 'MHC Parish') }}</span>
                     </div>
                     <h1 class="text-base font-semibold text-gray-800 hidden lg:block">@yield('page-title', 'Dashboard')</h1>
                     <h1 class="text-sm font-semibold text-gray-700 lg:hidden">@yield('page-title', 'Dashboard')</h1>

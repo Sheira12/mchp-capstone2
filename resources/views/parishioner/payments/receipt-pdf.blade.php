@@ -359,7 +359,19 @@ if (!function_exists('amountInWords')) {
         <div class="payer-right">
             <div class="payer-label">Payment Status</div>
             <div style="margin-bottom:2pt;"><span class="status-paid">PAID</span></div>
-            <div class="payer-label" style="margin-top:2pt;">Payment Method</div>
+            <div class="payer-label" style="margin-top:4pt;">Transaction Type</div>
+            <div style="margin-bottom:2pt;">
+                @php
+                    $txType  = $payment->transaction_type ?? 'debit';
+                    $txColor = $txType === 'credit' ? '#065f46' : '#991b1b';
+                    $txBg    = $txType === 'credit' ? '#d1fae5'  : '#fee2e2';
+                    $txArrow = $txType === 'credit' ? '▲' : '▼';
+                @endphp
+                <span style="display:inline-block;padding:1.5pt 5pt;border-radius:10pt;font-family:Arial,sans-serif;font-size:7pt;font-weight:bold;background:{{ $txBg }};color:{{ $txColor }};">
+                    {{ $txArrow }} {{ strtoupper($txType) }}
+                </span>
+            </div>
+            <div class="payer-label" style="margin-top:4pt;">Payment Method</div>
             <span class="{{ $methodClass }} method-badge">{{ $methodLabel }}</span>
             @if($payment->submitted_reference)
             <div class="payer-sub" style="margin-top:1pt;font-family:monospace;font-size:6.5pt;">Ref: {{ $payment->submitted_reference }}</div>

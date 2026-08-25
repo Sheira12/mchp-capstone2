@@ -57,6 +57,14 @@
             {{-- Payment details --}}
             <div class="space-y-3">
                 <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-500">Transaction Type</span>
+                    @php $badge = $payment->transaction_type_badge; @endphp
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold
+                        {{ $badge['color'] === 'green' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                        {{ $badge['color'] === 'green' ? '▲' : '▼' }} {{ $badge['label'] }}
+                    </span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-gray-100">
                     <span class="text-sm text-gray-500">Reference Number</span>
                     <span class="font-mono text-sm font-bold text-gray-800">{{ $payment->reference_number }}</span>
                 </div>
@@ -66,6 +74,10 @@
                         <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                         Paid
                     </span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-500">Payment Method</span>
+                    <span class="text-sm font-semibold text-gray-800">{{ \App\Models\Payment::METHODS[$payment->payment_method] ?? ucfirst($payment->payment_method) }}</span>
                 </div>
                 <div class="flex justify-between items-center py-2 border-b border-gray-100">
                     <span class="text-sm text-gray-500">Parishioner</span>

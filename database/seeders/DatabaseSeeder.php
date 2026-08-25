@@ -15,6 +15,9 @@ class DatabaseSeeder extends Seeder
             ServiceSeeder::class,
             DemoDataSeeder::class,
             AnalyticsDataSeeder::class,
+            DemoUsersSeeder::class,
+            FullDemoSeeder::class,
+            CurrentMonthSeeder::class,
         ]);
     }
 }

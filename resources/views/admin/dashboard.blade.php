@@ -305,9 +305,9 @@
         </a>
     </div>
 
-    {{-- Export Report --}}
+    {{-- Generate Report --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-        <h3 class="font-semibold text-gray-800 mb-4">Export Report</h3>        <form action="{{ route('admin.dashboard.export') }}" method="POST" class="flex flex-wrap gap-3 items-end">
+        <h3 class="font-semibold text-gray-800 mb-4">Generate Report</h3>        <form action="{{ route('admin.dashboard.export') }}" method="POST" class="flex flex-wrap gap-3 items-end">
             @csrf
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Period</label>
@@ -335,7 +335,7 @@
                     <option value="excel">Excel</option>
                 </select>
             </div>
-            <button type="submit" class="btn-primary text-sm">Export Report</button>
+            <button type="submit" class="btn-primary text-sm">Generate Report</button>
         </form>
     </div>
 

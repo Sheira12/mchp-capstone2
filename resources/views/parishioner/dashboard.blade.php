@@ -432,11 +432,21 @@
                 <a href="{{ route('parishioner.payments.index') }}" class="text-xs font-bold text-green-600 hover:underline">View all →</a>
             </div>
             @forelse($recentPayments as $payment)
-            @php $ps = ['paid'=>'status-paid','pending'=>'status-pending','failed'=>'status-failed'][$payment->status] ?? 'status-pending'; @endphp
+            @php
+                $ps = ['paid'=>'status-paid','pending'=>'status-pending','failed'=>'status-failed'][$payment->status] ?? 'status-pending';
+                $txBadge = $payment->transaction_type_badge;
+            @endphp
             <div class="flex items-center justify-between px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition">
                 <div>
-                    <p class="font-bold text-sm text-gray-900">₱{{ number_format($payment->amount, 2) }}</p>
-                    <p class="text-xs text-gray-400 capitalize mt-0.5">{{ $payment->payment_method }} · {{ $payment->created_at->format('M d') }}</p>
+                    <div class="flex items-center gap-1.5">
+                        <p class="font-bold text-sm text-gray-900">₱{{ number_format($payment->amount, 2) }}</p>
+                        <span style="display:inline-flex;align-items:center;padding:1px 6px;border-radius:9999px;font-size:0.65rem;font-weight:700;
+                            background:{{ $txBadge['color'] === 'green' ? '#dcfce7' : '#fee2e2' }};
+                            color:{{ $txBadge['color'] === 'green' ? '#166534' : '#991b1b' }};">
+                            {{ $txBadge['label'] === 'Debit' ? '▼' : '▲' }} {{ $txBadge['label'] }}
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-400 capitalize mt-0.5">{{ \App\Models\Payment::METHODS[$payment->payment_method] ?? $payment->payment_method }} · {{ $payment->created_at->format('M d') }}</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="status-pill {{ $ps }}">{{ ucfirst($payment->status) }}</span>

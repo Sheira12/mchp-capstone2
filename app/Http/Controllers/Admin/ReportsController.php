@@ -72,33 +72,71 @@ class ReportsController extends Controller
     // ── Payment Report ────────────────────────────────────────
     public function payments(Request $request)
     {
-        [$from, $to] = $this->dateRange($request);
+        // ── Quarter presets ──────────────────────────────────────
+        $quarters = [
+            'q1' => ['label' => '1st Quarter (Jan – Mar)', 'from' => '-01-01', 'to' => '-03-31'],
+            'q2' => ['label' => '2nd Quarter (Apr – Jun)', 'from' => '-04-01', 'to' => '-06-30'],
+            'q3' => ['label' => '3rd Quarter (Jul – Sep)', 'from' => '-07-01', 'to' => '-09-30'],
+            'q4' => ['label' => '4th Quarter (Oct – Dec)', 'from' => '-10-01', 'to' => '-12-31'],
+        ];
+
+        $year    = (int) $request->get('year', now()->year);
+        $quarter = $request->get('quarter'); // 'q1'|'q2'|'q3'|'q4'|null
+
+        if ($quarter && isset($quarters[$quarter])) {
+            $from = $year . $quarters[$quarter]['from'];
+            $to   = $year . $quarters[$quarter]['to'];
+        } else {
+            [$from, $to] = $this->dateRange($request);
+        }
+
+        $quarterLabel = ($quarter && isset($quarters[$quarter]))
+            ? $quarters[$quarter]['label'] . ' ' . $year
+            : null;
+
+        $baseQuery = fn() => Payment::paid()->whereBetween('paid_at', [$from, $to . ' 23:59:59']);
 
         $data = [
-            'total_collected'  => Payment::paid()->whereBetween('paid_at', [$from, $to.' 23:59:59'])->sum('amount'),
-            'total_pending'    => Payment::where('status','pending')->sum('amount'),
-            'total_refunded'   => Payment::where('status','refunded')->whereBetween('refunded_at',[$from,$to.' 23:59:59'])->sum('amount'),
-            'by_method'        => Payment::paid()->whereBetween('paid_at',[$from,$to.' 23:59:59'])
+            'total_collected'  => ($baseQuery)()->sum('amount'),
+            'total_debit'      => ($baseQuery)()->debit()->sum('amount'),
+            'total_credit'     => ($baseQuery)()->credit()->sum('amount'),
+            'total_pending'    => Payment::where('status', 'pending')->sum('amount'),
+            'total_refunded'   => Payment::where('status', 'refunded')
+                                    ->whereBetween('refunded_at', [$from, $to . ' 23:59:59'])
+                                    ->sum('amount'),
+            'debit_count'      => ($baseQuery)()->debit()->count(),
+            'credit_count'     => ($baseQuery)()->credit()->count(),
+            'by_method'        => ($baseQuery)()
                 ->select('payment_method', DB::raw('sum(amount) as total'), DB::raw('count(*) as count'))
                 ->groupBy('payment_method')->get(),
-            'daily'            => Payment::paid()->whereBetween('paid_at',[$from,$to.' 23:59:59'])
+            'by_type'          => ($baseQuery)()
+                ->select('transaction_type', DB::raw('sum(amount) as total'), DB::raw('count(*) as count'))
+                ->groupBy('transaction_type')->get(),
+            'daily'            => ($baseQuery)()
                 ->select(DB::raw('DATE(paid_at) as date'), DB::raw('sum(amount) as total'), DB::raw('count(*) as count'))
                 ->groupBy('date')->orderBy('date')->get(),
             'monthly'          => Payment::paid()
-                ->where('paid_at','>=', now()->subMonths(12))
+                ->where('paid_at', '>=', now()->subMonths(12))
                 ->select(DB::raw('YEAR(paid_at) as year'), DB::raw('MONTH(paid_at) as month'), DB::raw('sum(amount) as total'))
-                ->groupBy('year','month')->orderBy('year')->orderBy('month')->get(),
-            'outstanding_count'=> Booking::whereDoesntHave('payment', fn($q) => $q->where('status','paid'))->count(),
-            'outstanding_amt'  => Booking::whereDoesntHave('payment', fn($q) => $q->where('status','paid'))->sum('service_fee'),
-            'from'             => $from,
-            'to'               => $to,
+                ->groupBy('year', 'month')->orderBy('year')->orderBy('month')->get(),
+            'outstanding_count' => Booking::whereDoesntHave('payment', fn($q) => $q->where('status', 'paid'))->count(),
+            'outstanding_amt'   => Booking::whereDoesntHave('payment', fn($q) => $q->where('status', 'paid'))->sum('service_fee'),
+            'from'              => $from,
+            'to'                => $to,
+            'quarter'           => $quarter,
+            'quarter_label'     => $quarterLabel,
+            'year'              => $year,
+            'quarters'          => $quarters,
         ];
 
         if ($request->get('export') === 'pdf') {
             return $this->exportPdf('admin.reports.payments-pdf', $data, 'payment-report');
         }
         if ($request->get('export') === 'excel') {
-            return Excel::download(new \App\Exports\ParishReportExport(['revenue' => $data, 'period' => ['from'=>$from,'to'=>$to]]), 'payment-report.xlsx');
+            return Excel::download(
+                new \App\Exports\ParishReportExport(['revenue' => $data, 'period' => ['from' => $from, 'to' => $to, 'quarter_label' => $quarterLabel]]),
+                'payment-report' . ($quarter ? "-{$quarter}-{$year}" : '') . '.xlsx'
+            );
         }
 
         return view('admin.reports.payments', compact('data'));

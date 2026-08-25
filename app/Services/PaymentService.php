@@ -39,12 +39,13 @@ class PaymentService
     ): array {
         // Create payment record first
         $payment = Payment::create([
-            'parishioner_id' => $parishioner->id,
-            'booking_id'     => $booking?->id,
-            'certificate_id' => $certificate?->id,
-            'amount'         => $amount,
-            'payment_method' => 'card',
-            'status'         => 'pending',
+            'parishioner_id'   => $parishioner->id,
+            'booking_id'       => $booking?->id,
+            'certificate_id'   => $certificate?->id,
+            'amount'           => $amount,
+            'payment_method'   => 'card',
+            'transaction_type' => 'debit',
+            'status'           => 'pending',
         ]);
 
         try {
@@ -150,12 +151,13 @@ class PaymentService
     ): array {
         // Create payment record first
         $payment = Payment::create([
-            'parishioner_id' => $parishioner->id,
-            'booking_id'     => $booking?->id,
-            'certificate_id' => $certificate?->id,
-            'amount'         => $amount,
-            'payment_method' => $method === 'paymaya' ? 'maya' : 'gcash',
-            'status'         => 'pending',
+            'parishioner_id'   => $parishioner->id,
+            'booking_id'       => $booking?->id,
+            'certificate_id'   => $certificate?->id,
+            'amount'           => $amount,
+            'payment_method'   => $method === 'paymaya' ? 'maya' : 'gcash',
+            'transaction_type' => 'debit',
+            'status'           => 'pending',
         ]);
 
         try {

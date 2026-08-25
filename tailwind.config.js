@@ -8,10 +8,17 @@ export default {
         './resources/js/**/*.js',
     ],
     safelist: [
-        // Dynamic color classes used in Blade templates
-        { pattern: /bg-(amber|green|blue|red|purple|gray|orange)-(50|100|200)/ },
-        { pattern: /text-(amber|green|blue|red|purple|gray|orange)-(600|700|800)/ },
-        { pattern: /border-(amber|green|blue|red|purple|gray|orange)-(200|300)/ },
+        // Dynamic color classes used in Blade templates via variables like bg-{{ $color }}-100
+        // Status colors: amber (pending), green (confirmed/paid), blue (completed), red (cancelled/failed), gray (default)
+        // Extra: purple (certificates/roles), orange (ledger), teal (audit)
+        { pattern: /^bg-(amber|green|blue|red|gray|purple|orange|teal)-(50|100|200)$/ },
+        { pattern: /^text-(amber|green|blue|red|gray|purple|orange|teal)-(600|700|800)$/ },
+        { pattern: /^border-(amber|green|blue|red|gray|purple|orange|teal)-(200|300|400)$/ },
+        // Status bar top strips used in booking/payment cards: h-1 bg-{color}-400
+        { pattern: /^bg-(amber|green|blue|red|gray|purple|orange|teal)-400$/ },
+        // Badge backgrounds with text
+        'badge-pending', 'badge-paid', 'badge-confirmed', 'badge-completed',
+        'badge-cancelled', 'badge-failed', 'badge-refunded', 'badge-voided',
     ],
     theme: {
         extend: {

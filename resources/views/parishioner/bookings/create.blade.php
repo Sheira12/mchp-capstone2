@@ -358,12 +358,16 @@
                     <div>
                         <label class="form-label">Address <span class="text-gray-400 text-xs">(for blessings)</span></label>
                         <input type="text" name="address" value="{{ old('address') }}"
-                               class="form-input w-full" placeholder="Where service will be performed">
+                               class="form-input w-full @error('address') border-red-400 @enderror"
+                               placeholder="Where service will be performed">
+                        @error('address')<p class="form-error">{{ $message }}</p>@enderror
                     </div>
                     <div class="sm:col-span-2">
                         <label class="form-label">Additional Notes <span class="text-gray-400 text-xs">(optional)</span></label>
-                        <textarea name="notes" rows="3" class="form-input w-full"
+                        <textarea name="notes" rows="3"
+                                  class="form-input w-full @error('notes') border-red-400 @enderror"
                                   placeholder="Special requests, names of persons involved, etc.">{{ old('notes') }}</textarea>
+                        @error('notes')<p class="form-error">{{ $message }}</p>@enderror
                     </div>
                 </div>
             </div>
@@ -596,7 +600,15 @@ document.getElementById('booking-form').addEventListener('submit', function(e) {
     if (!document.getElementById('scheduled_date').value) {
         e.preventDefault();
         alert('Please select a date from the calendar.');
+        return;
     }
+    // Disable submit button to prevent double-submission
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.classList.add('opacity-75', 'cursor-not-allowed');
+    btn.innerHTML = '<svg style="width:16px;height:16px;animation:spin 1s linear infinite;flex-shrink:0" fill="none" viewBox="0 0 24 24"><circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path style="opacity:.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/></svg> Submitting…';
 });
 </script>
+@push('styles')
+<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 @endpush

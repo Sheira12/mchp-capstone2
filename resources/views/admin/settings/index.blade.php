@@ -31,39 +31,45 @@
             <div>
                 <label class="form-label">Address <span class="text-red-500">*</span></label>
                 <input type="text" name="parish_address" value="{{ old('parish_address', $settings['parish_address']) }}"
-                       required class="form-input w-full">
+                       required class="form-input w-full @error('parish_address') border-red-400 @enderror">
+                @error('parish_address')<p class="form-error">{{ $message }}</p>@enderror
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="form-label">Phone Number</label>
                     <input type="text" name="parish_phone" value="{{ old('parish_phone', $settings['parish_phone']) }}"
-                           class="form-input w-full" placeholder="(049) XXX-XXXX">
+                           class="form-input w-full @error('parish_phone') border-red-400 @enderror" placeholder="(049) XXX-XXXX">
+                    @error('parish_phone')<p class="form-error">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label class="form-label">Email Address</label>
                     <input type="email" name="parish_email" value="{{ old('parish_email', $settings['parish_email']) }}"
-                           class="form-input w-full">
+                           class="form-input w-full @error('parish_email') border-red-400 @enderror">
+                    @error('parish_email')<p class="form-error">{{ $message }}</p>@enderror
                 </div>
             </div>
 
             <div>
                 <label class="form-label">Parish Priest</label>
                 <input type="text" name="parish_priest" value="{{ old('parish_priest', $settings['parish_priest']) }}"
-                       class="form-input w-full" placeholder="Rev. Fr. Name">
+                       class="form-input w-full @error('parish_priest') border-red-400 @enderror" placeholder="Rev. Fr. Name">
+                @error('parish_priest')<p class="form-error">{{ $message }}</p>@enderror
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="form-label">Parish Secretary</label>
                     <input type="text" name="parish_secretary" value="{{ old('parish_secretary', $settings['parish_secretary']) }}"
-                           class="form-input w-full" placeholder="Full name of the Parish Secretary">
+                           class="form-input w-full @error('parish_secretary') border-red-400 @enderror" placeholder="Full name of the Parish Secretary">
+                    @error('parish_secretary')<p class="form-error">{{ $message }}</p>@enderror
                     <p class="text-xs text-gray-400 mt-1">Appears on the signature line of all certificates.</p>
                 </div>
                 <div>
                     <label class="form-label">Finance Officer</label>
                     <input type="text" name="parish_finance_officer" value="{{ old('parish_finance_officer', $settings['parish_finance_officer']) }}"
-                           class="form-input w-full" placeholder="Full name of the Finance Officer">
+                           class="form-input w-full @error('parish_finance_officer') border-red-400 @enderror" placeholder="Full name of the Finance Officer">
+                    @error('parish_finance_officer')<p class="form-error">{{ $message }}</p>@enderror
                     <p class="text-xs text-gray-400 mt-1">Appears on financial report signatures.</p>
                 </div>
             </div>
@@ -93,7 +99,8 @@
                 <div class="flex-1">
                     <label class="form-label text-xs">Facebook Page URL</label>
                     <input type="url" name="social_facebook" value="{{ old('social_facebook', $socials['facebook']) }}"
-                           class="form-input w-full text-sm" placeholder="https://facebook.com/yourpage">
+                           class="form-input w-full text-sm @error('social_facebook') border-red-400 @enderror" placeholder="https://facebook.com/yourpage">
+                    @error('social_facebook')<p class="form-error text-xs">{{ $message }}</p>@enderror
                 </div>
             </div>
 
@@ -105,33 +112,44 @@
                 <div class="flex-1">
                     <label class="form-label text-xs">Messenger URL</label>
                     <input type="url" name="social_messenger" value="{{ old('social_messenger', $socials['messenger']) }}"
-                           class="form-input w-full text-sm" placeholder="https://m.me/yourpage">
+                           class="form-input w-full text-sm @error('social_messenger') border-red-400 @enderror" placeholder="https://m.me/yourpage">
+                    @error('social_messenger')<p class="form-error text-xs">{{ $message }}</p>@enderror
                 </div>
             </div>
-
             {{-- Instagram --}}
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-full bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" fill="#fff"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="3" y="3" width="18" height="18" rx="5"/>
+                        <circle cx="12" cy="12" r="4"/>
+                        <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+                    </svg>
                 </div>
                 <div class="flex-1">
                     <label class="form-label text-xs">Instagram URL</label>
                     <input type="url" name="social_instagram" value="{{ old('social_instagram', $socials['instagram']) }}"
-                           class="form-input w-full text-sm" placeholder="https://instagram.com/yourpage">
+                           class="form-input w-full text-sm @error('social_instagram') border-red-400 @enderror" placeholder="https://instagram.com/yourpage">
+                    @error('social_instagram')<p class="form-error text-xs">{{ $message }}</p>@enderror
                 </div>
             </div>
 
             {{-- YouTube --}}
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-red-600 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 001.46 6.42 29 29 0 001 12a29 29 0 00.46 5.58A2.78 2.78 0 003.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.95A29 29 0 0023 12a29 29 0 00-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#fff"/></svg>
+                <div class="w-9 h-9 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-7 h-7" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill="#FF0000" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.6 3.5 12 3.5 12 3.5s-7.6 0-9.4.6a3 3 0 0 0-2.1 2.1C0 8 0 12 0 12s0 4 .5 5.8a3 3 0 0 0 2.1 2.1c1.8.6 9.4.6 9.4.6s7.6 0 9.4-.6a3 3 0 0 0 2.1-2.1c.5-1.8.5-5.8.5-5.8s0-4-.5-5.8Z"/>
+                        <path fill="#fff" d="M9.6 15.5 15.8 12 9.6 8.5v7Z"/>
+                    </svg>
                 </div>
                 <div class="flex-1">
                     <label class="form-label text-xs">YouTube Channel URL</label>
                     <input type="url" name="social_youtube" value="{{ old('social_youtube', $socials['youtube']) }}"
-                           class="form-input w-full text-sm" placeholder="https://youtube.com/@yourchannel">
+                           class="form-input w-full text-sm @error('social_youtube') border-red-400 @enderror" placeholder="https://youtube.com/@yourchannel">
+                    @error('social_youtube')<p class="form-error text-xs">{{ $message }}</p>@enderror
                 </div>
             </div>
+
+
 
             {{-- TikTok --}}
             <div class="flex items-center gap-3">
@@ -141,7 +159,8 @@
                 <div class="flex-1">
                     <label class="form-label text-xs">TikTok URL</label>
                     <input type="url" name="social_tiktok" value="{{ old('social_tiktok', $socials['tiktok']) }}"
-                           class="form-input w-full text-sm" placeholder="https://tiktok.com/@yourpage">
+                           class="form-input w-full text-sm @error('social_tiktok') border-red-400 @enderror" placeholder="https://tiktok.com/@yourpage">
+                    @error('social_tiktok')<p class="form-error text-xs">{{ $message }}</p>@enderror
                 </div>
             </div>
 
@@ -168,6 +187,7 @@
         <div class="flex flex-wrap gap-3">
             <form method="POST" action="{{ route('admin.settings.clear-cache') }}">
                 @csrf
+                <input type="hidden" name="type" value="config">
                 <button type="submit" class="btn-secondary text-sm">Clear Config Cache</button>
             </form>
             <form method="POST" action="{{ route('admin.settings.clear-cache') }}">

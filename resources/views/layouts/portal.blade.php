@@ -340,6 +340,9 @@
 {{-- Mobile overlay --}}
 <div class="sb-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
 
+{{-- Compute pending bookings count once for the entire layout --}}
+@php $_pendingBookings = auth()->user()->parishioner?->bookings()->where('status','pending')->count() ?? 0; @endphp
+
 <div class="portal-shell">
 
     {{-- ═══════════════ SIDEBAR ═══════════════ --}}
@@ -349,7 +352,7 @@
         <a href="{{ route('home') }}" class="sb-brand">
             <img src="{{ asset('images/parish-logo.png') }}" alt="MHC Parish">
             <div class="sb-brand-text">
-                <p>MHC Parish</p>
+                <p>{{ config('parish.name', 'MHC Parish') }}</p>
                 <p>Parishioner Portal</p>
             </div>
         </a>
@@ -402,9 +405,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
                 My Bookings
-                @php $pendingCount = auth()->user()->parishioner?->bookings()->where('status','pending')->count() ?? 0; @endphp
-                @if($pendingCount > 0)
-                    <span class="sb-badge">{{ $pendingCount }}</span>
+                @if($_pendingBookings > 0)
+                    <span class="sb-badge">{{ $_pendingBookings }}</span>
                 @endif
             </a>
 
@@ -555,8 +557,7 @@
             </a>
             <a href="{{ route('parishioner.bookings.index') }}"
                class="mbn-item {{ request()->routeIs('parishioner.bookings.*') ? 'active' : '' }}">
-                @php $pendingMobile = auth()->user()->parishioner?->bookings()->where('status','pending')->count() ?? 0; @endphp
-                @if($pendingMobile > 0)<span class="mbn-badge">{{ $pendingMobile }}</span>@endif
+                @if($_pendingBookings > 0)<span class="mbn-badge">{{ $_pendingBookings }}</span>@endif
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 Bookings
             </a>

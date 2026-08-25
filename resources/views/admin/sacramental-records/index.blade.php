@@ -1,5 +1,4 @@
 @extends('layouts.app')
-
 @section('title', 'Sacramental Records')
 @section('page-title', 'Sacramental Records')
 
@@ -8,7 +7,7 @@
 
     {{-- Filters --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <form method="GET" data-live-search data-target="#records-table" class="flex flex-wrap gap-3 items-end">
+        <form method="GET" data-live-search data-target="#records-list" class="flex flex-wrap gap-3 items-end">
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Search</label>
                 <input type="text" name="search" value="{{ request('search') }}"
@@ -18,11 +17,11 @@
                 <label class="block text-xs text-gray-500 mb-1">Type</label>
                 <select name="type" class="form-select text-sm" data-live-input>
                     <option value="">All Types</option>
-                    <option value="baptism" @selected(request('type') === 'baptism')>Baptism</option>
-                    <option value="first_communion" @selected(request('type') === 'first_communion')>First Communion</option>
-                    <option value="confirmation" @selected(request('type') === 'confirmation')>Confirmation</option>
-                    <option value="marriage" @selected(request('type') === 'marriage')>Marriage</option>
-                    <option value="death_burial" @selected(request('type') === 'death_burial')>Death/Burial</option>
+                    <option value="baptism"         @selected(request('type')==='baptism')>Baptism</option>
+                    <option value="first_communion" @selected(request('type')==='first_communion')>First Communion</option>
+                    <option value="confirmation"    @selected(request('type')==='confirmation')>Confirmation</option>
+                    <option value="marriage"        @selected(request('type')==='marriage')>Marriage</option>
+                    <option value="death_burial"    @selected(request('type')==='death_burial')>Death/Burial</option>
                 </select>
             </div>
             <div>
@@ -35,7 +34,7 @@
             </div>
             <button type="submit" class="btn-secondary text-sm">Filter</button>
             @if(request()->hasAny(['search','type','date_from','date_to']))
-                <a href="{{ route('admin.sacramental-records.index') }}" class="btn-secondary text-sm">Clear</a>
+            <a href="{{ route('admin.sacramental-records.index') }}" class="btn-secondary text-sm">Clear</a>
             @endif
             <div class="ml-auto">
                 <a href="{{ route('admin.sacramental-records.create') }}" class="btn-primary text-sm">+ New Record</a>
@@ -43,8 +42,70 @@
         </form>
     </div>
 
-    {{-- Table --}}
-    <div id="records-table" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    {{-- ── MOBILE CARDS ── --}}
+    @php
+        $typeColors = ['baptism'=>'blue','first_communion'=>'green','confirmation'=>'purple','marriage'=>'pink','death_burial'=>'gray'];
+        $typeLabels = ['baptism'=>'Baptism','first_communion'=>'First Communion','confirmation'=>'Confirmation','marriage'=>'Marriage','death_burial'=>'Death/Burial'];
+        $typeIcons  = ['baptism'=>'💧','first_communion'=>'🕊️','confirmation'=>'✝️','marriage'=>'💍','death_burial'=>'🕯️'];
+    @endphp
+    <div id="records-list" class="space-y-3 lg:hidden">
+        @forelse($records as $record)
+        @php $color = $typeColors[$record->type] ?? 'gray'; @endphp
+        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+            <div class="flex items-start gap-3 mb-2">
+                <div class="w-10 h-10 rounded-xl bg-{{ $color }}-50 flex items-center justify-center text-lg flex-shrink-0">
+                    {{ $typeIcons[$record->type] ?? '📋' }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <a href="{{ route('admin.sacramental-records.show', $record) }}"
+                               class="font-semibold text-gray-900 hover:text-blue-700 text-sm">
+                                {{ $record->parishioner->full_name }}
+                            </a>
+                            <p class="text-xs text-gray-500 mt-0.5">{{ $record->date_administered->format('M d, Y') }}</p>
+                        </div>
+                        <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-{{ $color }}-100 text-{{ $color }}-800">
+                                {{ $typeLabels[$record->type] ?? $record->type }}
+                            </span>
+                            @if($record->verified_at)
+                            <span class="text-xs font-semibold text-green-600">✓ Verified</span>
+                            @else
+                            <span class="text-xs text-gray-400">Pending</span>
+                            @endif
+                        </div>
+                    </div>
+                    @if($record->celebrant)
+                    <p class="text-xs text-gray-400 mt-1">{{ $record->celebrant }}</p>
+                    @endif
+                    @if($record->register_number)
+                    <p class="text-xs font-mono text-gray-400">Reg# {{ $record->register_number }}</p>
+                    @endif
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5 flex-wrap pt-2 border-t border-gray-100">
+                <a href="{{ route('admin.sacramental-records.show', $record) }}" class="action-btn action-btn-view">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    View
+                </a>
+                <a href="{{ route('admin.sacramental-records.edit', $record) }}" class="action-btn action-btn-edit">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    Edit
+                </a>
+            </div>
+        </div>
+        @empty
+        <div class="bg-white rounded-xl border border-gray-100 p-10 text-center text-gray-400">No records found.</div>
+        @endforelse
+        @if($records->hasPages())
+        <div class="bg-white rounded-xl border border-gray-100 px-4 py-3">{{ $records->links() }}</div>
+        @endif
+    </div>
+
+    {{-- ── DESKTOP TABLE ── --}}
+    <div id="records-table" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hidden lg:block">
+        <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-100">
                 <tr class="text-left text-gray-500">
@@ -59,17 +120,7 @@
             </thead>
             <tbody class="divide-y divide-gray-50">
                 @forelse($records as $record)
-                @php
-                    $typeColors = [
-                        'baptism' => 'blue', 'first_communion' => 'green',
-                        'confirmation' => 'purple', 'marriage' => 'pink', 'death_burial' => 'gray'
-                    ];
-                    $typeLabels = [
-                        'baptism' => 'Baptism', 'first_communion' => 'First Communion',
-                        'confirmation' => 'Confirmation', 'marriage' => 'Marriage', 'death_burial' => 'Death/Burial'
-                    ];
-                    $color = $typeColors[$record->type] ?? 'gray';
-                @endphp
+                @php $color = $typeColors[$record->type] ?? 'gray'; @endphp
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3 font-medium text-gray-900">
                         <a href="{{ route('admin.sacramental-records.show', $record) }}" class="hover:text-blue-700">
@@ -81,14 +132,14 @@
                             {{ $typeLabels[$record->type] ?? $record->type }}
                         </span>
                     </td>
-                    <td class="px-4 py-3 text-gray-600">{{ $record->date_administered->format('M d, Y') }}</td>
+                    <td class="px-4 py-3 text-gray-600 whitespace-nowrap">{{ $record->date_administered->format('M d, Y') }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ $record->celebrant }}</td>
-                    <td class="px-4 py-3 text-gray-500">{{ $record->register_number ?? '—' }}</td>
+                    <td class="px-4 py-3 text-gray-500 font-mono text-xs">{{ $record->register_number ?? '—' }}</td>
                     <td class="px-4 py-3">
                         @if($record->verified_at)
-                            <span class="text-green-600 text-xs">✓ Verified</span>
+                        <span class="text-green-600 text-xs font-semibold">✓ Verified</span>
                         @else
-                            <span class="text-gray-400 text-xs">Pending</span>
+                        <span class="text-gray-400 text-xs">Pending</span>
                         @endif
                     </td>
                     <td class="px-4 py-3">
@@ -105,15 +156,12 @@
                     </td>
                 </tr>
                 @empty
-                <tr>
-                    <td colspan="7" class="px-4 py-8 text-center text-gray-400">No records found.</td>
-                </tr>
+                <tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">No records found.</td></tr>
                 @endforelse
             </tbody>
         </table>
-        <div class="px-4 py-3 border-t border-gray-100">
-            {{ $records->links() }}
         </div>
+        <div class="px-4 py-3 border-t border-gray-100">{{ $records->links() }}</div>
     </div>
 </div>
 @endsection

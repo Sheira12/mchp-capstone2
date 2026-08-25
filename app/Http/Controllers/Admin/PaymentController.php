@@ -73,9 +73,10 @@ class PaymentController extends Controller
 
         $payment = Payment::create([
             ...$validated,
-            'payment_method' => 'cash',
-            'status'         => 'paid',
-            'paid_at'        => now(),
+            'payment_method'   => 'cash',
+            'transaction_type' => 'debit',
+            'status'           => 'paid',
+            'paid_at'          => now(),
         ]);
 
         // Update booking status if linked

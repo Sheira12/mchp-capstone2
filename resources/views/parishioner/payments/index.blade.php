@@ -51,8 +51,16 @@
                             </svg>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="font-bold text-lg text-gray-900">₱{{ number_format($payment->amount, 2) }}</p>
-                            <p class="text-sm text-gray-500 capitalize mt-0.5">{{ $payment->payment_method }} payment</p>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <p class="font-bold text-lg text-gray-900">₱{{ number_format($payment->amount, 2) }}</p>
+                                @php $badge = $payment->transaction_type_badge; @endphp
+                                <span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:9999px;font-size:0.7rem;font-weight:700;letter-spacing:0.04em;
+                                    background:{{ $badge['color'] === 'green' ? '#dcfce7' : '#fee2e2' }};
+                                    color:{{ $badge['color'] === 'green' ? '#166534' : '#991b1b' }};">
+                                    {{ $badge['label'] === 'Debit' ? '▼' : '▲' }} {{ $badge['label'] }}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-500 capitalize mt-0.5">{{ \App\Models\Payment::METHODS[$payment->payment_method] ?? $payment->payment_method }}</p>
                             @if($payment->booking)
                             <p class="text-xs text-gray-400 mt-1">For: {{ $payment->booking->getTypeLabel() }}</p>
                             @endif

@@ -1,14 +1,20 @@
 @extends('layouts.app')
-
 @section('title', 'Certificates')
 @section('page-title', 'Certificates')
+
+@push('styles')
+<style>
+.cert-card { background:#fff; border:1px solid #e8edf5; border-radius:1rem; padding:1rem; transition:box-shadow 0.15s; }
+.cert-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.07); }
+</style>
+@endpush
 
 @section('content')
 <div class="py-6 space-y-4">
 
     {{-- Filters --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <form method="GET" data-live-search data-target="#certificates-table" class="flex flex-wrap gap-3 items-end">
+        <form method="GET" data-live-search data-target="#certs-list" class="flex flex-wrap gap-3 items-end">
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Search</label>
                 <input type="text" name="search" value="{{ request('search') }}"
@@ -18,25 +24,25 @@
                 <label class="block text-xs text-gray-500 mb-1">Type</label>
                 <select name="type" class="form-select text-sm" data-live-input>
                     <option value="">All Types</option>
-                    <option value="baptism" @selected(request('type') === 'baptism')>Baptism</option>
-                    <option value="confirmation" @selected(request('type') === 'confirmation')>Confirmation</option>
-                    <option value="marriage" @selected(request('type') === 'marriage')>Marriage</option>
-                    <option value="first_communion" @selected(request('type') === 'first_communion')>First Communion</option>
-                    <option value="other" @selected(request('type') === 'other')>Other</option>
+                    <option value="baptism"         @selected(request('type')==='baptism')>Baptism</option>
+                    <option value="confirmation"    @selected(request('type')==='confirmation')>Confirmation</option>
+                    <option value="marriage"        @selected(request('type')==='marriage')>Marriage</option>
+                    <option value="first_communion" @selected(request('type')==='first_communion')>First Communion</option>
+                    <option value="other"           @selected(request('type')==='other')>Other</option>
                 </select>
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Status</label>
                 <select name="status" class="form-select text-sm" data-live-input>
                     <option value="">All Status</option>
-                    <option value="draft" @selected(request('status') === 'draft')>Draft</option>
-                    <option value="issued" @selected(request('status') === 'issued')>Issued</option>
-                    <option value="released" @selected(request('status') === 'released')>Released</option>
+                    <option value="draft"    @selected(request('status')==='draft')>Draft</option>
+                    <option value="issued"   @selected(request('status')==='issued')>Issued</option>
+                    <option value="released" @selected(request('status')==='released')>Released</option>
                 </select>
             </div>
             <button type="submit" class="btn-secondary text-sm">Filter</button>
             @if(request()->hasAny(['search','type','status']))
-                <a href="{{ route('admin.certificates.index') }}" class="btn-secondary text-sm">Clear</a>
+            <a href="{{ route('admin.certificates.index') }}" class="btn-secondary text-sm">Clear</a>
             @endif
             <div class="ml-auto">
                 <a href="{{ route('admin.certificates.create') }}" class="btn-primary text-sm">+ New Certificate</a>
@@ -44,8 +50,65 @@
         </form>
     </div>
 
-    {{-- Table --}}
-    <div id="certificates-table" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    {{-- ── MOBILE CARDS ── --}}
+    <div id="certs-list" class="space-y-3 lg:hidden">
+        @forelse($certificates as $cert)
+        @php
+            $statusColors = ['draft'=>'gray','issued'=>'blue','released'=>'green'];
+            $sc = $statusColors[$cert->status] ?? 'gray';
+            $typeIcons = ['baptism'=>'💧','confirmation'=>'✝️','marriage'=>'💍','first_communion'=>'🕊️','death_burial'=>'🕯️'];
+        @endphp
+        <div class="cert-card">
+            <div class="flex items-start gap-3 mb-2">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-lg flex-shrink-0">
+                    {{ $typeIcons[$cert->type] ?? '📜' }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <a href="{{ route('admin.certificates.show', $cert) }}" class="font-semibold text-gray-900 hover:text-blue-700 text-sm capitalize">
+                                {{ str_replace('_', ' ', $cert->type) }} Certificate
+                            </a>
+                            <p class="text-xs font-mono text-gray-400 mt-0.5">{{ $cert->certificate_number }}</p>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-{{ $sc }}-100 text-{{ $sc }}-800 flex-shrink-0">
+                            {{ ucfirst($cert->status) }}
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-0.5">{{ $cert->parishioner->full_name }} · {{ $cert->issued_date->format('M d, Y') }}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5 flex-wrap pt-2 border-t border-gray-100">
+                <a href="{{ route('admin.certificates.show', $cert) }}" class="action-btn action-btn-view">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    View
+                </a>
+                <a href="{{ route('admin.certificates.download', $cert) }}" class="action-btn action-btn-green">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    PDF
+                </a>
+                @if($cert->status === 'issued')
+                <form method="POST" action="{{ route('admin.certificates.release', $cert) }}" class="inline">
+                    @csrf
+                    <button type="submit" class="action-btn" style="background:#f5f3ff;color:#6d28d9;border-color:#ddd6fe;">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Release
+                    </button>
+                </form>
+                @endif
+            </div>
+        </div>
+        @empty
+        <div class="bg-white rounded-xl border border-gray-100 p-10 text-center text-gray-400">No certificates found.</div>
+        @endforelse
+        @if($certificates->hasPages())
+        <div class="bg-white rounded-xl border border-gray-100 px-4 py-3">{{ $certificates->links() }}</div>
+        @endif
+    </div>
+
+    {{-- ── DESKTOP TABLE ── --}}
+    <div id="certificates-table" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hidden lg:block">
+        <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-100">
                 <tr class="text-left text-gray-500">
@@ -59,23 +122,16 @@
             </thead>
             <tbody class="divide-y divide-gray-50">
                 @forelse($certificates as $cert)
-                @php
-                    $statusColors = ['draft' => 'gray', 'issued' => 'blue', 'released' => 'green'];
-                    $sc = $statusColors[$cert->status] ?? 'gray';
-                @endphp
+                @php $statusColors=['draft'=>'gray','issued'=>'blue','released'=>'green']; $sc=$statusColors[$cert->status]??'gray'; @endphp
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ $cert->certificate_number }}</td>
                     <td class="px-4 py-3 font-medium text-gray-900">
-                        <a href="{{ route('admin.certificates.show', $cert) }}" class="hover:text-blue-700">
-                            {{ $cert->parishioner->full_name }}
-                        </a>
+                        <a href="{{ route('admin.certificates.show', $cert) }}" class="hover:text-blue-700">{{ $cert->parishioner->full_name }}</a>
                     </td>
-                    <td class="px-4 py-3 text-gray-600 capitalize">{{ str_replace('_', ' ', $cert->type) }}</td>
+                    <td class="px-4 py-3 text-gray-600 capitalize">{{ str_replace('_',' ',$cert->type) }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ $cert->issued_date->format('M d, Y') }}</td>
                     <td class="px-4 py-3">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-{{ $sc }}-100 text-{{ $sc }}-800">
-                            {{ ucfirst($cert->status) }}
-                        </span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-{{ $sc }}-100 text-{{ $sc }}-800">{{ ucfirst($cert->status) }}</span>
                     </td>
                     <td class="px-4 py-3">
                         <div class="flex items-center gap-1.5 flex-wrap">
@@ -100,15 +156,14 @@
                     </td>
                 </tr>
                 @empty
-                <tr>
-                    <td colspan="6" class="px-4 py-8 text-center text-gray-400">No certificates found.</td>
-                </tr>
+                <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No certificates found.</td></tr>
                 @endforelse
             </tbody>
         </table>
-        <div class="px-4 py-3 border-t border-gray-100">
-            {{ $certificates->links() }}
         </div>
+        @if($certificates->hasPages())
+        <div class="px-4 py-3 border-t border-gray-100">{{ $certificates->links() }}</div>
+        @endif
     </div>
 </div>
 @endsection

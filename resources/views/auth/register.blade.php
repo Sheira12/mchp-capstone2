@@ -7,7 +7,7 @@
     @vite(['resources/css/app.css'])
     <style>
         .auth-bg {
-            background-image: url('/images/church-bg.jpg');
+            background-image: url('{{ asset('images/church-bg.jpg') }}');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -15,6 +15,7 @@
         .auth-overlay {
             background: linear-gradient(135deg, rgba(15,23,80,0.82) 0%, rgba(30,58,138,0.78) 50%, rgba(49,46,129,0.82) 100%);
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="min-h-screen auth-bg">
@@ -60,7 +61,10 @@
                        class="form-input w-full"
                        placeholder="Repeat password">
             </div>
-            <button type="submit" class="w-full btn-primary py-2.5">Create Account</button>
+            <button type="submit" class="w-full btn-primary py-2.5"
+                    onclick="this.disabled=true;this.innerHTML='<span style=\'display:inline-flex;align-items:center;gap:6px\'><svg style=\'width:16px;height:16px;animation:spin 1s linear infinite\' fill=\'none\' viewBox=\'0 0 24 24\'><circle style=\'opacity:.25\' cx=\'12\' cy=\'12\' r=\'10\' stroke=\'currentColor\' stroke-width=\'4\'/><path style=\'opacity:.75\' fill=\'currentColor\' d=\'M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z\'/></svg>Creating account…</span>';this.form.submit();">
+                Create Account
+            </button>
         </form>
 
         <p class="text-center text-sm text-gray-500 mt-6">
@@ -73,7 +77,7 @@
     </div>
 
     <p class="text-center text-xs text-white/50 mt-4">
-        Mary Help of Christians Parish · Southville 1, Niugan, Cabuyao, Laguna
+        {{ config('parish.name') }} · {{ config('parish.address') }}
     </p>
 </div>
 </div>

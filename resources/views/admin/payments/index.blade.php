@@ -1,5 +1,4 @@
 @extends('layouts.app')
-
 @section('title', 'Payments')
 @section('page-title', 'Payments')
 
@@ -7,16 +6,16 @@
 <div class="py-6 space-y-4">
 
     {{-- Summary Cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
         @php $total = $summary->sum('total'); @endphp
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <p class="text-sm text-gray-500">Total Collected</p>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 col-span-2 sm:col-span-1">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Collected</p>
             <p class="text-2xl font-bold text-green-600 mt-1">₱{{ number_format($total, 2) }}</p>
         </div>
         @foreach($summary as $s)
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <p class="text-sm text-gray-500 capitalize">{{ $s->payment_method }}</p>
-            <p class="text-2xl font-bold text-gray-800 mt-1">₱{{ number_format($s->total, 2) }}</p>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ \App\Models\Payment::METHODS[$s->payment_method] ?? ucfirst($s->payment_method) }}</p>
+            <p class="text-xl font-bold text-gray-800 mt-1">₱{{ number_format($s->total, 2) }}</p>
             <p class="text-xs text-gray-400">{{ $s->count }} transactions</p>
         </div>
         @endforeach
@@ -25,18 +24,18 @@
     {{-- Pending verification alert --}}
     @php $pendingVerification = \App\Models\Payment::where('status','pending')->whereIn('payment_method',['gcash','maya'])->count(); @endphp
     @if($pendingVerification > 0)
-    <div class="bg-amber-50 border border-amber-300 rounded-xl p-4 flex items-center justify-between">
-        <div class="flex items-center gap-3">
+    <div class="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div class="flex items-start gap-3">
             <div class="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
             <div>
-                <p class="font-bold text-amber-900">{{ $pendingVerification }} GCash/Maya payment(s) awaiting verification</p>
-                <p class="text-sm text-amber-700">Review submitted reference numbers and proof of payment.</p>
+                <p class="font-bold text-amber-900 text-sm">{{ $pendingVerification }} GCash/Maya payment(s) awaiting verification</p>
+                <p class="text-xs text-amber-700 mt-0.5">Review submitted reference numbers and proof of payment.</p>
             </div>
         </div>
         <a href="{{ route('admin.payments.index', ['status' => 'pending']) }}"
-           class="flex-shrink-0 bg-amber-500 text-white font-bold text-sm px-4 py-2 rounded-lg hover:bg-amber-600 transition">
+           class="flex-shrink-0 bg-amber-500 text-white font-bold text-sm px-4 py-2 rounded-lg hover:bg-amber-600 transition self-start sm:self-auto">
             Review Now
         </a>
     </div>
@@ -44,7 +43,7 @@
 
     {{-- Filters --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <form method="GET" data-live-search data-target="#payments-table" class="flex flex-wrap gap-3 items-end">
+        <form method="GET" data-live-search data-target="#payments-list" class="flex flex-wrap gap-3 items-end">
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Search</label>
                 <input type="text" name="search" value="{{ request('search') }}"
@@ -54,19 +53,20 @@
                 <label class="block text-xs text-gray-500 mb-1">Status</label>
                 <select name="status" class="form-select text-sm" data-live-input>
                     <option value="">All</option>
-                    <option value="pending" @selected(request('status') === 'pending')>Pending</option>
-                    <option value="paid" @selected(request('status') === 'paid')>Paid</option>
-                    <option value="refunded" @selected(request('status') === 'refunded')>Refunded</option>
-                    <option value="voided" @selected(request('status') === 'voided')>Voided</option>
+                    <option value="pending"  @selected(request('status')==='pending')>Pending</option>
+                    <option value="paid"     @selected(request('status')==='paid')>Paid</option>
+                    <option value="refunded" @selected(request('status')==='refunded')>Refunded</option>
+                    <option value="voided"   @selected(request('status')==='voided')>Voided</option>
                 </select>
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Method</label>
                 <select name="method" class="form-select text-sm" data-live-input>
                     <option value="">All</option>
-                    <option value="cash" @selected(request('method') === 'cash')>Cash</option>
-                    <option value="gcash" @selected(request('method') === 'gcash')>GCash</option>
-                    <option value="paymaya" @selected(request('method') === 'paymaya')>Maya</option>
+                    <option value="cash"    @selected(request('method')==='cash')>Cash</option>
+                    <option value="gcash"   @selected(request('method')==='gcash')>GCash</option>
+                    <option value="paymaya" @selected(request('method')==='paymaya')>Maya</option>
+                    <option value="card"    @selected(request('method')==='card')>Card</option>
                 </select>
             </div>
             <div>
@@ -79,9 +79,9 @@
             </div>
             <button type="submit" class="btn-secondary text-sm">Filter</button>
             @if(request()->hasAny(['search','status','method','date_from','date_to']))
-                <a href="{{ route('admin.payments.index') }}" class="btn-secondary text-sm">Clear</a>
+            <a href="{{ route('admin.payments.index') }}" class="btn-secondary text-sm">Clear</a>
             @endif
-            <div class="ml-auto flex gap-2">
+            <div class="ml-auto flex gap-2 flex-wrap">
                 <a href="{{ route('admin.payments.report') }}" class="btn-secondary text-sm">Reports</a>
                 <button type="button" onclick="document.getElementById('cash-modal').classList.remove('hidden')"
                         class="btn-primary text-sm">+ Record Cash</button>
@@ -89,14 +89,66 @@
         </form>
     </div>
 
-    {{-- Table --}}
-    <div id="payments-table" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    {{-- ── MOBILE CARDS ── --}}
+    <div id="payments-list" class="space-y-3 lg:hidden">
+        @forelse($payments as $payment)
+        @php
+            $statusColors = ['pending'=>'amber','paid'=>'green','refunded'=>'blue','voided'=>'red'];
+            $sc    = $statusColors[$payment->status] ?? 'gray';
+            $badge = $payment->transaction_type_badge;
+            $methodIcons = ['gcash'=>'📱','maya'=>'💙','cash'=>'💵','card'=>'💳','bank'=>'🏦'];
+        @endphp
+        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <div class="flex items-start gap-3 flex-1 min-w-0">
+                    <div class="w-9 h-9 rounded-xl bg-{{ $sc }}-50 flex items-center justify-center text-base flex-shrink-0">
+                        {{ $methodIcons[$payment->payment_method] ?? '💰' }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <p class="font-bold text-gray-900">₱{{ number_format($payment->amount, 2) }}</p>
+                            <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold
+                                {{ $badge['color'] === 'green' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                {{ $badge['color'] === 'green' ? '▲' : '▼' }} {{ $badge['label'] }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-0.5">
+                            {{ \App\Models\Payment::METHODS[$payment->payment_method] ?? ucfirst($payment->payment_method) }}
+                            @if($payment->parishioner) · {{ $payment->parishioner->full_name }}@endif
+                        </p>
+                        <p class="text-xs font-mono text-gray-400 mt-0.5">{{ $payment->reference_number ?? '—' }}</p>
+                        <p class="text-xs text-gray-400">{{ $payment->paid_at ? $payment->paid_at->format('M d, Y') : $payment->created_at->format('M d, Y') }}</p>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-{{ $sc }}-100 text-{{ $sc }}-800">
+                        {{ ucfirst($payment->status) }}
+                    </span>
+                    <a href="{{ route('admin.payments.show', $payment) }}" class="action-btn action-btn-view text-xs">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        View
+                    </a>
+                </div>
+            </div>
+        </div>
+        @empty
+        <div class="bg-white rounded-xl border border-gray-100 p-10 text-center text-gray-400">No payments found.</div>
+        @endforelse
+        @if($payments->hasPages())
+        <div class="bg-white rounded-xl border border-gray-100 px-4 py-3">{{ $payments->links() }}</div>
+        @endif
+    </div>
+
+    {{-- ── DESKTOP TABLE ── --}}
+    <div id="payments-table" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hidden lg:block">
+        <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-100">
                 <tr class="text-left text-gray-500">
                     <th class="px-4 py-3 font-medium">Reference #</th>
                     <th class="px-4 py-3 font-medium">Parishioner</th>
                     <th class="px-4 py-3 font-medium">Amount</th>
+                    <th class="px-4 py-3 font-medium">Type</th>
                     <th class="px-4 py-3 font-medium">Method</th>
                     <th class="px-4 py-3 font-medium">Status</th>
                     <th class="px-4 py-3 font-medium">Date</th>
@@ -106,22 +158,27 @@
             <tbody class="divide-y divide-gray-50">
                 @forelse($payments as $payment)
                 @php
-                    $statusColors = ['pending' => 'amber', 'paid' => 'green', 'refunded' => 'blue', 'voided' => 'red'];
-                    $sc = $statusColors[$payment->status] ?? 'gray';
+                    $statusColors = ['pending'=>'amber','paid'=>'green','refunded'=>'blue','voided'=>'red'];
+                    $sc    = $statusColors[$payment->status] ?? 'gray';
+                    $badge = $payment->transaction_type_badge;
                 @endphp
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ $payment->reference_number ?? '—' }}</td>
-                    <td class="px-4 py-3 font-medium text-gray-900">
-                        {{ $payment->parishioner?->full_name ?? '—' }}
-                    </td>
+                    <td class="px-4 py-3 font-medium text-gray-900">{{ $payment->parishioner?->full_name ?? '—' }}</td>
                     <td class="px-4 py-3 font-semibold text-gray-900">₱{{ number_format($payment->amount, 2) }}</td>
-                    <td class="px-4 py-3 text-gray-600 capitalize">{{ $payment->payment_method }}</td>
+                    <td class="px-4 py-3">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold
+                            {{ $badge['color'] === 'green' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                            {{ $badge['color'] === 'green' ? '▲' : '▼' }} {{ $badge['label'] }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-gray-600">{{ \App\Models\Payment::METHODS[$payment->payment_method] ?? ucfirst($payment->payment_method) }}</td>
                     <td class="px-4 py-3">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-{{ $sc }}-100 text-{{ $sc }}-800">
                             {{ ucfirst($payment->status) }}
                         </span>
                     </td>
-                    <td class="px-4 py-3 text-gray-500 text-xs">
+                    <td class="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
                         {{ $payment->paid_at ? $payment->paid_at->format('M d, Y') : $payment->created_at->format('M d, Y') }}
                     </td>
                     <td class="px-4 py-3">
@@ -133,14 +190,13 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="px-4 py-8 text-center text-gray-400">No payments found.</td>
+                    <td colspan="8" class="px-4 py-8 text-center text-gray-400">No payments found.</td>
                 </tr>
                 @endforelse
             </tbody>
         </table>
-        <div class="px-4 py-3 border-t border-gray-100">
-            {{ $payments->links() }}
         </div>
+        <div class="px-4 py-3 border-t border-gray-100">{{ $payments->links() }}</div>
     </div>
 </div>
 

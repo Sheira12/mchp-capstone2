@@ -105,10 +105,11 @@ class SummarySheet implements FromArray, WithHeadings, WithTitle, WithColumnWidt
     {
         $period = $this->data['period'] ?? ['from' => 'N/A', 'to' => 'N/A'];
         $rows = [
-            ['Report Period',        ($period['from'] ?? '') . ' to ' . ($period['to'] ?? '')],
-            ['Generated At',        now()->format('F d, Y h:i A')],
-            ['Parish Name',         config('parish.name')],
-            ['Parish Address',      config('parish.address')],
+            ['Report Period',    ($period['from'] ?? '') . ' to ' . ($period['to'] ?? '')],
+            ['Quarter',         $period['quarter_label'] ?? 'Custom Range'],
+            ['Generated At',    now()->format('F d, Y h:i A')],
+            ['Parish Name',     config('parish.name')],
+            ['Parish Address',  config('parish.address')],
             ['', ''],
         ];
 
@@ -123,8 +124,11 @@ class SummarySheet implements FromArray, WithHeadings, WithTitle, WithColumnWidt
 
         if (isset($this->data['revenue'])) {
             $rows[] = ['=== REVENUE ===', ''];
-            $rows[] = ['Total Revenue',   number_format($this->data['revenue']['total'] ?? 0, 2)];
-            $rows[] = ['Refunded Amount', number_format($this->data['revenue']['refunded'] ?? 0, 2)];
+            $rows[] = ['Total Collected', number_format($this->data['revenue']['total_collected'] ?? $this->data['revenue']['total'] ?? 0, 2)];
+            $rows[] = ['Total Debit',     number_format($this->data['revenue']['total_debit']     ?? 0, 2)];
+            $rows[] = ['Total Credit',    number_format($this->data['revenue']['total_credit']    ?? 0, 2)];
+            $rows[] = ['Net Total',       number_format(($this->data['revenue']['total_debit'] ?? 0) - ($this->data['revenue']['total_credit'] ?? 0), 2)];
+            $rows[] = ['Refunded Amount', number_format($this->data['revenue']['total_refunded']  ?? $this->data['revenue']['refunded'] ?? 0, 2)];
             $rows[] = ['', ''];
         }
 
@@ -211,34 +215,53 @@ class RevenueSheet implements FromArray, WithHeadings, WithTitle, WithColumnWidt
     use ExcelStyles;
     public function __construct(private array $data) {}
     public function title(): string { return 'Revenue'; }
-    public function headings(): array { return ['Payment Method', 'Transactions', 'Total Amount (PHP)']; }
-    public function columnWidths(): array { return ['A' => 22, 'B' => 15, 'C' => 22]; }
+    public function headings(): array { return ['Payment Method', 'Transactions', 'Total Amount (PHP)', 'Transaction Type', 'Debit (PHP)', 'Credit (PHP)']; }
+    public function columnWidths(): array { return ['A' => 22, 'B' => 15, 'C' => 22, 'D' => 18, 'E' => 18, 'F' => 18]; }
 
     public function array(): array
     {
-        $rows  = [];
-        $byMethod = $this->data['revenue']['by_method'] ?? [];
+        $rows     = [];
+        $revenue  = $this->data['revenue'] ?? [];
+        $byMethod = $revenue['by_method'] ?? [];
+        $byType   = $revenue['by_type']   ?? [];
+
+        // Index by_type for quick lookup
+        $debitTotal  = 0;
+        $creditTotal = 0;
+        if (is_iterable($byType)) {
+            foreach ($byType as $t) {
+                if (is_object($t)) {
+                    if ($t->transaction_type === 'debit')  $debitTotal  = (float) $t->total;
+                    if ($t->transaction_type === 'credit') $creditTotal = (float) $t->total;
+                }
+            }
+        }
 
         if (is_array($byMethod) && count($byMethod) && is_object(reset($byMethod))) {
             // From ReportsController (Collection objects)
             foreach ($byMethod as $m) {
                 $method = \App\Models\Payment::METHODS[$m->payment_method] ?? ucfirst($m->payment_method);
-                $rows[] = [$method, $m->count ?? '—', number_format($m->total, 2)];
+                $rows[] = [$method, $m->count ?? '—', number_format($m->total, 2), 'Mixed', '—', '—'];
             }
         } else {
             // From DashboardController (plain array)
             foreach ($byMethod as $method => $total) {
-                $rows[] = [\App\Models\Payment::METHODS[$method] ?? ucfirst($method), '—', number_format($total, 2)];
+                $rows[] = [\App\Models\Payment::METHODS[$method] ?? ucfirst($method), '—', number_format($total, 2), 'Mixed', '—', '—'];
             }
         }
 
-        $rows[] = ['TOTAL COLLECTED', '—', number_format($this->data['revenue']['total'] ?? $this->data['revenue']['total_collected'] ?? 0, 2)];
-        if (!empty($this->data['revenue']['total_pending'])) {
-            $rows[] = ['TOTAL PENDING',   '—', number_format($this->data['revenue']['total_pending'], 2)];
-        }
-        if (!empty($this->data['revenue']['total_refunded'])) {
-            $rows[] = ['TOTAL REFUNDED',  '—', number_format($this->data['revenue']['total_refunded'], 2)];
-        }
+        $rows[] = ['', '', '', '', '', ''];
+        $rows[] = ['=== TRANSACTION TYPE BREAKDOWN ===', '', '', '', '', ''];
+        $rows[] = ['Debit (Fees Paid)',  $revenue['debit_count']  ?? '—', number_format($revenue['total_debit']  ?? 0, 2), 'Debit',  number_format($revenue['total_debit']  ?? 0, 2), '—'];
+        $rows[] = ['Credit (Refunds)',   $revenue['credit_count'] ?? '—', number_format($revenue['total_credit'] ?? 0, 2), 'Credit', '—', number_format($revenue['total_credit'] ?? 0, 2)];
+        $rows[] = ['NET TOTAL',          ($revenue['debit_count'] ?? 0) + ($revenue['credit_count'] ?? 0),
+                    number_format(($revenue['total_debit'] ?? 0) - ($revenue['total_credit'] ?? 0), 2), '', '', ''];
+
+        $rows[] = ['', '', '', '', '', ''];
+        $rows[] = ['=== TOTALS ===', '', '', '', '', ''];
+        $rows[] = ['TOTAL COLLECTED', '—', number_format($revenue['total_collected'] ?? $revenue['total'] ?? 0, 2), '', '', ''];
+        if (!empty($revenue['total_pending']))  $rows[] = ['TOTAL PENDING',  '—', number_format($revenue['total_pending'],  2), '', '', ''];
+        if (!empty($revenue['total_refunded'])) $rows[] = ['TOTAL REFUNDED', '—', number_format($revenue['total_refunded'], 2), '', '', ''];
 
         return $rows;
     }

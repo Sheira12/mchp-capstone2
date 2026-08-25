@@ -17,7 +17,7 @@
                target="_blank"
                class="action-btn btn-primary flex items-center gap-1.5">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                Export PDF
+                Generate PDF
             </a>
         </div>
     </div>
@@ -77,9 +77,9 @@
                 <thead class="bg-gray-50 border-b border-gray-100">
                     <tr class="text-left text-gray-500">
                         <th class="px-4 py-3 font-medium">Date</th>
-                        <th class="px-4 py-3 font-medium">Reference</th>
                         <th class="px-4 py-3 font-medium">Description</th>
                         <th class="px-4 py-3 font-medium">Method</th>
+                        <th class="px-4 py-3 font-medium text-center">Type</th>
                         <th class="px-4 py-3 font-medium text-right">Amount Due</th>
                         <th class="px-4 py-3 font-medium text-right">Amount Paid</th>
                         <th class="px-4 py-3 font-medium text-right">Balance</th>
@@ -100,26 +100,29 @@
                             'refunded' => 'blue',
                             default    => 'gray',
                         };
+                        $badge = $payment->transaction_type_badge;
                     @endphp
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
                             {{ $payment->created_at->format('M d, Y') }}
                         </td>
-                        <td class="px-4 py-3 font-mono text-xs text-gray-500">
-                            {{ $payment->reference_number }}
-                        </td>
                         <td class="px-4 py-3 text-gray-700">
                             @if($payment->booking)
                                 <span class="font-medium">{{ $payment->booking->getTypeLabel() }}</span>
-                                <span class="text-xs text-gray-400 block">{{ $payment->booking->reference_number }}</span>
                             @elseif($payment->certificate)
                                 <span class="font-medium">{{ $payment->certificate->getTypeLabel() }}</span>
                             @else
                                 <span class="text-gray-500">{{ $payment->notes ?? 'Parish Service' }}</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-gray-600 capitalize">
-                            {{ \App\Models\Payment::METHODS[$payment->payment_method] ?? $payment->payment_method }}
+                        <td class="px-4 py-3 text-gray-600">
+                            {{ \App\Models\Payment::METHODS[$payment->payment_method] ?? ucfirst($payment->payment_method) }}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold
+                                {{ $badge['color'] === 'green' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                {{ $badge['color'] === 'green' ? '▲' : '▼' }} {{ $badge['label'] }}
+                            </span>
                         </td>
                         <td class="px-4 py-3 text-right text-gray-700">₱{{ number_format($due, 2) }}</td>
                         <td class="px-4 py-3 text-right font-semibold text-green-600">

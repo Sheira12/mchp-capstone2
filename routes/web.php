@@ -83,6 +83,7 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
     Route::get('/dashboard', [ParishionerDashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile/photo', [ProfileController::class, 'removePhoto'])->name('profile.remove-photo');
 
     // Bookings
     Route::get('/bookings', [ParishionerBookingController::class, 'index'])->name('bookings.index');
@@ -98,6 +99,7 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
     Route::post('/payments/pay/{booking}/proof', [ParishionerPaymentController::class, 'submitProof'])->name('payments.submit-proof');
     Route::post('/payments/otp/send', [ParishionerPaymentController::class, 'sendPaymentOtp'])->name('payments.otp-send');
     Route::get('/payments/pay/{booking}/demo/{method}', [ParishionerPaymentController::class, 'demoCheckout'])->name('payments.demo-checkout');
+    Route::post('/payments/pay/{booking}/demo/card/complete', [ParishionerPaymentController::class, 'demoCardComplete'])->name('payments.demo-card-complete');
     Route::post('/payments/pay/{booking}/demo/{method}/complete', [ParishionerPaymentController::class, 'demoComplete'])->name('payments.demo-complete');
     Route::get('/payments/receipt/{payment}', [ParishionerPaymentController::class, 'receipt'])->name('payments.receipt');
     Route::get('/payments/receipt/{payment}/pdf', [ParishionerPaymentController::class, 'receiptPdf'])->name('payments.receipt-pdf');

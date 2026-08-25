@@ -142,7 +142,7 @@
 
         {{-- Submit --}}
         <div class="flex items-center gap-3">
-            <button type="submit"
+            <button type="submit" id="cert-submit-btn"
                     class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-blue-600 text-white font-bold px-8 py-3 rounded-xl hover:bg-blue-700 shadow-md transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -195,6 +195,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (certType && certType.value) {
         updateRecordFilter(certType.value);
     }
+
+    // Disable submit button on form submit to prevent double-submission
+    const form = document.querySelector('form[action="{{ route('parishioner.certificates.store') }}"]');
+    const submitBtn = document.getElementById('cert-submit-btn');
+    if (form && submitBtn) {
+        form.addEventListener('submit', function () {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            submitBtn.innerHTML =
+                '<svg style="width:16px;height:16px;animation:spin 1s linear infinite;flex-shrink:0" fill="none" viewBox="0 0 24 24">' +
+                '<circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>' +
+                '<path style="opacity:.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/>' +
+                '</svg> Submitting…';
+        });
+    }
 });
 </script>
+
+@push('styles')
+<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 @endpush

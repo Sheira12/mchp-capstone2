@@ -380,7 +380,6 @@
             </div>
 
             <div id="card-errors" class="hidden mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700"></div>
-            <div id="card-success" class="hidden mb-3 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700"></div>
 
             <div class="space-y-3">
                 {{-- Card Number --}}
@@ -429,14 +428,20 @@
                     <span class="px-1.5 py-0.5 bg-gray-700 text-white text-xs font-bold rounded" style="font-size:9px;">JCB</span>
                 </div>
 
-                <button id="pay-card-btn" onclick="payWithCard()"
-                        class="w-full flex items-center justify-center gap-2 text-white font-bold py-3.5 rounded-xl transition shadow-md text-sm"
-                        style="background:#6366f1;">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                    </svg>
-                    <span id="pay-card-btn-text">Pay ₱{{ number_format($booking->service_fee, 2) }} with Card</span>
-                </button>
+                <form id="demo-card-form"
+                      action="{{ route('parishioner.payments.demo-card-complete', $booking) }}"
+                      method="POST">
+                    @csrf
+                    <input type="hidden" name="card_last4" id="hidden-card-last4">
+                    <button type="button" id="pay-card-btn" onclick="payWithCard()"
+                            class="w-full flex items-center justify-center gap-2 text-white font-bold py-3.5 rounded-xl transition shadow-md text-sm"
+                            style="background:#6366f1;">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                        <span id="pay-card-btn-text">Pay ₱{{ number_format($booking->service_fee, 2) }} with Card</span>
+                    </button>
+                </form>
             </div>
 
             <div class="flex items-center gap-2 mt-3 justify-center text-xs text-gray-400">
@@ -502,134 +507,44 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// ── Card payment via PayMongo REST API ─────────────────────────────────────
-const PAYMONGO_PK = '{{ config('services.paymongo.public_key') }}';
-
-async function payWithCard() {
+// ── Card payment (demo mode — instant success) ─────────────────────────────
+function payWithCard() {
     const btn     = document.getElementById('pay-card-btn');
     const btnText = document.getElementById('pay-card-btn-text');
     const errorEl = document.getElementById('card-errors');
-    const successEl = document.getElementById('card-success');
 
     errorEl.classList.add('hidden');
-    successEl.classList.add('hidden');
+
+    // Basic client-side validation
+    const rawNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+    const rawExpiry = document.getElementById('card-expiry').value;
+    const rawCvc    = document.getElementById('card-cvc').value.trim();
+    const cardName  = document.getElementById('card-name').value.trim();
+
+    if (!rawNumber || rawNumber.length < 13) {
+        errorEl.textContent = 'Please enter a valid card number.';
+        errorEl.classList.remove('hidden'); return;
+    }
+    if (!rawExpiry || !rawExpiry.includes('/')) {
+        errorEl.textContent = 'Please enter a valid expiry date (MM/YY).';
+        errorEl.classList.remove('hidden'); return;
+    }
+    if (!rawCvc || rawCvc.length < 3) {
+        errorEl.textContent = 'Please enter a valid CVC.';
+        errorEl.classList.remove('hidden'); return;
+    }
+    if (!cardName) {
+        errorEl.textContent = 'Please enter the cardholder name.';
+        errorEl.classList.remove('hidden'); return;
+    }
+
+    // Pass last 4 digits for the payment note
+    document.getElementById('hidden-card-last4').value = rawNumber.slice(-4);
+
     btn.disabled = true;
     btnText.textContent = 'Processing…';
 
-    try {
-        // ── Validate inputs ────────────────────────────────────────────────
-        const rawNumber = document.getElementById('card-number').value.replace(/\s/g, '');
-        const rawExpiry = document.getElementById('card-expiry').value;
-        const rawCvc    = document.getElementById('card-cvc').value.trim();
-        const cardName  = document.getElementById('card-name').value.trim();
-
-        if (!rawNumber || rawNumber.length < 13) throw new Error('Please enter a valid card number.');
-        if (!rawExpiry || !rawExpiry.includes('/')) throw new Error('Please enter a valid expiry date (MM/YY).');
-        if (!rawCvc || rawCvc.length < 3) throw new Error('Please enter a valid CVC.');
-        if (!cardName) throw new Error('Please enter the cardholder name.');
-
-        const [expMonth, expYear] = rawExpiry.split('/');
-        const fullYear = parseInt('20' + expYear.trim());
-
-        // ── Step 1: Create Payment Intent (backend) ────────────────────────
-        const intentRes = await fetch('{{ route('parishioner.payments.initiate') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-                method:     'card',
-                booking_id: '{{ $booking->id }}',
-                amount:     '{{ $booking->service_fee }}',
-            }),
-        });
-
-        const intentData = await intentRes.json();
-        if (!intentData.success) {
-            throw new Error(intentData.use_qr
-                ? 'Card payments are currently unavailable. Please use GCash, Maya, or Cash.'
-                : (intentData.error || 'Failed to create payment.'));
-        }
-
-        // ── Step 2: Create PaymentMethod (client-side, direct REST) ────────
-        btnText.textContent = 'Securing card details…';
-        const pmRes = await fetch('https://api.paymongo.com/v1/payment_methods', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Basic ' + btoa(PAYMONGO_PK + ':'),
-            },
-            body: JSON.stringify({
-                data: {
-                    attributes: {
-                        type: 'card',
-                        details: {
-                            card_number: rawNumber,
-                            exp_month:   parseInt(expMonth),
-                            exp_year:    fullYear,
-                            cvc:         rawCvc,
-                        },
-                        billing: {
-                            name:  cardName,
-                            email: '{{ auth()->user()->email ?? "" }}',
-                            phone: '{{ auth()->user()->parishioner?->contact_number ?? "" }}',
-                        },
-                    },
-                },
-            }),
-        });
-
-        const pmData = await pmRes.json();
-        if (pmData.errors) {
-            const msg = pmData.errors[0]?.detail || 'Card details are invalid.';
-            throw new Error(msg);
-        }
-        const paymentMethodId = pmData.data?.id;
-        if (!paymentMethodId) throw new Error('Failed to tokenize card.');
-
-        // ── Step 3: Attach PaymentMethod to Intent (backend) ───────────────
-        btnText.textContent = 'Confirming payment…';
-        const confirmRes = await fetch('{{ route('parishioner.payments.card-confirm') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-                payment_intent_id: intentData.payment_intent_id,
-                payment_method_id: paymentMethodId,
-                reference_number:  intentData.reference_number,
-            }),
-        });
-
-        const confirmData = await confirmRes.json();
-        if (!confirmData.success) throw new Error(confirmData.error || 'Payment confirmation failed.');
-
-        // ── Step 4: Handle 3DS or success ──────────────────────────────────
-        if (confirmData.status === 'awaiting_next_action' && confirmData.redirect_url) {
-            btnText.textContent = 'Redirecting to 3D Secure…';
-            window.location.href = confirmData.redirect_url;
-            return;
-        }
-
-        if (confirmData.status === 'succeeded') {
-            successEl.textContent = '✓ Payment successful! Redirecting…';
-            successEl.classList.remove('hidden');
-            setTimeout(() => { window.location.href = confirmData.receipt_url; }, 1500);
-            return;
-        }
-
-        throw new Error('Unexpected status: ' + confirmData.status + '. Please try again.');
-
-    } catch (err) {
-        errorEl.textContent = err.message || 'Payment failed. Please try again.';
-        errorEl.classList.remove('hidden');
-        btn.disabled = false;
-        btnText.textContent = 'Pay ₱{{ number_format($booking->service_fee, 2) }} with Card';
-    }
+    document.getElementById('demo-card-form').submit();
 }
 </script>
 @endpush
