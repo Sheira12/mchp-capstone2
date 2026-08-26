@@ -56,13 +56,18 @@ RUN mkdir -p storage/logs storage/framework/cache \
     && chmod -R 775 storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+# Install PHP dependencies (no dev packages)
+# Write a temporary .env so artisan package:discover can boot during image build
+# This .env is deleted after; real env vars come from Railway at runtime
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts \
+    && printf 'APP_KEY=base64:t9wdDWo9XmhT91b1E4sdC7+QISHHQv8hjk/xHaTIQCY=\nAPP_ENV=production\nAPP_DEBUG=false\nDB_CONNECTION=pgsql\n' > .env \
+    && php artisan package:discover --ansi \
+    && rm -f .env
 
-# Build assets
+# Build front-end assets
 RUN npm ci && npm run build && rm -rf node_modules
 
-# Apache config for Laravel
+# Apache virtual host config for Laravel
 RUN echo '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html/public\n\
     <Directory /var/www/html/public>\n\
@@ -73,7 +78,7 @@ RUN echo '<VirtualHost *:80>\n\
     CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
-# PHP config
+# PHP upload / memory limits
 RUN echo "upload_max_filesize = 50M\npost_max_size = 50M\nmemory_limit = 256M" \
     > /usr/local/etc/php/conf.d/uploads.ini
 
