@@ -1,6 +1,6 @@
 FROM php:8.2-apache
 
-# Install system dependencies + PHP extensions in one layer
+# System deps + PHP extensions
 RUN apt-get update && apt-get install -y \
     git curl zip unzip \
     libpng-dev libonig-dev libxml2-dev libzip-dev \
@@ -10,37 +10,36 @@ RUN apt-get update && apt-get install -y \
         pdo pdo_pgsql pdo_mysql mbstring exif pcntl bcmath gd zip intl xml opcache \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js 20
+# Node.js 20
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Composer
+# Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Enable Apache mod_rewrite
+# Apache rewrite
 RUN a2enmod rewrite
 
 WORKDIR /var/www/html
 
-# Copy app source
+# Copy app
 COPY . .
 
-# All build steps in ONE layer — prevents partial cache reuse
-# 1. Remove any stale bootstrap cache (dev providers)
-# 2. Setup storage dirs + permissions
-# 3. composer install --no-dev
-# 4. Run package:discover with temp .env (dont-discover in composer.json is the real guard)
-# 5. npm build
+# Copy production env — baked into image so DB_CONNECTION=pgsql is always set
+RUN cp .env.railway .env
+
+# Build
 RUN rm -f bootstrap/cache/packages.php bootstrap/cache/services.php \
     && mkdir -p storage/logs storage/framework/cache \
         storage/framework/sessions storage/framework/views bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && composer install --no-dev --optimize-autoloader --no-interaction --no-scripts \
+    && php artisan package:discover --ansi \
     && npm ci && npm run build && rm -rf node_modules
 
-# Apache virtual host — Laravel public dir
+# Apache vhost
 RUN printf '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html/public\n\
     <Directory /var/www/html/public>\n\
