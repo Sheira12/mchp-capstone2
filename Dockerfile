@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     libfreetype6-dev \
     libjpeg62-turbo-dev \
+    libicu-dev \
     zip \
     unzip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
