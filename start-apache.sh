@@ -23,6 +23,11 @@ if [ -z "$APP_KEY" ]; then
     php artisan key:generate --force 2>/dev/null || true
 fi
 
+# ── Rebuild package/service provider cache from installed packages ───────────
+# (bootstrap/cache/*.php is not committed — must be regenerated at runtime)
+echo '=== Discovering Packages ==='
+php artisan package:discover --ansi 2>&1 || echo "WARNING: package:discover failed"
+
 # ── Database migrations (non-fatal — container must start even if DB is slow) ─
 echo '=== Running Migrations ==='
 php artisan migrate --force 2>&1 || echo "WARNING: Migration failed — app will still start"
