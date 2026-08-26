@@ -46,6 +46,10 @@ RUN a2enmod rewrite
 # Set working directory
 WORKDIR /var/www/html
 
+# Force cache bust on every build so COPY . . always picks up latest commit
+ARG CACHE_BUST=2
+RUN echo "Cache bust: $CACHE_BUST"
+
 # Copy application
 COPY . .
 
