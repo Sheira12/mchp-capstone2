@@ -7,7 +7,11 @@ use Illuminate\Http\Request;
 
 class TrustProxies extends Middleware
 {
-    protected $proxies;
+    /**
+     * Trust all proxies (required for Railway, Render, and other cloud platforms
+     * that sit behind a reverse proxy / load balancer).
+     */
+    protected $proxies = '*';
     protected $headers = Request::HEADER_X_FORWARDED_FOR |
         Request::HEADER_X_FORWARDED_HOST |
         Request::HEADER_X_FORWARDED_PORT |

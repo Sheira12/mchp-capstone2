@@ -1,0 +1,46 @@
+# Railway / Nixpacks build config for Laravel + PHP 8.2
+[phases.setup]
+nixPkgs = [
+  "php82",
+  "php82Extensions.pdo",
+  "php82Extensions.pdo_pgsql",
+  "php82Extensions.pgsql",
+  "php82Extensions.pdo_mysql",
+  "php82Extensions.mysql",
+  "php82Extensions.mbstring",
+  "php82Extensions.xml",
+  "php82Extensions.zip",
+  "php82Extensions.bcmath",
+  "php82Extensions.gd",
+  "php82Extensions.curl",
+  "php82Extensions.fileinfo",
+  "php82Extensions.tokenizer",
+  "php82Extensions.ctype",
+  "php82Extensions.intl",
+  "php82Extensions.openssl",
+  "php82Extensions.pcre",
+  "php82Extensions.dom",
+  "php82Extensions.simplexml",
+  "php82Extensions.xmlwriter",
+  "php82Extensions.xmlreader",
+  "composer",
+  "nodejs_20",
+  "nodePackages.npm"
+]
+
+[phases.install]
+cmds = [
+  "composer install --no-dev --optimize-autoloader --no-interaction",
+  "npm ci",
+  "npm run build"
+]
+
+[phases.build]
+cmds = [
+  "php artisan config:clear",
+  "php artisan route:clear",
+  "php artisan view:clear"
+]
+
+[start]
+cmd = "php artisan migrate --force && php artisan db:seed --class=RolesAndPermissionsSeeder --force 2>/dev/null; php artisan storage:link 2>/dev/null; php artisan config:cache && php artisan route:cache && php artisan view:cache && php -S 0.0.0.0:$PORT -t public"
