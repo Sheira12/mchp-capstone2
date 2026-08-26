@@ -1,0 +1,7 @@
+
+# Force LF for Railway deployment files (shell scripts break with CRLF)
+start.sh text eol=lf
+Procfile text eol=lf
+*.sh text eol=lf
+nixpacks.toml text eol=lf
+railway.json text eol=lf
