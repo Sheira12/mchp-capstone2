@@ -68,11 +68,15 @@ class PublicController extends Controller
         return back()->with('success', 'Your inquiry has been sent. We will get back to you shortly.');
     }
 
-    public function announcements()
+    public function announcements(Request $request)
     {
-        $announcements = Announcement::published()
-            ->orderByDesc('published_at')
-            ->paginate(12);
+        $query = Announcement::published()->orderByDesc('published_at');
+
+        if ($category = $request->get('category')) {
+            $query->where('category', $category);
+        }
+
+        $announcements = $query->paginate(12)->withQueryString();
 
         return view('public.announcements', compact('announcements'));
     }
