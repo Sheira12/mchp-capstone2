@@ -5,3 +5,5 @@ Procfile text eol=lf
 *.sh text eol=lf
 nixpacks.toml text eol=lf
 railway.json text eol=lf
+start-apache.sh text eol=lf
+Dockerfile text eol=lf
