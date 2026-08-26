@@ -18,8 +18,10 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Apache rewrite
-RUN a2enmod rewrite
+# Apache rewrite + fix MPM conflict (disable prefork, enable event)
+RUN a2enmod rewrite \
+    && a2dismod mpm_prefork 2>/dev/null || true \
+    && a2enmod mpm_event 2>/dev/null || true
 
 WORKDIR /var/www/html
 
