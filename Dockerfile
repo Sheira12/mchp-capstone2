@@ -38,9 +38,6 @@ RUN rm -f bootstrap/cache/packages.php bootstrap/cache/services.php \
     && chmod -R 775 storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && composer install --no-dev --optimize-autoloader --no-interaction --no-scripts \
-    && printf 'APP_KEY=base64:t9wdDWo9XmhT91b1E4sdC7+QISHHQv8hjk/xHaTIQCY=\nAPP_ENV=production\nAPP_DEBUG=false\nDB_CONNECTION=pgsql\n' > .env \
-    && php artisan package:discover --ansi \
-    && rm -f .env \
     && npm ci && npm run build && rm -rf node_modules
 
 # Apache virtual host — Laravel public dir
