@@ -45,6 +45,8 @@ php artisan config:clear 2>&1 || true
 php artisan route:clear 2>&1 || true
 php artisan view:clear 2>&1 || true
 php artisan cache:clear 2>&1 || true
+# Remove any compiled blade files that may be stale
+rm -rf storage/framework/views/*.php 2>/dev/null || true
 
 # ── Migrations ────────────────────────────────────────────────────────────────
 echo '=== Running Migrations ==='
