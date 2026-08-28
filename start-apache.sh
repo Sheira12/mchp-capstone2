@@ -35,8 +35,13 @@ grep "^DB_USERNAME" .env   || echo "DB_USERNAME not found in .env"
 echo "-----------------"
 
 # ── Storage dirs ─────────────────────────────────────────────────────────────
-mkdir -p storage/logs storage/framework/cache \
-         storage/framework/sessions storage/framework/views bootstrap/cache
+mkdir -p storage/logs \
+         storage/framework/cache \
+         storage/framework/cache/data \
+         storage/framework/sessions \
+         storage/framework/views \
+         bootstrap/cache \
+         public/storage
 chmod -R 775 storage bootstrap/cache || true
 chown -R www-data:www-data storage bootstrap/cache || true
 
