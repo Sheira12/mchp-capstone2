@@ -9,6 +9,8 @@ sed -i "s/Listen 80/Listen $PORT/g" /etc/apache2/ports.conf || true
 sed -i "s/:80/:$PORT/g" /etc/apache2/sites-available/000-default.conf || true
 
 # ── Override .env values from platform environment variables ─────────────────
+# Explicitly blank out DATABASE_URL so Laravel uses individual DB_* vars
+sed -i "s|DATABASE_URL=.*|DATABASE_URL=|" .env 2>/dev/null || true
 # This handles both Render and Railway injected env vars
 [ -n "$APP_KEY" ]         && sed -i "s|APP_KEY=.*|APP_KEY=$APP_KEY|" .env
 [ -n "$APP_URL" ]         && sed -i "s|APP_URL=.*|APP_URL=$APP_URL|" .env
