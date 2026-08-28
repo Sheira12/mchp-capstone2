@@ -48,7 +48,13 @@ php artisan cache:clear 2>&1 || true
 
 # ── Migrations ────────────────────────────────────────────────────────────────
 echo '=== Running Migrations ==='
-php artisan migrate --force 2>&1 || echo 'WARNING: migrate failed (non-fatal)'
+php artisan migrate --force 2>&1
+MIGRATE_EXIT=$?
+echo "Migration exit code: $MIGRATE_EXIT"
+if [ $MIGRATE_EXIT -ne 0 ]; then
+    echo "ERROR: Migrations failed! DB connection details:"
+    grep "^DB_" .env
+fi
 
 # ── Seeders (only run if migrations succeeded) ────────────────────────────────
 echo '=== Running Seeders ==='
