@@ -8,27 +8,35 @@ echo "Using PORT=$PORT"
 sed -i "s/Listen 80/Listen $PORT/g" /etc/apache2/ports.conf || true
 sed -i "s/:80/:$PORT/g" /etc/apache2/sites-available/000-default.conf || true
 
-# ── Override .env values from platform environment variables ─────────────────
+# ── Override .env values from Render/Railway environment variables ────────────
 sed -i "s|DATABASE_URL=.*|DATABASE_URL=|" .env 2>/dev/null || true
-[ -n "$APP_KEY" ]       && sed -i "s|APP_KEY=.*|APP_KEY=$APP_KEY|" .env
-[ -n "$APP_URL" ]       && sed -i "s|APP_URL=.*|APP_URL=$APP_URL|" .env
-[ -n "$APP_ENV" ]       && sed -i "s|APP_ENV=.*|APP_ENV=$APP_ENV|" .env
-[ -n "$APP_DEBUG" ]     && sed -i "s|APP_DEBUG=.*|APP_DEBUG=$APP_DEBUG|" .env
-[ -n "$DB_CONNECTION" ] && sed -i "s|DB_CONNECTION=.*|DB_CONNECTION=$DB_CONNECTION|" .env
-[ -n "$DB_HOST" ]       && sed -i "s|DB_HOST=.*|DB_HOST=$DB_HOST|" .env
-[ -n "$DB_PORT" ]       && sed -i "s|DB_PORT=.*|DB_PORT=$DB_PORT|" .env
-[ -n "$DB_DATABASE" ]   && sed -i "s|DB_DATABASE=.*|DB_DATABASE=$DB_DATABASE|" .env
-[ -n "$DB_USERNAME" ]   && sed -i "s|DB_USERNAME=.*|DB_USERNAME=$DB_USERNAME|" .env
-[ -n "$DB_PASSWORD" ]   && sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|" .env
-[ -n "$DB_SSLMODE" ]    && sed -i "s|DB_SSLMODE=.*|DB_SSLMODE=$DB_SSLMODE|" .env
+[ -n "$APP_KEY" ]             && sed -i "s|APP_KEY=.*|APP_KEY=$APP_KEY|" .env
+[ -n "$APP_URL" ]             && sed -i "s|APP_URL=.*|APP_URL=$APP_URL|" .env
+[ -n "$APP_ENV" ]             && sed -i "s|APP_ENV=.*|APP_ENV=$APP_ENV|" .env
+[ -n "$APP_DEBUG" ]           && sed -i "s|APP_DEBUG=.*|APP_DEBUG=$APP_DEBUG|" .env
+[ -n "$DB_CONNECTION" ]       && sed -i "s|DB_CONNECTION=.*|DB_CONNECTION=$DB_CONNECTION|" .env
+[ -n "$DB_HOST" ]             && sed -i "s|DB_HOST=.*|DB_HOST=$DB_HOST|" .env
+[ -n "$DB_PORT" ]             && sed -i "s|DB_PORT=.*|DB_PORT=$DB_PORT|" .env
+[ -n "$DB_DATABASE" ]         && sed -i "s|DB_DATABASE=.*|DB_DATABASE=$DB_DATABASE|" .env
+[ -n "$DB_USERNAME" ]         && sed -i "s|DB_USERNAME=.*|DB_USERNAME=$DB_USERNAME|" .env
+[ -n "$DB_PASSWORD" ]         && sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|" .env
+[ -n "$DB_SSLMODE" ]          && sed -i "s|DB_SSLMODE=.*|DB_SSLMODE=$DB_SSLMODE|" .env
+[ -n "$MAIL_MAILER" ]         && sed -i "s|MAIL_MAILER=.*|MAIL_MAILER=$MAIL_MAILER|" .env
+[ -n "$MAIL_HOST" ]           && sed -i "s|MAIL_HOST=.*|MAIL_HOST=$MAIL_HOST|" .env
+[ -n "$MAIL_PORT" ]           && sed -i "s|MAIL_PORT=.*|MAIL_PORT=$MAIL_PORT|" .env
+[ -n "$MAIL_USERNAME" ]       && sed -i "s|MAIL_USERNAME=.*|MAIL_USERNAME=$MAIL_USERNAME|" .env
+[ -n "$MAIL_PASSWORD" ]       && sed -i "s|MAIL_PASSWORD=.*|MAIL_PASSWORD=$MAIL_PASSWORD|" .env
+[ -n "$MAIL_ENCRYPTION" ]     && sed -i "s|MAIL_ENCRYPTION=.*|MAIL_ENCRYPTION=$MAIL_ENCRYPTION|" .env
+[ -n "$MAIL_FROM_ADDRESS" ]   && sed -i "s|MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=$MAIL_FROM_ADDRESS|" .env
 [ -n "$PAYMONGO_SECRET_KEY" ] && sed -i "s|PAYMONGO_SECRET_KEY=.*|PAYMONGO_SECRET_KEY=$PAYMONGO_SECRET_KEY|" .env
-[ -n "$MAIL_PASSWORD" ] && sed -i "s|MAIL_PASSWORD=.*|MAIL_PASSWORD=$MAIL_PASSWORD|" .env
 [ -n "$RAILWAY_PUBLIC_DOMAIN" ] && sed -i "s|APP_URL=.*|APP_URL=https://$RAILWAY_PUBLIC_DOMAIN|" .env
 
 echo "--- ENV CHECK ---"
 grep "^DB_CONNECTION" .env
 grep "^DB_HOST=" .env
 grep "^APP_URL=" .env
+grep "^MAIL_HOST" .env
+grep "^MAIL_USERNAME" .env
 echo "-----------------"
 
 # ── Create ALL storage directories Laravel needs ─────────────────────────────
