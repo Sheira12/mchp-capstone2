@@ -57,7 +57,7 @@ php artisan route:cache 2>&1 || true
 php artisan view:cache 2>&1 || true
 
 echo "=== Starting Apache on port $PORT ==="
-# Disable conflicting MPM modules, keep only mpm_event
-a2dismod mpm_prefork mpm_worker 2>/dev/null || true
-a2enmod mpm_event 2>/dev/null || true
+# PHP requires mpm_prefork (non-threadsafe) — disable event/worker
+a2dismod mpm_event mpm_worker 2>/dev/null || true
+a2enmod mpm_prefork 2>/dev/null || true
 exec apache2-foreground
