@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -38,20 +39,24 @@ class User extends Authenticatable
     ];
 
     /**
-     * Generate and store a fresh 6-digit OTP (valid 10 minutes).
+     * Generate a cryptographically secure 6-digit OTP.
+     * Stores a bcrypt hash in the DB — the plaintext is returned ONCE for emailing only.
+     * Never store or log the plaintext after this call.
      */
     public function generateTwoFactorCode(): string
     {
-        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $plainCode = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
         $this->update([
-            'two_factor_code'       => $code,
-            'two_factor_expires_at' => now()->addMinutes(15), // 15 minutes validity
+            'two_factor_code'       => Hash::make($plainCode), // store hash, not plaintext
+            'two_factor_expires_at' => now()->addMinutes(5),   // 5-minute expiry
         ]);
-        return $code;
+
+        return $plainCode; // caller must use this ONLY to send the email — never store it
     }
 
     /**
-     * Clear the OTP after successful verification.
+     * Clear the OTP after successful verification or on failure.
      */
     public function clearTwoFactorCode(): void
     {
@@ -62,13 +67,19 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if the given code is valid and not expired.
+     * Verify the submitted OTP against the stored hash, and check expiry.
      */
-    public function validateTwoFactorCode(string $code): bool
+    public function validateTwoFactorCode(string $submittedCode): bool
     {
-        return $this->two_factor_code === $code
-            && $this->two_factor_expires_at
-            && $this->two_factor_expires_at->isFuture();
+        if (!$this->two_factor_code || !$this->two_factor_expires_at) {
+            return false;
+        }
+
+        if ($this->two_factor_expires_at->isPast()) {
+            return false;
+        }
+
+        return Hash::check($submittedCode, $this->two_factor_code);
     }
 
     public function parishioner()

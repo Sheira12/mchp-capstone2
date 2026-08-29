@@ -35,6 +35,7 @@
           <p style="margin:0 0 24px;font-size:14px;color:#475569;line-height:1.7;">
             A sign-in was requested for your <strong>{{ config('app.name') }}</strong> account.
             Use the verification code below to complete your login.
+            This code expires in <strong>5 minutes</strong> and can only be used once.
           </p>
 
           {{-- Code box --}}
@@ -48,7 +49,7 @@
                   {{ $code }}
                 </p>
                 <p style="margin:10px 0 0;font-size:12px;color:#94a3b8;">
-                  &#9201; Expires in <strong>15 minutes</strong>
+                  &#9201; Expires in <strong>5 minutes</strong>
                 </p>
               </td>
             </tr>

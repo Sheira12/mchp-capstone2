@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -40,7 +41,6 @@ class AuthController extends Controller
 
         $user->assignRole('parishioner');
 
-        // Do NOT auto-login — redirect to login with success message
         return redirect()->route('login')
             ->with('status', 'Account created successfully! Please sign in to continue.');
     }
@@ -63,11 +63,23 @@ class AuthController extends Controller
 
         $credentials['email'] = strtolower(trim($credentials['email']));
 
+        // Rate limit: 5 login attempts per minute per IP+email
+        $throttleKey = 'login:' . $credentials['email'] . '|' . $request->ip();
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            throw ValidationException::withMessages([
+                'email' => "Too many login attempts. Please try again in {$seconds} seconds.",
+            ]);
+        }
+
         if (!Auth::validate($credentials)) {
+            RateLimiter::hit($throttleKey, 60);
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
         }
+
+        RateLimiter::clear($throttleKey);
 
         $user = User::where('email', $credentials['email'])->first();
 
@@ -77,7 +89,7 @@ class AuthController extends Controller
             ]);
         }
 
-        // Admins (super_admin, parish_secretary, finance_officer) log in directly — no OTP
+        // Admins log in directly — no OTP required
         if ($user->hasRole(['super_admin', 'parish_secretary', 'finance_officer'])) {
             Auth::login($user, $request->boolean('remember'));
             $request->session()->regenerate();
@@ -85,27 +97,37 @@ class AuthController extends Controller
             return redirect()->intended(route('admin.dashboard'));
         }
 
-        // Parishioners go through email OTP verification
-        $code = $user->generateTwoFactorCode();
+        // Parishioners — generate OTP and send via Resend HTTP API
+        $plainCode = $user->generateTwoFactorCode();  // returns plaintext for email only
 
+        // Store only what is needed in session — NEVER store the OTP
         $request->session()->put('2fa_user_id', $user->id);
         $request->session()->put('2fa_remember', $request->boolean('remember'));
+        $request->session()->put('2fa_masked_email', $this->maskEmail($user->email));
+        $request->session()->forget('2fa_attempts'); // reset attempt counter
 
-        // Send OTP email
-        $emailSent = false;
+        // Send via Resend HTTP API (MAIL_MAILER=resend in .env)
         try {
-            Mail::to($user->email)->send(new TwoFactorCodeMail($user, $code));
-            $emailSent = true;
+            Mail::to($user->email)->send(new TwoFactorCodeMail($user, $plainCode));
+            Log::info('2FA OTP sent', ['user_id' => $user->id]);
         } catch (\Exception $e) {
-            Log::error('2FA email failed: ' . $e->getMessage());
+            // Log the error without the OTP or API key
+            Log::error('2FA email send failed', [
+                'user_id' => $user->id,
+                'error'   => $e->getMessage(),
+            ]);
+
+            // Clear the generated OTP — user must retry
+            $user->clearTwoFactorCode();
+            $request->session()->forget(['2fa_user_id', '2fa_remember', '2fa_masked_email']);
+
+            // Block login — do NOT show OTP — ask user to retry
+            return back()->withErrors([
+                'email' => 'Unable to send the verification code. Please try again in a moment.',
+            ]);
         }
 
-        // If email fails, store code in session so it can be shown on screen
-        $request->session()->put('dev_code', $emailSent ? null : $code);
-
-        return redirect()->route('2fa.show')
-            ->with('2fa_email', $this->maskEmail($user->email))
-            ->with('email_sent', $emailSent);
+        return redirect()->route('2fa.show');
     }
 
     // ─────────────────────────────────────────────
@@ -118,13 +140,10 @@ class AuthController extends Controller
             return redirect()->route('login');
         }
 
-        $user        = User::find($request->session()->get('2fa_user_id'));
-        $maskedEmail = $request->session()->get('2fa_email')
-            ?? ($user ? $this->maskEmail($user->email) : '');
-        $emailSent   = $request->session()->get('email_sent', false);
-        $devCode     = $request->session()->get('dev_code');
+        $maskedEmail = $request->session()->get('2fa_masked_email', '');
 
-        return view('auth.two-factor', compact('maskedEmail', 'emailSent', 'devCode'));
+        // Pass only the masked email — no OTP, no dev code, nothing sensitive
+        return view('auth.two-factor', compact('maskedEmail'));
     }
 
     // ─────────────────────────────────────────────
@@ -133,12 +152,20 @@ class AuthController extends Controller
 
     public function verify2fa(Request $request)
     {
-        $request->validate(['code' => ['required', 'string', 'size:6']]);
+        $request->validate(['code' => ['required', 'string', 'size:6', 'regex:/^\d{6}$/']]);
 
         $userId = $request->session()->get('2fa_user_id');
         if (!$userId) {
             return redirect()->route('login')
                 ->withErrors(['code' => 'Session expired. Please sign in again.']);
+        }
+
+        // Rate limit: max 5 failed attempts per session (per OTP)
+        $throttleKey = '2fa_verify:' . $userId;
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $request->session()->forget(['2fa_user_id', '2fa_remember', '2fa_masked_email']);
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Too many failed attempts. Please sign in again.']);
         }
 
         $user = User::find($userId);
@@ -148,17 +175,22 @@ class AuthController extends Controller
         }
 
         if (!$user->validateTwoFactorCode($request->input('code'))) {
-            return back()->withErrors(['code' => 'Invalid or expired code. Please try again.']);
+            RateLimiter::hit($throttleKey, 300); // 5 minute window
+            return back()->withErrors(['code' => 'Invalid or expired verification code. Please try again.']);
         }
 
+        // OTP valid — clear it immediately to prevent reuse
+        RateLimiter::clear($throttleKey);
         $user->clearTwoFactorCode();
         $user->update(['last_login_at' => now()]);
 
         $remember = $request->session()->pull('2fa_remember', false);
-        $request->session()->forget(['2fa_user_id', '2fa_email', 'dev_code']);
+        $request->session()->forget(['2fa_user_id', '2fa_masked_email', '2fa_attempts']);
 
         Auth::login($user, $remember);
         $request->session()->regenerate();
+
+        Log::info('2FA verified, user logged in', ['user_id' => $user->id]);
 
         return redirect()->intended(route('parishioner.dashboard'));
     }
@@ -175,23 +207,35 @@ class AuthController extends Controller
         $user = User::find($userId);
         if (!$user) return redirect()->route('login');
 
-        $code     = $user->generateTwoFactorCode();
-        $sent     = false;
-
-        try {
-            Mail::to($user->email)->send(new TwoFactorCodeMail($user, $code));
-            $sent = true;
-        } catch (\Exception $e) {
-            Log::error('2FA resend failed: ' . $e->getMessage());
+        // Rate limit: 1 resend per 60 seconds per user
+        $throttleKey = '2fa_resend:' . $userId;
+        if (RateLimiter::tooManyAttempts($throttleKey, 1)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            return back()->withErrors([
+                'code' => "Please wait {$seconds} seconds before requesting a new code.",
+            ]);
         }
 
-        $request->session()->put('dev_code', $sent ? null : $code);
+        // Generate fresh OTP — invalidates the previous one
+        $plainCode = $user->generateTwoFactorCode();
+        $request->session()->forget('2fa_attempts'); // reset verify attempt counter
 
-        return back()
-            ->with('resent', $sent
-                ? 'A new verification code has been sent to your email.'
-                : 'Email unavailable.')
-            ->with('email_sent', $sent);
+        try {
+            Mail::to($user->email)->send(new TwoFactorCodeMail($user, $plainCode));
+            RateLimiter::hit($throttleKey, 60); // 60 second cooldown
+            Log::info('2FA OTP resent', ['user_id' => $user->id]);
+            return back()->with('resent', 'A new verification code has been sent to your email.');
+        } catch (\Exception $e) {
+            Log::error('2FA resend failed', [
+                'user_id' => $user->id,
+                'error'   => $e->getMessage(),
+            ]);
+            // Clear OTP — do not expose it
+            $user->clearTwoFactorCode();
+            return back()->withErrors([
+                'code' => 'Unable to send the verification code. Please go back and sign in again.',
+            ]);
+        }
     }
 
     // ─────────────────────────────────────────────
@@ -266,14 +310,5 @@ class AuthController extends Controller
         [$local, $domain] = explode('@', $email, 2);
         $masked = substr($local, 0, 2) . str_repeat('*', max(0, strlen($local) - 2));
         return $masked . '@' . $domain;
-    }
-
-    private function maskPhone(string $phone): string
-    {
-        $digits = preg_replace('/\D/', '', $phone);
-        if (strlen($digits) >= 7) {
-            return substr($digits, 0, 3) . str_repeat('*', strlen($digits) - 6) . substr($digits, -3);
-        }
-        return str_repeat('*', strlen($phone));
     }
 }
