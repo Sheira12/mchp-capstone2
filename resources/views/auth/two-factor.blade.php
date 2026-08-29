@@ -55,7 +55,7 @@
             </div>
 
             {{-- Fallback: show code on screen when email fails --}}
-            @if(!empty($devCode))
+            @if(!empty($devCode) && config('app.debug'))
             <div class="mb-5 bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 text-center">
                 <p class="text-xs font-bold text-yellow-800 uppercase tracking-wider mb-2">
                     ⚠ Email delivery failed — use this code:
