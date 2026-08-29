@@ -69,12 +69,12 @@
         @endif
 
         {{-- ── Fallback: show code on screen if email failed ── --}}
-        @if(!empty($dev_code))
+        @if(!empty($devCode))
         <div style="background:#fefce8;border:2px solid #facc15;border-radius:0.75rem;padding:1rem;margin-bottom:1rem;text-align:center;">
             <p style="font-size:0.75rem;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 6px;">
                 ⚠ Email delivery failed — use this code to sign in:
             </p>
-            <p style="font-size:2.5rem;font-weight:900;color:#1e3a8a;letter-spacing:0.35em;margin:0;font-family:monospace;">{{ $dev_code }}</p>
+            <p style="font-size:2.5rem;font-weight:900;color:#1e3a8a;letter-spacing:0.35em;margin:0;font-family:monospace;">{{ $devCode }}</p>
         </div>
         @endif
 

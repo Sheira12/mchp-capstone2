@@ -117,6 +117,13 @@ class AuthController extends Controller
         // When email fails (no internet/DNS), show code on screen so login still works
         $devCode = (!$emailSent) ? $code : null;
 
+        // Store devCode in persistent session (not just flash) so it survives page reloads
+        if ($devCode) {
+            $request->session()->put('dev_code', $devCode);
+        } else {
+            $request->session()->forget('dev_code');
+        }
+
         return redirect()->route('2fa.show')
             ->with('2fa_email', $this->maskEmail($user->email))
             ->with('2fa_phone', $hasSms ? $this->maskPhone($phone) : null)
