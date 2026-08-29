@@ -130,12 +130,16 @@ class CertificateController extends Controller
         // Notify the parishioner their certificate is ready
         $linkedUser = \App\Models\User::where('parishioner_id', $certificate->parishioner_id)->first();
         if ($linkedUser) {
-            $linkedUser->notify(new \App\Notifications\ParishionerStatusNotification(
-                'Certificate Ready for Download 📄',
-                'Your ' . $certificate->getTypeLabel() . ' is now ready. You can download it from your portal.',
-                route('parishioner.certificates.index'),
-                'document'
-            ));
+            try {
+                $linkedUser->notify(new \App\Notifications\ParishionerStatusNotification(
+                    'Certificate Ready for Download 📄',
+                    'Your ' . $certificate->getTypeLabel() . ' is now ready. You can download it from your portal.',
+                    route('parishioner.certificates.index'),
+                    'document'
+                ));
+            } catch (\Exception $e) {
+                \Log::warning('Certificate release notification failed: ' . $e->getMessage());
+            }
         }
 
         return back()->with('success', 'Certificate marked as released.');

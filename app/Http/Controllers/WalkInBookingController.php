@@ -104,7 +104,11 @@ class WalkInBookingController extends Controller
         // Notify admin users (database notification)
         $adminUsers = \App\Models\User::role(['super_admin', 'parish_secretary'])->get();
         foreach ($adminUsers as $admin) {
-            $admin->notify(new \App\Notifications\AdminBookingNotification($booking));
+            try {
+                $admin->notify(new \App\Notifications\AdminBookingNotification($booking));
+            } catch (\Exception $e) {
+                \Log::warning('WalkIn admin notification failed: ' . $e->getMessage());
+            }
         }
 
         // Log for audit

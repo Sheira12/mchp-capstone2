@@ -96,7 +96,11 @@ class CertificateController extends Controller
         // Notify ALL admin users (shows in admin notification bell)
         $adminUsers = \App\Models\User::role(['super_admin', 'parish_secretary'])->get();
         foreach ($adminUsers as $admin) {
-            $admin->notify(new \App\Notifications\AdminCertificateNotification($certificate));
+            try {
+                $admin->notify(new \App\Notifications\AdminCertificateNotification($certificate));
+            } catch (\Exception $e) {
+                \Log::warning('Admin certificate notification failed: ' . $e->getMessage());
+            }
         }
 
         // Notify the parishioner (shows in portal notification bell)

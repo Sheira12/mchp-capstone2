@@ -75,13 +75,21 @@ class BookingController extends Controller
         // Notify parishioner via email
         $linkedUser = \App\Models\User::where('parishioner_id', $booking->parishioner_id)->first();
         if ($linkedUser) {
-            $linkedUser->notify(new BookingStatusNotification($booking, 'created'));
+            try {
+                $linkedUser->notify(new BookingStatusNotification($booking, 'created'));
+            } catch (\Exception $e) {
+                \Log::warning('Booking created notification failed: ' . $e->getMessage());
+            }
         }
 
         // Notify ALL admin users (database notification — shows in admin bell)
         $adminUsers = \App\Models\User::role(['super_admin', 'parish_secretary'])->get();
         foreach ($adminUsers as $admin) {
-            $admin->notify(new \App\Notifications\AdminBookingNotification($booking));
+            try {
+                $admin->notify(new \App\Notifications\AdminBookingNotification($booking));
+            } catch (\Exception $e) {
+                \Log::warning('Admin booking notification failed: ' . $e->getMessage());
+            }
         }
 
         return redirect()->route('parishioner.bookings.show', $booking)

@@ -83,7 +83,11 @@ class BookingController extends Controller
         // Send confirmation email via linked user
         $linkedUser = \App\Models\User::where('parishioner_id', $booking->parishioner_id)->first();
         if ($linkedUser) {
-            $linkedUser->notify(new BookingStatusNotification($booking, 'created'));
+            try {
+                $linkedUser->notify(new BookingStatusNotification($booking, 'created'));
+            } catch (\Exception $e) {
+                \Log::warning('Admin booking created notification failed: ' . $e->getMessage());
+            }
         }
 
         AuditLog::record('create', $booking, [], $booking->toArray(), 'Booking created');
@@ -105,8 +109,12 @@ class BookingController extends Controller
 
         $linkedUser = \App\Models\User::where('parishioner_id', $booking->parishioner_id)->first();
         if ($linkedUser) {
-            $linkedUser->notify(new BookingStatusNotification($booking, 'confirmed'));
-            // Portal DB notification
+            try {
+                $linkedUser->notify(new BookingStatusNotification($booking, 'confirmed'));
+            } catch (\Exception $e) {
+                \Log::warning('Booking confirmed notification failed: ' . $e->getMessage());
+            }
+            // Portal DB notification (in-app only, no email)
             $linkedUser->notify(new \App\Notifications\ParishionerStatusNotification(
                 'Booking Confirmed ✓',
                 'Your booking for ' . $booking->getTypeLabel() . ' on ' . $booking->scheduled_date->format('M d, Y') . ' has been confirmed.',
@@ -144,8 +152,12 @@ class BookingController extends Controller
 
         $linkedUser = \App\Models\User::where('parishioner_id', $booking->parishioner_id)->first();
         if ($linkedUser) {
-            $linkedUser->notify(new BookingStatusNotification($booking, 'cancelled'));
-            // Portal DB notification
+            try {
+                $linkedUser->notify(new BookingStatusNotification($booking, 'cancelled'));
+            } catch (\Exception $e) {
+                \Log::warning('Booking cancelled notification failed: ' . $e->getMessage());
+            }
+            // Portal DB notification (in-app only, no email)
             $linkedUser->notify(new \App\Notifications\ParishionerStatusNotification(
                 'Booking Cancelled',
                 'Your booking for ' . $booking->getTypeLabel() . ' on ' . $booking->scheduled_date->format('M d, Y') . ' has been cancelled.',

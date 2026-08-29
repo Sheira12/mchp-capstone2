@@ -115,7 +115,11 @@ class PaymentController extends Controller
         // Send receipt notification
         $linkedUser = \App\Models\User::where('parishioner_id', $payment->parishioner_id)->first();
         if ($linkedUser) {
-            $linkedUser->notify(new \App\Notifications\PaymentReceiptNotification($payment));
+            try {
+                $linkedUser->notify(new \App\Notifications\PaymentReceiptNotification($payment));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning('Payment receipt notification failed: ' . $e->getMessage());
+            }
         }
 
         AuditLog::record('verify', $payment, ['status' => 'pending'], ['status' => 'paid'], 'Payment verified by admin');

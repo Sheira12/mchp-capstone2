@@ -20,7 +20,24 @@ class BookingStatusNotification extends Notification implements ShouldQueue
 
     public function via($notifiable): array
     {
-        return ['mail'];
+        // Use database notification for in-app bell; mail only if a working mailer is configured
+        return ['mail', 'database'];
+    }
+
+    public function toDatabase($notifiable): array
+    {
+        return [
+            'message' => $this->getStatusMessage(),
+            'booking_id' => $this->booking->id,
+            'reference' => $this->booking->reference_number,
+            'event' => $this->event,
+            'url' => url('/portal/bookings/' . $this->booking->id),
+        ];
+    }
+
+    public function failed(\Throwable $e): void
+    {
+        \Illuminate\Support\Facades\Log::warning('BookingStatusNotification failed: ' . $e->getMessage());
     }
 
     public function toMail($notifiable): MailMessage
