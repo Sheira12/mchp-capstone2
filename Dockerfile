@@ -37,7 +37,7 @@ RUN rm -f bootstrap/cache/packages.php bootstrap/cache/services.php \
         storage/framework/sessions storage/framework/views bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
-    && composer install --no-dev --optimize-autoloader --no-interaction --no-scripts \
+    && composer update resend/resend-laravel --no-dev --optimize-autoloader --no-interaction --no-scripts \
     && php artisan package:discover --ansi \
     && npm ci && npm run build && rm -rf node_modules
 
