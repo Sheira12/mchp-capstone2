@@ -64,8 +64,8 @@ class DashboardController extends Controller
 
         // Monthly sacrament trend (last 12 months)
         $monthlyTrend = SacramentalRecord::select(
-            DB::raw('YEAR(date_administered) as year'),
-            DB::raw('MONTH(date_administered) as month'),
+            DB::raw("EXTRACT(YEAR FROM date_administered)::integer as year"),
+            DB::raw("EXTRACT(MONTH FROM date_administered)::integer as month"),
             DB::raw('count(*) as total')
         )
             ->where('date_administered', '>=', now()->subMonths(12))
@@ -77,8 +77,8 @@ class DashboardController extends Controller
         // Monthly revenue trend
         $revenueTrend = Payment::paid()
             ->select(
-                DB::raw('YEAR(paid_at) as year'),
-                DB::raw('MONTH(paid_at) as month'),
+                DB::raw("EXTRACT(YEAR FROM paid_at)::integer as year"),
+                DB::raw("EXTRACT(MONTH FROM paid_at)::integer as month"),
                 DB::raw('sum(amount) as total')
             )
             ->where('paid_at', '>=', now()->subMonths(12))
@@ -133,8 +133,8 @@ class DashboardController extends Controller
 
         // Monthly booking frequency (last 12 months)
         $monthlyBookings = Booking::select(
-            DB::raw('YEAR(scheduled_date) as year'),
-            DB::raw('MONTH(scheduled_date) as month'),
+            DB::raw("EXTRACT(YEAR FROM scheduled_date)::integer as year"),
+            DB::raw("EXTRACT(MONTH FROM scheduled_date)::integer as month"),
             DB::raw('count(*) as total')
         )
             ->where('scheduled_date', '>=', now()->subMonths(12))

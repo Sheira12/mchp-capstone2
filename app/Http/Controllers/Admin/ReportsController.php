@@ -50,8 +50,8 @@ class ReportsController extends Controller
             'by_barangay' => Parishioner::select('barangay', DB::raw('count(*) as total'))
                 ->whereNotNull('barangay')->groupBy('barangay')->orderByDesc('total')->limit(10)->get(),
             'monthly'     => Parishioner::select(
-                    DB::raw('YEAR(created_at) as year'),
-                    DB::raw('MONTH(created_at) as month'),
+                    DB::raw("EXTRACT(YEAR FROM created_at)::integer as year"),
+                    DB::raw("EXTRACT(MONTH FROM created_at)::integer as month"),
                     DB::raw('count(*) as total')
                 )->where('created_at', '>=', now()->subMonths(12))
                 ->groupBy('year','month')->orderBy('year')->orderBy('month')->get(),
@@ -117,7 +117,7 @@ class ReportsController extends Controller
                 ->groupBy('date')->orderBy('date')->get(),
             'monthly'          => Payment::paid()
                 ->where('paid_at', '>=', now()->subMonths(12))
-                ->select(DB::raw('YEAR(paid_at) as year'), DB::raw('MONTH(paid_at) as month'), DB::raw('sum(amount) as total'))
+                ->select(DB::raw("EXTRACT(YEAR FROM paid_at)::integer as year"), DB::raw("EXTRACT(MONTH FROM paid_at)::integer as month"), DB::raw('sum(amount) as total'))
                 ->groupBy('year', 'month')->orderBy('year')->orderBy('month')->get(),
             'outstanding_count' => Booking::whereDoesntHave('payment', fn($q) => $q->where('status', 'paid'))->count(),
             'outstanding_amt'   => Booking::whereDoesntHave('payment', fn($q) => $q->where('status', 'paid'))->sum('service_fee'),
@@ -159,8 +159,8 @@ class ReportsController extends Controller
                 ->groupBy('booking_type')->orderByDesc('total')->get()
                 ->map(fn($r) => ['type' => Booking::TYPES[$r->booking_type] ?? $r->booking_type, 'total' => $r->total]),
             'monthly'     => Booking::select(
-                    DB::raw('YEAR(scheduled_date) as year'),
-                    DB::raw('MONTH(scheduled_date) as month'),
+                    DB::raw("EXTRACT(YEAR FROM scheduled_date)::integer as year"),
+                    DB::raw("EXTRACT(MONTH FROM scheduled_date)::integer as month"),
                     DB::raw('count(*) as total')
                 )->where('scheduled_date','>=', now()->subMonths(12))
                 ->groupBy('year','month')->orderBy('year')->orderBy('month')->get(),
