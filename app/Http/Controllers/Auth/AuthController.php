@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\TwoFactorCodeMail;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -59,7 +61,6 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        // Normalize email
         $credentials['email'] = strtolower(trim($credentials['email']));
 
         if (!Auth::validate($credentials)) {
@@ -76,18 +77,121 @@ class AuthController extends Controller
             ]);
         }
 
-        // Log in directly — no OTP step
-        Auth::login($user, $request->boolean('remember'));
-        $request->session()->regenerate();
-
-        $user->update(['last_login_at' => now()]);
-
-        // Role-based redirect
+        // Admins (super_admin, parish_secretary, finance_officer) log in directly — no OTP
         if ($user->hasRole(['super_admin', 'parish_secretary', 'finance_officer'])) {
+            Auth::login($user, $request->boolean('remember'));
+            $request->session()->regenerate();
+            $user->update(['last_login_at' => now()]);
             return redirect()->intended(route('admin.dashboard'));
         }
 
+        // Parishioners go through email OTP verification
+        $code = $user->generateTwoFactorCode();
+
+        $request->session()->put('2fa_user_id', $user->id);
+        $request->session()->put('2fa_remember', $request->boolean('remember'));
+
+        // Send OTP email
+        $emailSent = false;
+        try {
+            Mail::to($user->email)->send(new TwoFactorCodeMail($user, $code));
+            $emailSent = true;
+        } catch (\Exception $e) {
+            Log::error('2FA email failed: ' . $e->getMessage());
+        }
+
+        // If email fails, store code in session so it can be shown on screen
+        $request->session()->put('dev_code', $emailSent ? null : $code);
+
+        return redirect()->route('2fa.show')
+            ->with('2fa_email', $this->maskEmail($user->email))
+            ->with('email_sent', $emailSent);
+    }
+
+    // ─────────────────────────────────────────────
+    //  2FA — Show OTP form (parishioners only)
+    // ─────────────────────────────────────────────
+
+    public function show2fa(Request $request)
+    {
+        if (!$request->session()->has('2fa_user_id')) {
+            return redirect()->route('login');
+        }
+
+        $user        = User::find($request->session()->get('2fa_user_id'));
+        $maskedEmail = $request->session()->get('2fa_email')
+            ?? ($user ? $this->maskEmail($user->email) : '');
+        $emailSent   = $request->session()->get('email_sent', false);
+        $devCode     = $request->session()->get('dev_code');
+
+        return view('auth.two-factor', compact('maskedEmail', 'emailSent', 'devCode'));
+    }
+
+    // ─────────────────────────────────────────────
+    //  2FA — Verify OTP (parishioners only)
+    // ─────────────────────────────────────────────
+
+    public function verify2fa(Request $request)
+    {
+        $request->validate(['code' => ['required', 'string', 'size:6']]);
+
+        $userId = $request->session()->get('2fa_user_id');
+        if (!$userId) {
+            return redirect()->route('login')
+                ->withErrors(['code' => 'Session expired. Please sign in again.']);
+        }
+
+        $user = User::find($userId);
+        if (!$user) {
+            return redirect()->route('login')
+                ->withErrors(['code' => 'User not found. Please sign in again.']);
+        }
+
+        if (!$user->validateTwoFactorCode($request->input('code'))) {
+            return back()->withErrors(['code' => 'Invalid or expired code. Please try again.']);
+        }
+
+        $user->clearTwoFactorCode();
+        $user->update(['last_login_at' => now()]);
+
+        $remember = $request->session()->pull('2fa_remember', false);
+        $request->session()->forget(['2fa_user_id', '2fa_email', 'dev_code']);
+
+        Auth::login($user, $remember);
+        $request->session()->regenerate();
+
         return redirect()->intended(route('parishioner.dashboard'));
+    }
+
+    // ─────────────────────────────────────────────
+    //  2FA — Resend OTP
+    // ─────────────────────────────────────────────
+
+    public function resend2fa(Request $request)
+    {
+        $userId = $request->session()->get('2fa_user_id');
+        if (!$userId) return redirect()->route('login');
+
+        $user = User::find($userId);
+        if (!$user) return redirect()->route('login');
+
+        $code     = $user->generateTwoFactorCode();
+        $sent     = false;
+
+        try {
+            Mail::to($user->email)->send(new TwoFactorCodeMail($user, $code));
+            $sent = true;
+        } catch (\Exception $e) {
+            Log::error('2FA resend failed: ' . $e->getMessage());
+        }
+
+        $request->session()->put('dev_code', $sent ? null : $code);
+
+        return back()
+            ->with('resent', $sent
+                ? 'A new verification code has been sent to your email.'
+                : 'Email unavailable.')
+            ->with('email_sent', $sent);
     }
 
     // ─────────────────────────────────────────────

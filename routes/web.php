@@ -66,7 +66,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 });
 
-// 2FA routes removed — login no longer requires OTP verification
+// 2FA routes — parishioner OTP verification only
+Route::get('/verify-otp', [AuthController::class, 'show2fa'])->name('2fa.show');
+Route::post('/verify-otp', [AuthController::class, 'verify2fa'])->name('2fa.verify');
+Route::post('/resend-otp', [AuthController::class, 'resend2fa'])->name('2fa.resend');
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
