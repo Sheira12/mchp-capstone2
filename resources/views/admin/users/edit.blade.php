@@ -42,7 +42,7 @@
                        oninput="checkEmailChanged(this)">
                 @error('email')<p class="form-error">{{ $message }}</p>@enderror
                 <p class="text-xs text-gray-400 mt-1">
-                    The 2FA verification code is sent to this email on every login. Make sure it's correct and accessible.
+                    Use a real, accessible email address for this account.
                 </p>
             </div>
 

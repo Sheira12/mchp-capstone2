@@ -32,7 +32,7 @@
                        class="form-input w-full @error('email') border-red-400 @enderror"
                        placeholder="user@gmail.com">
                 <p class="text-xs text-gray-400 mt-1">
-                    The 2FA verification code is sent to this email on every login. Use a real, accessible Gmail address.
+                    Use a real, accessible Gmail address for this account.
                 </p>
                 @error('email')<p class="form-error">{{ $message }}</p>@enderror
             </div>

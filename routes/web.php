@@ -66,11 +66,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 });
 
-// 2FA routes — accessible when NOT fully authenticated (session has 2fa_user_id)
-Route::get('/verify-otp', [AuthController::class, 'show2fa'])->name('2fa.show');
-Route::post('/verify-otp', [AuthController::class, 'verify2fa'])->name('2fa.verify');
-Route::post('/resend-otp', [AuthController::class, 'resend2fa'])->name('2fa.resend');
-Route::post('/switch-channel', [AuthController::class, 'switchChannel'])->name('2fa.switch-channel');
+// 2FA routes removed — login no longer requires OTP verification
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
