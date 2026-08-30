@@ -148,7 +148,8 @@
                              title="Click to change photo">
                             @if($parishioner?->photo_path)
                                 <img id="photo-img" src="{{ Storage::url($parishioner->photo_path) }}"
-                                     style="width:100%;height:100%;object-fit:cover;">
+                                     style="width:100%;height:100%;object-fit:cover;"
+                                     onerror="this.style.display='none';document.getElementById('photo-placeholder').style.display='flex';">
                             @else
                                 <div id="photo-placeholder" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;">
                                     <svg style="width:36px;height:36px;color:#93c5fd;" fill="none" stroke="currentColor" viewBox="0 0 24 24">

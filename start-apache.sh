@@ -87,7 +87,12 @@ php artisan db:seed --class=MassScheduleSeeder --force 2>&1 || true
 php artisan db:seed --class=ServiceSeeder --force 2>&1 || true
 
 # ── Storage link ──────────────────────────────────────────────────────────────
+# Remove stale symlink if it exists, then recreate
+rm -f /var/www/html/public/storage 2>/dev/null || true
 php artisan storage:link 2>&1 || true
+
+# ── Regenerate QR codes (ephemeral filesystem — lost on restart) ───────────────
+php artisan parish:fix-qrcodes 2>&1 || true
 
 # ── Final permission fix — must run AFTER all artisan commands ─────────────────
 # Artisan commands above may create cache files owned by root.

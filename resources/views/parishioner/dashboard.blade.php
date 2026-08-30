@@ -172,7 +172,11 @@
             <div style="position:relative;flex-shrink:0;">
                 @if($p?->photo_path)
                     <img src="{{ Storage::url($p->photo_path) }}"
-                         style="width:72px;height:72px;border-radius:1rem;object-fit:cover;border:2px solid rgba(255,255,255,0.5);box-shadow:0 4px 16px rgba(0,0,0,0.25);">
+                         style="width:72px;height:72px;border-radius:1rem;object-fit:cover;border:2px solid rgba(255,255,255,0.5);box-shadow:0 4px 16px rgba(0,0,0,0.25);"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <div style="display:none;width:72px;height:72px;border-radius:1rem;background:rgba(255,255,255,0.18);align-items:center;justify-content:center;font-size:1.75rem;font-weight:800;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,0.2);border:2px solid rgba(255,255,255,0.3);">
+                        {{ substr(auth()->user()->name, 0, 1) }}
+                    </div>
                 @else
                     <div style="width:72px;height:72px;border-radius:1rem;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;font-size:1.75rem;font-weight:800;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,0.2);border:2px solid rgba(255,255,255,0.3);">
                         {{ substr($user->name, 0, 1) }}
