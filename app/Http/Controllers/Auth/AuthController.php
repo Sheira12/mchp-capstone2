@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
@@ -106,22 +107,11 @@ class AuthController extends Controller
         $request->session()->put('2fa_masked_email', $this->maskEmail($user->email));
         $request->session()->forget('2fa_attempts'); // reset attempt counter
 
-        // Send via Resend HTTP API (MAIL_MAILER=resend in .env)
-        try {
-            Mail::to($user->email)->send(new TwoFactorCodeMail($user, $plainCode));
-            Log::info('2FA OTP sent', ['user_id' => $user->id]);
-        } catch (\Exception $e) {
-            // Log the error without the OTP or API key
-            Log::error('2FA email send failed', [
-                'user_id' => $user->id,
-                'error'   => $e->getMessage(),
-            ]);
-
-            // Clear the generated OTP — user must retry
+        // Send via HTTP API (Brevo → Resend → Laravel Mail fallback)
+        if (!$this->sendOtpEmail($user, $plainCode)) {
+            // Delivery failed — clear OTP, block login, no OTP exposed
             $user->clearTwoFactorCode();
             $request->session()->forget(['2fa_user_id', '2fa_remember', '2fa_masked_email']);
-
-            // Block login — do NOT show OTP — ask user to retry
             return back()->withErrors([
                 'email' => 'Unable to send the verification code. Please try again in a moment.',
             ]);
@@ -220,22 +210,17 @@ class AuthController extends Controller
         $plainCode = $user->generateTwoFactorCode();
         $request->session()->forget('2fa_attempts'); // reset verify attempt counter
 
-        try {
-            Mail::to($user->email)->send(new TwoFactorCodeMail($user, $plainCode));
-            RateLimiter::hit($throttleKey, 60); // 60 second cooldown
-            Log::info('2FA OTP resent', ['user_id' => $user->id]);
-            return back()->with('resent', 'A new verification code has been sent to your email.');
-        } catch (\Exception $e) {
-            Log::error('2FA resend failed', [
-                'user_id' => $user->id,
-                'error'   => $e->getMessage(),
-            ]);
-            // Clear OTP — do not expose it
+        if (!$this->sendOtpEmail($user, $plainCode)) {
+            Log::error('2FA resend failed', ['user_id' => $user->id]);
             $user->clearTwoFactorCode();
             return back()->withErrors([
                 'code' => 'Unable to send the verification code. Please go back and sign in again.',
             ]);
         }
+
+        RateLimiter::hit($throttleKey, 60);
+        Log::info('2FA OTP resent', ['user_id' => $user->id]);
+        return back()->with('resent', 'A new verification code has been sent to your email.');
     }
 
     // ─────────────────────────────────────────────
@@ -304,6 +289,111 @@ class AuthController extends Controller
     // ─────────────────────────────────────────────
     //  HELPERS
     // ─────────────────────────────────────────────
+
+    /**
+     * Send OTP email via HTTP API (Brevo or Resend — both use HTTPS port 443).
+     * Returns true on success, false on failure.
+     * NEVER logs or exposes the OTP.
+     */
+    private function sendOtpEmail(User $user, string $plainCode): bool
+    {
+        $fromAddress = config('mail.from.address', 'noreply@mhcparish.ph');
+        $fromName    = config('mail.from.name', 'MHC Parish System');
+        $subject     = 'Your ' . config('parish.name', 'Mary Help of Christians Parish') . ' Verification Code';
+
+        // Build HTML email body (OTP exists only here — sent directly to provider API)
+        $html = view('emails.two-factor-code', ['user' => $user, 'code' => $plainCode])->render();
+
+        $mailer = config('mail.default', env('MAIL_MAILER', 'resend'));
+
+        // ── Brevo HTTP API ────────────────────────────────────────────────────
+        if ($mailer === 'brevo' || env('BREVO_API_KEY')) {
+            $apiKey = env('BREVO_API_KEY');
+            if ($apiKey) {
+                try {
+                    $response = Http::withHeaders([
+                        'api-key'      => $apiKey,
+                        'Content-Type' => 'application/json',
+                    ])->timeout(15)->post('https://api.brevo.com/v3/smtp/email', [
+                        'sender'     => ['name' => $fromName, 'email' => $fromAddress],
+                        'to'         => [['email' => $user->email, 'name' => $user->name]],
+                        'subject'    => $subject,
+                        'htmlContent'=> $html,
+                    ]);
+
+                    if ($response->successful()) {
+                        Log::info('2FA OTP sent via Brevo', [
+                            'user_id'    => $user->id,
+                            'message_id' => $response->json('messageId') ?? 'n/a',
+                        ]);
+                        return true;
+                    }
+
+                    Log::error('2FA Brevo API error', [
+                        'user_id' => $user->id,
+                        'status'  => $response->status(),
+                        'body'    => $response->body(),
+                    ]);
+                    return false;
+                } catch (\Exception $e) {
+                    Log::error('2FA Brevo HTTP exception', [
+                        'user_id' => $user->id,
+                        'error'   => $e->getMessage(),
+                    ]);
+                    return false;
+                }
+            }
+        }
+
+        // ── Resend HTTP API ───────────────────────────────────────────────────
+        $resendKey = env('RESEND_API_KEY');
+        if ($resendKey && $resendKey !== 'RENDER_VAR_OVERRIDE') {
+            try {
+                $response = Http::withToken($resendKey)
+                    ->timeout(15)
+                    ->post('https://api.resend.com/emails', [
+                        'from'    => "$fromName <$fromAddress>",
+                        'to'      => [$user->email],
+                        'subject' => $subject,
+                        'html'    => $html,
+                    ]);
+
+                if ($response->successful()) {
+                    Log::info('2FA OTP sent via Resend', [
+                        'user_id' => $user->id,
+                        'id'      => $response->json('id') ?? 'n/a',
+                    ]);
+                    return true;
+                }
+
+                Log::error('2FA Resend API error', [
+                    'user_id' => $user->id,
+                    'status'  => $response->status(),
+                    'error'   => $response->json('message') ?? $response->body(),
+                ]);
+                return false;
+            } catch (\Exception $e) {
+                Log::error('2FA Resend HTTP exception', [
+                    'user_id' => $user->id,
+                    'error'   => $e->getMessage(),
+                ]);
+                return false;
+            }
+        }
+
+        // ── Laravel Mail fallback (Resend transport via package) ─────────────
+        try {
+            Mail::to($user->email)->send(new TwoFactorCodeMail($user, $plainCode));
+            Log::info('2FA OTP sent via Laravel Mail', ['user_id' => $user->id]);
+            return true;
+        } catch (\Exception $e) {
+            Log::error('2FA Laravel Mail failed', [
+                'user_id' => $user->id,
+                'error'   => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
 
     private function maskEmail(string $email): string
     {
