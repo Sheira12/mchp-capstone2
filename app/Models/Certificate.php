@@ -51,23 +51,28 @@ class Certificate extends Model
     /**
      * Generate a unique certificate number using a pessimistic lock + retry loop.
      * This safely handles concurrent inserts without race conditions.
+     * Uses BIGINT cast for PostgreSQL compatibility (MySQL/MariaDB also accepts it).
      */
     public static function generateUniqueNumber(): string
     {
         $year   = date('Y');
         $prefix = "CERT-{$year}-";
         $offset = strlen($prefix) + 1; // SUBSTRING is 1-based
+        $driver = \DB::getDriverName();
 
         $maxAttempts = 5;
 
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
-            $number = \DB::transaction(function () use ($prefix, $year, $offset) {
-                // Lock the table for the duration of this transaction so no other
-                // concurrent request can read the same MAX value before we commit.
+            $number = \DB::transaction(function () use ($prefix, $year, $offset, $driver) {
+                // Use BIGINT for PostgreSQL, UNSIGNED for MySQL
+                $castExpr = $driver === 'pgsql'
+                    ? "MAX(CAST(SUBSTRING(certificate_number FROM {$offset}) AS BIGINT))"
+                    : "MAX(CAST(SUBSTRING(certificate_number, {$offset}) AS UNSIGNED))";
+
                 $maxNum = \DB::table('certificates')
                     ->where('certificate_number', 'like', "{$prefix}%")
                     ->lockForUpdate()
-                    ->selectRaw("MAX(CAST(SUBSTRING(certificate_number, {$offset}) AS UNSIGNED)) as max_num")
+                    ->selectRaw("{$castExpr} as max_num")
                     ->value('max_num');
 
                 return $prefix . str_pad(($maxNum ?? 0) + 1, 5, '0', STR_PAD_LEFT);
@@ -83,8 +88,7 @@ class Certificate extends Model
         }
 
         // Last-resort fallback: append microseconds to guarantee uniqueness
-        $year   = date('Y');
-        $micro  = substr((string) microtime(true) * 100, -5);
+        $micro = substr((string) (microtime(true) * 100), -5);
         return "CERT-{$year}-" . str_pad($micro, 5, '0', STR_PAD_LEFT);
     }
 
