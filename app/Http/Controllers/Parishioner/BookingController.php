@@ -76,7 +76,10 @@ class BookingController extends Controller
         $linkedUser = \App\Models\User::where('parishioner_id', $booking->parishioner_id)->first();
         if ($linkedUser) {
             try {
-                $linkedUser->notify(new BookingStatusNotification($booking, 'created'));
+                $notification = new BookingStatusNotification($booking, 'created');
+                $linkedUser->notify($notification);
+                // Send email via HTTP API (non-fatal — booking is already saved)
+                $notification->sendEmail($linkedUser);
             } catch (\Exception $e) {
                 \Log::warning('Booking created notification failed: ' . $e->getMessage());
             }

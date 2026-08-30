@@ -110,7 +110,9 @@ class BookingController extends Controller
         $linkedUser = \App\Models\User::where('parishioner_id', $booking->parishioner_id)->first();
         if ($linkedUser) {
             try {
-                $linkedUser->notify(new BookingStatusNotification($booking, 'confirmed'));
+                $notification = new BookingStatusNotification($booking, 'confirmed');
+                $linkedUser->notify($notification);
+                $notification->sendEmail($linkedUser);
             } catch (\Exception $e) {
                 \Log::warning('Booking confirmed notification failed: ' . $e->getMessage());
             }
@@ -153,7 +155,9 @@ class BookingController extends Controller
         $linkedUser = \App\Models\User::where('parishioner_id', $booking->parishioner_id)->first();
         if ($linkedUser) {
             try {
-                $linkedUser->notify(new BookingStatusNotification($booking, 'cancelled'));
+                $notification = new BookingStatusNotification($booking, 'cancelled');
+                $linkedUser->notify($notification);
+                $notification->sendEmail($linkedUser);
             } catch (\Exception $e) {
                 \Log::warning('Booking cancelled notification failed: ' . $e->getMessage());
             }

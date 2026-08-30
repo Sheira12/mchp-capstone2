@@ -29,8 +29,12 @@ sed -i "s|DATABASE_URL=.*|DATABASE_URL=|" .env 2>/dev/null || true
 [ -n "$MAIL_ENCRYPTION" ]     && sed -i "s|MAIL_ENCRYPTION=.*|MAIL_ENCRYPTION=$MAIL_ENCRYPTION|" .env
 [ -n "$MAIL_FROM_ADDRESS" ]   && sed -i "s|MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=$MAIL_FROM_ADDRESS|" .env
 [ -n "$RESEND_API_KEY" ]      && sed -i "s|RESEND_API_KEY=.*|RESEND_API_KEY=$RESEND_API_KEY|" .env
+[ -n "$BREVO_API_KEY" ]       && (grep -q "BREVO_API_KEY=" .env && sed -i "s|BREVO_API_KEY=.*|BREVO_API_KEY=$BREVO_API_KEY|" .env || echo "BREVO_API_KEY=$BREVO_API_KEY" >> .env)
 [ -n "$PAYMONGO_SECRET_KEY" ] && sed -i "s|PAYMONGO_SECRET_KEY=.*|PAYMONGO_SECRET_KEY=$PAYMONGO_SECRET_KEY|" .env
 [ -n "$RAILWAY_PUBLIC_DOMAIN" ] && sed -i "s|APP_URL=.*|APP_URL=https://$RAILWAY_PUBLIC_DOMAIN|" .env
+# Also patch QR_VERIFICATION_BASE_URL to use the real production URL
+[ -n "$APP_URL" ] && sed -i "s|QR_VERIFICATION_BASE_URL=.*|QR_VERIFICATION_BASE_URL=$APP_URL/verify|" .env
+[ -n "$RAILWAY_PUBLIC_DOMAIN" ] && sed -i "s|QR_VERIFICATION_BASE_URL=.*|QR_VERIFICATION_BASE_URL=https://$RAILWAY_PUBLIC_DOMAIN/verify|" .env
 
 echo "--- ENV CHECK ---"
 grep "^DB_CONNECTION" .env
