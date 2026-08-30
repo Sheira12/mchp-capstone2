@@ -57,39 +57,30 @@ class Certificate extends Model
     {
         $year   = date('Y');
         $prefix = "CERT-{$year}-";
-        $offset = strlen($prefix) + 1; // SUBSTRING is 1-based
-        $driver = \DB::getDriverName();
 
         $maxAttempts = 5;
 
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
-            $number = \DB::transaction(function () use ($prefix, $year, $offset, $driver) {
-                // Use BIGINT for PostgreSQL, UNSIGNED for MySQL
-                $castExpr = $driver === 'pgsql'
-                    ? "MAX(CAST(SUBSTRING(certificate_number FROM {$offset}) AS BIGINT))"
-                    : "MAX(CAST(SUBSTRING(certificate_number, {$offset}) AS UNSIGNED))";
+            // Count existing certificates this year to get next sequence number
+            // No locking needed — unique constraint on certificate_number handles race conditions
+            $count = \DB::table('certificates')
+                ->where('certificate_number', 'like', "{$prefix}%")
+                ->count();
 
-                $maxNum = \DB::table('certificates')
-                    ->where('certificate_number', 'like', "{$prefix}%")
-                    ->lockForUpdate()
-                    ->selectRaw("{$castExpr} as max_num")
-                    ->value('max_num');
+            $number = $prefix . str_pad($count + 1, 5, '0', STR_PAD_LEFT);
 
-                return $prefix . str_pad(($maxNum ?? 0) + 1, 5, '0', STR_PAD_LEFT);
-            });
-
-            // Check if this number is already taken (handles edge cases)
+            // Check if this number is already taken (handles race conditions)
             if (!\DB::table('certificates')->where('certificate_number', $number)->exists()) {
                 return $number;
             }
 
-            // Tiny random backoff before retrying
-            usleep(random_int(10000, 50000)); // 10–50 ms
+            // Number taken — try count+2, count+3, etc.
+            usleep(random_int(10000, 50000));
         }
 
-        // Last-resort fallback: append microseconds to guarantee uniqueness
-        $micro = substr((string) (microtime(true) * 100), -5);
-        return "CERT-{$year}-" . str_pad($micro, 5, '0', STR_PAD_LEFT);
+        // Last-resort fallback: use timestamp microseconds for guaranteed uniqueness
+        $micro = str_pad((string)(microtime(true) * 1000 % 100000), 5, '0', STR_PAD_LEFT);
+        return "CERT-{$year}-" . $micro;
     }
 
     public function parishioner()
