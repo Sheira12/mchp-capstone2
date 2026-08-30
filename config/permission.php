@@ -199,8 +199,9 @@ return [
          * You may optionally indicate a specific cache driver to use for permission and
          * role caching using any of the `store` drivers listed in the cache.php config
          * file. Using 'default' here means to use the `default` set in cache.php.
+         * Using 'array' avoids filesystem permission issues on Render/Docker deployments.
          */
 
-        'store' => 'default',
+        'store' => env('PERMISSION_CACHE_STORE', 'array'),
     ],
 ];

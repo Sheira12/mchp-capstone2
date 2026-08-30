@@ -85,6 +85,13 @@ php artisan db:seed --class=ServiceSeeder --force 2>&1 || true
 # ── Storage link ──────────────────────────────────────────────────────────────
 php artisan storage:link 2>&1 || true
 
+# ── Final permission fix — must run AFTER all artisan commands ─────────────────
+# Artisan commands above may create cache files owned by root.
+# Reset ownership to www-data so Apache/PHP can write.
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
+echo "Storage permissions fixed."
+
 echo "=== Starting Apache on port $PORT ==="
 a2dismod mpm_event mpm_worker 2>/dev/null || true
 a2enmod mpm_prefork 2>/dev/null || true
