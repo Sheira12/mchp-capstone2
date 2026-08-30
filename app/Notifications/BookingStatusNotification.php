@@ -20,8 +20,9 @@ class BookingStatusNotification extends Notification implements ShouldQueue
 
     public function via($notifiable): array
     {
-        // Use database notification for in-app bell; mail only if a working mailer is configured
-        return ['mail', 'database'];
+        // Database only — mail is handled separately via sendOtpEmail-style HTTP API
+        // Keeping mail here causes 500 when email provider rejects the message
+        return ['database'];
     }
 
     public function toDatabase($notifiable): array
