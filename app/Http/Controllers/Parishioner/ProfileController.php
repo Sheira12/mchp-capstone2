@@ -55,37 +55,40 @@ class ProfileController extends Controller
         // Handle photo upload — supports cropped base64 (from crop modal) or raw file
         $photoPath = null;
         if ($request->filled('photo_cropped')) {
-            // Base64 from Cropper.js — decode and store as WebP
-            $base64 = $request->input('photo_cropped');
+            // Base64 from Cropper.js
+            $base64Input = $request->input('photo_cropped');
 
-            // Strip the data URI prefix: data:image/webp;base64,....
-            if (str_contains($base64, ',')) {
-                $base64 = substr($base64, strpos($base64, ',') + 1);
-            }
+            // Ensure it's a proper data URI (keep it as-is for DB storage)
+            if (str_starts_with($base64Input, 'data:')) {
+                // Store the full data URI directly in the database
+                // This avoids filesystem/ephemeral storage issues on Render
+                $stripped = substr($base64Input, strpos($base64Input, ',') + 1);
+                $decoded  = base64_decode($stripped);
 
-            $decoded = base64_decode($base64);
-            if ($decoded === false || strlen($decoded) < 100) {
-                return back()->withErrors(['photo' => 'Invalid cropped image data.']);
-            }
-            if (strlen($decoded) > 5 * 1024 * 1024) {
-                return back()->withErrors(['photo' => 'Cropped image too large (max 5 MB).']);
-            }
+                if ($decoded === false || strlen($decoded) < 100) {
+                    return back()->withErrors(['photo' => 'Invalid cropped image data.']);
+                }
+                if (strlen($decoded) > 3 * 1024 * 1024) {
+                    return back()->withErrors(['photo' => 'Cropped image too large (max 3 MB).']);
+                }
 
-            // Delete old photo
-            if ($user->parishioner?->photo_path) {
-                Storage::disk('public')->delete($user->parishioner->photo_path);
+                // Store the data URI string directly — no filesystem needed
+                $photoPath = $base64Input;
+            } else {
+                return back()->withErrors(['photo' => 'Invalid image format.']);
             }
-
-            $filename  = 'parishioners/photos/' . uniqid('photo_', true) . '.webp';
-            Storage::disk('public')->put($filename, $decoded);
-            $photoPath = $filename;
 
         } elseif ($request->hasFile('photo')) {
-            // Fallback: raw file upload (no crop)
-            if ($user->parishioner?->photo_path) {
-                Storage::disk('public')->delete($user->parishioner->photo_path);
+            // Fallback: raw file upload — store as base64 data URI in DB
+            $file    = $request->file('photo');
+            $decoded = file_get_contents($file->getRealPath());
+            $mime    = $file->getMimeType();
+
+            if (strlen($decoded) > 3 * 1024 * 1024) {
+                return back()->withErrors(['photo' => 'Image too large (max 3 MB).']);
             }
-            $photoPath = $request->file('photo')->store('parishioners/photos', 'public');
+
+            $photoPath = 'data:' . $mime . ';base64,' . base64_encode($decoded);
         }
 
         // Remove photo fields — handled manually above, not DB columns on Parishioner

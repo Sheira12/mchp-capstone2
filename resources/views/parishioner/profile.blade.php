@@ -147,7 +147,7 @@
                              onclick="document.getElementById('photo-input').click()"
                              title="Click to change photo">
                             @if($parishioner?->photo_path)
-                                <img id="photo-img" src="{{ Storage::url($parishioner->photo_path) }}"
+                                <img id="photo-img" src="{{ str_starts_with($parishioner->photo_path, 'data:') ? $parishioner->photo_path : Storage::url($parishioner->photo_path) }}"
                                      style="width:100%;height:100%;object-fit:cover;"
                                      onerror="this.style.display='none';document.getElementById('photo-placeholder').style.display='flex';">
                             @else

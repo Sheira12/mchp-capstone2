@@ -113,7 +113,7 @@
         <div class="par-card">
             {{-- Avatar --}}
             @if($parishioner->photo_path)
-            <img src="{{ Storage::url($parishioner->photo_path) }}" class="par-avatar" alt="">
+            <img src="{{ str_starts_with($parishioner->photo_path, 'data:') ? $parishioner->photo_path : Storage::url($parishioner->photo_path) }}" class="par-avatar" alt="" onerror="this.style.display='none'">
             @else
             <div class="par-avatar-initials">
                 {{ substr($parishioner->first_name,0,1) }}{{ substr($parishioner->last_name,0,1) }}
@@ -222,7 +222,7 @@
                         <td class="px-4 py-3">
                             <div class="flex items-center gap-3">
                                 @if($parishioner->photo_path)
-                                <img src="{{ Storage::url($parishioner->photo_path) }}" class="w-9 h-9 rounded-full object-cover flex-shrink-0">
+                                <img src="{{ str_starts_with($parishioner->photo_path, 'data:') ? $parishioner->photo_path : Storage::url($parishioner->photo_path) }}" class="w-9 h-9 rounded-full object-cover flex-shrink-0" onerror="this.style.display='none'">
                                 @else
                                 <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-700 font-semibold text-xs flex-shrink-0">
                                     {{ substr($parishioner->first_name,0,1) }}{{ substr($parishioner->last_name,0,1) }}
