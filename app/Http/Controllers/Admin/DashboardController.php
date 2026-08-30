@@ -63,10 +63,14 @@ class DashboardController extends Controller
             ->toArray();
 
         // Monthly sacrament trend (last 12 months)
+        $driver = \DB::getDriverName();
+        $yearExpr  = $driver === 'pgsql' ? "EXTRACT(YEAR FROM date_administered)::integer"  : "YEAR(date_administered)";
+        $monthExpr = $driver === 'pgsql' ? "EXTRACT(MONTH FROM date_administered)::integer" : "MONTH(date_administered)";
+
         $monthlyTrend = SacramentalRecord::select(
-            DB::raw("EXTRACT(YEAR FROM date_administered)::integer as year"),
-            DB::raw("EXTRACT(MONTH FROM date_administered)::integer as month"),
-            DB::raw('count(*) as total')
+            \DB::raw("$yearExpr as year"),
+            \DB::raw("$monthExpr as month"),
+            \DB::raw('count(*) as total')
         )
             ->where('date_administered', '>=', now()->subMonths(12))
             ->groupBy('year', 'month')
@@ -75,11 +79,14 @@ class DashboardController extends Controller
             ->get();
 
         // Monthly revenue trend
+        $yearPaidExpr  = $driver === 'pgsql' ? "EXTRACT(YEAR FROM paid_at)::integer"  : "YEAR(paid_at)";
+        $monthPaidExpr = $driver === 'pgsql' ? "EXTRACT(MONTH FROM paid_at)::integer" : "MONTH(paid_at)";
+
         $revenueTrend = Payment::paid()
             ->select(
-                DB::raw("EXTRACT(YEAR FROM paid_at)::integer as year"),
-                DB::raw("EXTRACT(MONTH FROM paid_at)::integer as month"),
-                DB::raw('sum(amount) as total')
+                \DB::raw("$yearPaidExpr as year"),
+                \DB::raw("$monthPaidExpr as month"),
+                \DB::raw('sum(amount) as total')
             )
             ->where('paid_at', '>=', now()->subMonths(12))
             ->groupBy('year', 'month')
@@ -132,9 +139,12 @@ class DashboardController extends Controller
         $medianPayment = $this->calculateMedian($paymentAmounts);
 
         // Monthly booking frequency (last 12 months)
+        $yearSchedExpr  = $driver === 'pgsql' ? "EXTRACT(YEAR FROM scheduled_date)::integer"  : "YEAR(scheduled_date)";
+        $monthSchedExpr = $driver === 'pgsql' ? "EXTRACT(MONTH FROM scheduled_date)::integer" : "MONTH(scheduled_date)";
+
         $monthlyBookings = Booking::select(
-            DB::raw("EXTRACT(YEAR FROM scheduled_date)::integer as year"),
-            DB::raw("EXTRACT(MONTH FROM scheduled_date)::integer as month"),
+            DB::raw("$yearSchedExpr as year"),
+            DB::raw("$monthSchedExpr as month"),
             DB::raw('count(*) as total')
         )
             ->where('scheduled_date', '>=', now()->subMonths(12))
