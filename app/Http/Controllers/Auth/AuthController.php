@@ -309,6 +309,13 @@ class AuthController extends Controller
         // ── Brevo HTTP API ────────────────────────────────────────────────────
         if ($mailer === 'brevo' || env('BREVO_API_KEY')) {
             $apiKey = env('BREVO_API_KEY');
+            Log::info('2FA sendOtpEmail: Brevo check', [
+                'user_id'          => $user->id,
+                'has_key'          => !empty($apiKey),
+                'key_length'       => strlen($apiKey ?? ''),
+                'sender'           => $fromAddress,
+                'recipient_domain' => substr(strrchr($user->email, '@'), 1),
+            ]);
             if ($apiKey) {
                 try {
                     $response = Http::withHeaders([
@@ -330,9 +337,12 @@ class AuthController extends Controller
                     }
 
                     Log::error('2FA Brevo API error', [
-                        'user_id' => $user->id,
-                        'status'  => $response->status(),
-                        'body'    => $response->body(),
+                        'user_id'        => $user->id,
+                        'status'         => $response->status(),
+                        'brevo_code'     => $response->json('code') ?? 'n/a',
+                        'brevo_message'  => $response->json('message') ?? 'n/a',
+                        'recipient_domain' => substr(strrchr($user->email, '@'), 1),
+                        'sender'         => $fromAddress,
                     ]);
                     return false;
                 } catch (\Exception $e) {
