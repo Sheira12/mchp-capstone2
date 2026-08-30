@@ -55,8 +55,7 @@ mkdir -p \
     storage/framework/testing \
     storage/framework/views \
     storage/logs \
-    bootstrap/cache \
-    public/storage
+    bootstrap/cache
 
 # Create the hashed subdirectory structure for file cache (00-ff)
 for i in $(seq 0 255); do
@@ -87,9 +86,12 @@ php artisan db:seed --class=MassScheduleSeeder --force 2>&1 || true
 php artisan db:seed --class=ServiceSeeder --force 2>&1 || true
 
 # ── Storage link ──────────────────────────────────────────────────────────────
-# Remove stale symlink if it exists, then recreate
-rm -f /var/www/html/public/storage 2>/dev/null || true
-php artisan storage:link 2>&1 || true
+# Force remove whatever exists at public/storage (file, dir, or symlink)
+# then recreate as proper symlink to storage/app/public
+rm -rf /var/www/html/public/storage 2>/dev/null || true
+ln -sf /var/www/html/storage/app/public /var/www/html/public/storage
+echo "Storage symlink created: public/storage -> storage/app/public"
+ls -la /var/www/html/public/storage 2>/dev/null || echo "WARNING: symlink creation failed"
 
 # ── Regenerate QR codes (ephemeral filesystem — lost on restart) ───────────────
 php artisan parish:fix-qrcodes 2>&1 || true
