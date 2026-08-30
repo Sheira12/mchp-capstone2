@@ -130,6 +130,14 @@ class SacramentalRecordController extends Controller
 
     private function validateRecord(Request $request): array
     {
+        // Filter out empty array entries from JSON fields before validation
+        foreach (['godparents', 'witnesses', 'sponsors', 'document_references'] as $field) {
+            if ($request->has($field)) {
+                $filtered = array_filter((array) $request->input($field), fn($v) => trim((string)$v) !== '');
+                $request->merge([$field => array_values($filtered)]);
+            }
+        }
+
         return $request->validate([
             'parishioner_id'        => ['required', 'exists:parishioners,id'],
             'spouse_parishioner_id' => ['nullable', 'exists:parishioners,id'],

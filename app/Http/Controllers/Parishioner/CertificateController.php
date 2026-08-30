@@ -37,7 +37,12 @@ class CertificateController extends Controller
         }
 
         // Load sacramental records to pre-fill the form
-        $sacramentalRecords = $parishioner->sacramentalRecords()->orderBy('date_administered')->get();
+        try {
+            $sacramentalRecords = $parishioner->sacramentalRecords()->orderBy('date_administered')->get();
+        } catch (\Exception $e) {
+            \Log::error('Certificate create: failed to load sacramental records', ['error' => $e->getMessage()]);
+            $sacramentalRecords = collect();
+        }
 
         $certificateTypes = Certificate::TYPES;
 
