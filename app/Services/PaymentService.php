@@ -62,9 +62,10 @@ class PaymentService
                             ],
                             'description'             => $description,
                             'statement_descriptor'    => 'MHC Parish',
-                            'metadata'                => [
-                                'reference_number' => $payment->reference_number,
-                                'parishioner_id'   => $parishioner->id,
+                            'metadata' => [
+                                'reference_number' => (string) $payment->reference_number,
+                                'parishioner_id'   => (string) $parishioner->id,
+                                'booking_id'       => $booking ? (string) $booking->id : '',
                             ],
                         ],
                     ],
@@ -186,8 +187,9 @@ class PaymentService
                                 'phone' => $parishioner->contact_number ?? '',
                             ],
                             'metadata' => [
-                                'reference_number' => $payment->reference_number,
-                                'parishioner_id'   => $parishioner->id,
+                                'reference_number' => (string) $payment->reference_number,
+                                'parishioner_id'   => (string) $parishioner->id,
+                                'booking_id'       => $booking ? (string) $booking->id : '',
                             ],
                         ],
                     ],
@@ -310,7 +312,7 @@ class PaymentService
                                 'type' => 'source',
                             ],
                             'metadata' => [
-                                'reference_number' => $payment->reference_number,
+                                'reference_number' => (string) $payment->reference_number,
                             ],
                         ],
                     ],
