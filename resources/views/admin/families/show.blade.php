@@ -78,7 +78,7 @@
                     <td class="px-4 py-3">
                         <div class="flex items-center gap-2">
                             @if($member->photo_path)
-                                <img src="{{ Storage::url($member->photo_path) }}" class="w-7 h-7 rounded-full object-cover">
+                                <img src="{{ str_starts_with($member->photo_path, 'data:') ? $member->photo_path : Storage::url($member->photo_path) }}" class="w-7 h-7 rounded-full object-cover" onerror="this.style.display='none'">
                             @else
                                 <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-700">
                                     {{ substr($member->first_name, 0, 1) }}

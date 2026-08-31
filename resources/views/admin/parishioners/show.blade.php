@@ -26,7 +26,7 @@
         <div class="space-y-5">
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center">
                 @if($parishioner->photo_path)
-                <img src="{{ Storage::url($parishioner->photo_path) }}" alt="{{ $parishioner->full_name }}" class="w-24 h-24 rounded-full mx-auto object-cover mb-4 border-4 border-gray-100">
+                <img src="{{ str_starts_with($parishioner->photo_path, 'data:') ? $parishioner->photo_path : Storage::url($parishioner->photo_path) }}" alt="{{ $parishioner->full_name }}" class="w-24 h-24 rounded-full mx-auto object-cover mb-4 border-4 border-gray-100" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                 @else
                 <div class="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-3xl mx-auto mb-4">
                     {{ substr($parishioner->first_name, 0, 1) }}{{ substr($parishioner->last_name, 0, 1) }}

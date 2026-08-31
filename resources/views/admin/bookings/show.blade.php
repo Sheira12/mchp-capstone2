@@ -155,7 +155,7 @@ $sc = $statusConfig[$booking->status] ?? $statusConfig['pending'];
         @if($booking->parishioner)
         <div class="flex items-center gap-3 mb-4">
             @if($booking->parishioner->photo_path)
-            <img src="{{ Storage::url($booking->parishioner->photo_path) }}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-100">
+            <img src="{{ str_starts_with($booking->parishioner->photo_path, 'data:') ? $booking->parishioner->photo_path : Storage::url($booking->parishioner->photo_path) }}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-100" onerror="this.style.display='none'">
             @else
             <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
                 {{ substr($booking->parishioner->first_name, 0, 1) }}

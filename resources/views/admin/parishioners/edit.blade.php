@@ -140,7 +140,7 @@
             <div class="flex items-center gap-4">
                 <div id="photo-preview" class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
                     @if($parishioner->photo_path)
-                        <img src="{{ Storage::url($parishioner->photo_path) }}" class="w-full h-full object-cover" id="current-photo">
+                        <img src="{{ str_starts_with($parishioner->photo_path, 'data:') ? $parishioner->photo_path : Storage::url($parishioner->photo_path) }}" class="w-full h-full object-cover" id="current-photo" onerror="this.style.display='none'">
                     @else
                         <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
