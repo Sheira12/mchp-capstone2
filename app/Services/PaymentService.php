@@ -225,10 +225,13 @@ class PaymentService
             $statusCode   = $e->getResponse() ? $e->getResponse()->getStatusCode() : 'unknown';
 
             Log::error('PayMongo source creation failed (client error)', [
-                'booking_id'   => $booking?->id,
-                'method'       => $method,
-                'http_status'  => $statusCode,
+                'booking_id'        => $booking?->id,
+                'method'            => $method,
+                'http_status'       => $statusCode,
                 'paymongo_response' => $responseBody,
+                'success_url_used'  => $successUrl,
+                'failed_url_used'   => $failedUrl,
+                'amount_centavos'   => (int) round($amount * 100),
             ]);
 
             $payment->update(['status' => 'failed']);
