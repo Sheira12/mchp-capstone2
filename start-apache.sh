@@ -18,7 +18,7 @@ sed -i "s|DATABASE_URL=.*|DATABASE_URL=|" .env 2>/dev/null || true
 [ -n "$DB_HOST" ]             && sed -i "s|DB_HOST=.*|DB_HOST=$DB_HOST|" .env
 [ -n "$DB_PORT" ]             && sed -i "s|DB_PORT=.*|DB_PORT=$DB_PORT|" .env
 [ -n "$DB_DATABASE" ]         && sed -i "s|DB_DATABASE=.*|DB_DATABASE=$DB_DATABASE|" .env
-[ -n "$DB_USERNAME" ]         && sed -i "s|DB_USERNAME=.*|DB_USERNAME=$DB_USERNAME|" .env
+[ -n "$DB_USERNAME" ]         && sed -i "s|DB_USERNAME=.*|DB_USER NAME=$DB_USERNAME|" .env
 [ -n "$DB_PASSWORD" ]         && sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|" .env
 [ -n "$DB_SSLMODE" ]          && sed -i "s|DB_SSLMODE=.*|DB_SSLMODE=$DB_SSLMODE|" .env
 [ -n "$MAIL_MAILER" ]         && sed -i "s|MAIL_MAILER=.*|MAIL_MAILER=$MAIL_MAILER|" .env
@@ -31,6 +31,8 @@ sed -i "s|DATABASE_URL=.*|DATABASE_URL=|" .env 2>/dev/null || true
 [ -n "$RESEND_API_KEY" ]      && sed -i "s|RESEND_API_KEY=.*|RESEND_API_KEY=$RESEND_API_KEY|" .env
 [ -n "$BREVO_API_KEY" ]       && (grep -q "BREVO_API_KEY=" .env && sed -i "s|BREVO_API_KEY=.*|BREVO_API_KEY=$BREVO_API_KEY|" .env || echo "BREVO_API_KEY=$BREVO_API_KEY" >> .env)
 [ -n "$PAYMONGO_SECRET_KEY" ] && sed -i "s|PAYMONGO_SECRET_KEY=.*|PAYMONGO_SECRET_KEY=$PAYMONGO_SECRET_KEY|" .env
+[ -n "$PAYMONGO_PUBLIC_KEY" ] && sed -i "s|PAYMONGO_PUBLIC_KEY=.*|PAYMONGO_PUBLIC_KEY=$PAYMONGO_PUBLIC_KEY|" .env
+[ -n "$PAYMONGO_WEBHOOK_SECRET" ] && (grep -q "PAYMONGO_WEBHOOK_SECRET=" .env && sed -i "s|PAYMONGO_WEBHOOK_SECRET=.*|PAYMONGO_WEBHOOK_SECRET=$PAYMONGO_WEBHOOK_SECRET|" .env || echo "PAYMONGO_WEBHOOK_SECRET=$PAYMONGO_WEBHOOK_SECRET" >> .env)
 [ -n "$RAILWAY_PUBLIC_DOMAIN" ] && sed -i "s|APP_URL=.*|APP_URL=https://$RAILWAY_PUBLIC_DOMAIN|" .env
 # Also patch QR_VERIFICATION_BASE_URL to use the real production URL
 [ -n "$APP_URL" ] && sed -i "s|QR_VERIFICATION_BASE_URL=.*|QR_VERIFICATION_BASE_URL=$APP_URL/verify|" .env
@@ -42,6 +44,8 @@ grep "^DB_HOST=" .env
 grep "^APP_URL=" .env
 grep "^MAIL_HOST" .env
 grep "^MAIL_USERNAME" .env
+echo "PAYMONGO_SECRET_KEY length: $(grep '^PAYMONGO_SECRET_KEY=' .env | sed 's/PAYMONGO_SECRET_KEY=//' | wc -c)"
+echo "PAYMONGO_SECRET_KEY starts_with: $(grep '^PAYMONGO_SECRET_KEY=' .env | cut -c1-30)"
 echo "-----------------"
 
 # ── Create ALL storage directories Laravel needs ─────────────────────────────
