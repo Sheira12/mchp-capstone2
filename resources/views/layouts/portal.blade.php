@@ -360,7 +360,11 @@
         {{-- User card --}}
         <div class="sb-user">
             @if(auth()->user()->parishioner?->photo_path)
-                <img src="{{ Storage::url(auth()->user()->parishioner->photo_path) }}" class="sb-avatar" alt="Photo">
+                @php $sbPhoto = auth()->user()->parishioner->photo_path; @endphp
+                <img src="{{ str_starts_with($sbPhoto, 'data:') ? $sbPhoto : Storage::url($sbPhoto) }}"
+                     class="sb-avatar" alt="Photo"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <div class="sb-avatar-placeholder" style="display:none;">{{ substr(auth()->user()->name, 0, 1) }}</div>
             @else
                 <div class="sb-avatar-placeholder">{{ substr(auth()->user()->name, 0, 1) }}</div>
             @endif
@@ -533,8 +537,13 @@
                    style="display:flex;align-items:center;gap:8px;text-decoration:none;padding:4px 10px 4px 4px;border-radius:9999px;border:1.5px solid #e2e8f0;transition:background 0.15s;"
                    onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='transparent';">
                     @if(auth()->user()->parishioner?->photo_path)
-                        <img src="{{ Storage::url(auth()->user()->parishioner->photo_path) }}"
-                             style="width:30px;height:30px;border-radius:50%;object-fit:cover;">
+                        @php $topPhoto = auth()->user()->parishioner->photo_path; @endphp
+                        <img src="{{ str_starts_with($topPhoto, 'data:') ? $topPhoto : Storage::url($topPhoto) }}"
+                             style="width:30px;height:30px;border-radius:50%;object-fit:cover;"
+                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                        <div style="display:none;width:30px;height:30px;border-radius:50%;background:#dbeafe;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#1e3a8a;">
+                            {{ substr(auth()->user()->name, 0, 1) }}
+                        </div>
                     @else
                         <div style="width:30px;height:30px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;font-size:0.875rem;font-weight:700;color:#fff;">
                             {{ substr(auth()->user()->name, 0, 1) }}
