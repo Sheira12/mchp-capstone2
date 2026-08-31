@@ -45,6 +45,7 @@
                 <p class="text-sm text-gray-400 mb-6">Reference: <span class="font-mono font-medium">{{ $ref }}</span></p>
             @endif
             <div class="flex flex-col gap-3">
+                <button onclick="retryCheck()" class="btn-primary">Check Payment Status</button>
                 <a href="{{ route('parishioner.payments.index') }}" class="btn-primary">View Payment History</a>
                 <a href="{{ route('parishioner.dashboard') }}" class="btn-secondary">Back to Dashboard</a>
             </div>
@@ -59,8 +60,8 @@
     const ref        = @json($ref);
     const pollUrl    = @json(route('parishioner.payments.check-status'));
     let   attempts   = 0;
-    const maxAttempts = 20;   // 20 × 3s = 60 seconds max
-    const interval   = 3000;  // poll every 3 seconds
+    const maxAttempts = 40;   // 40 × 3s = 2 minutes max
+    const interval   = 3000;
 
     function poll() {
         attempts++;
@@ -75,10 +76,13 @@
                 setTimeout(() => { window.location.href = data.receipt_url; }, 1500);
                 return;
             }
+            if (data.status === 'failed') {
+                window.location.href = @json(route('parishioner.payments.failed')) + '?ref=' + encodeURIComponent(ref);
+                return;
+            }
             if (attempts < maxAttempts) {
                 setTimeout(poll, interval);
             } else {
-                // Timeout — show delayed state so user can navigate manually
                 document.getElementById('pending-state').style.display = 'none';
                 document.getElementById('delayed-state').style.display = 'block';
             }
@@ -88,7 +92,15 @@
         });
     }
 
-    // Start polling after 2 seconds (give webhook time to arrive)
+    // Expose retry function for the manual button
+    window.retryCheck = function() {
+        attempts = 0;
+        document.getElementById('delayed-state').style.display = 'none';
+        document.getElementById('pending-state').style.display = 'block';
+        setTimeout(poll, 500);
+    };
+
+    // Start polling after 2 seconds
     setTimeout(poll, 2000);
 })();
 </script>
