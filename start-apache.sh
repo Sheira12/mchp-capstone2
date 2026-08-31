@@ -18,7 +18,7 @@ sed -i "s|DATABASE_URL=.*|DATABASE_URL=|" .env 2>/dev/null || true
 [ -n "$DB_HOST" ]             && sed -i "s|DB_HOST=.*|DB_HOST=$DB_HOST|" .env
 [ -n "$DB_PORT" ]             && sed -i "s|DB_PORT=.*|DB_PORT=$DB_PORT|" .env
 [ -n "$DB_DATABASE" ]         && sed -i "s|DB_DATABASE=.*|DB_DATABASE=$DB_DATABASE|" .env
-[ -n "$DB_USERNAME" ]         && sed -i "s|DB_USERNAME=.*|DB_USER NAME=$DB_USERNAME|" .env
+[ -n "$DB_USERNAME" ]         && sed -i "s|DB_USERNAME=.*|DB_USERNAME=$DB_USERNAME|" .env
 [ -n "$DB_PASSWORD" ]         && sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|" .env
 [ -n "$DB_SSLMODE" ]          && sed -i "s|DB_SSLMODE=.*|DB_SSLMODE=$DB_SSLMODE|" .env
 [ -n "$MAIL_MAILER" ]         && sed -i "s|MAIL_MAILER=.*|MAIL_MAILER=$MAIL_MAILER|" .env
@@ -47,6 +47,12 @@ grep "^MAIL_USERNAME" .env
 echo "PAYMONGO_SECRET_KEY length: $(grep '^PAYMONGO_SECRET_KEY=' .env | sed 's/PAYMONGO_SECRET_KEY=//' | wc -c)"
 echo "PAYMONGO_SECRET_KEY starts_with: $(grep '^PAYMONGO_SECRET_KEY=' .env | cut -c1-30)"
 echo "-----------------"
+
+# ── Remove any invalid .env lines (keys with spaces) that break dotenv ─────────
+# This happens when a Render Variable key accidentally has a space in it
+sed -i '/^[A-Z_][A-Z0-9_]* [A-Z0-9_].*=/d' .env 2>/dev/null || true
+sed -i '/^[^A-Z_#]/d' .env 2>/dev/null || true
+echo ".env sanitized."
 
 # ── Create ALL storage directories Laravel needs ─────────────────────────────
 echo "=== Creating storage directories ==="
