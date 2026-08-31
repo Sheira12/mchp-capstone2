@@ -47,9 +47,13 @@ class PaymentController extends Controller
 
         $secretKey    = config('services.paymongo.secret_key');
         $isConfigured = $secretKey
+            && strlen($secretKey) > 20
             && !str_contains($secretKey, 'xxxxxxxxxxxx')
             && !str_contains($secretKey, 'PASTE_YOUR')
-            && !str_contains($secretKey, 'your_secret');
+            && !str_contains($secretKey, 'your_secret')
+            && !str_contains($secretKey, 'RENDER_VAR_OVERRIDE')
+            && !str_contains($secretKey, 'RAILWAY_VAR_OVERRIDE')
+            && str_starts_with($secretKey, 'sk_');
 
         if ($isConfigured) {
             try {

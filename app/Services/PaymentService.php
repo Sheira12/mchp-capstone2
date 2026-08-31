@@ -139,7 +139,8 @@ class PaymentService
     }
 
     /**
-     * Create a PayMongo payment link for GCash or Maya.
+     * Create a PayMongo payment link for GCash or Maya via the Sources API.
+     * The redirect URLs use APP_URL so they work on any deployment.
      */
     public function createPaymentLink(
         Parishioner $parishioner,
@@ -160,23 +161,28 @@ class PaymentService
             'status'           => 'pending',
         ]);
 
+        // Build redirect URLs using APP_URL (never localhost in production)
+        $appUrl     = rtrim(config('app.url'), '/');
+        $successUrl = $appUrl . route('parishioner.payments.success', ['ref' => $payment->reference_number], false);
+        $failedUrl  = $appUrl . route('parishioner.payments.failed', [], false) . '?ref=' . $payment->reference_number;
+
         try {
-            // Create PayMongo source
+            // Create PayMongo source (GCash/Maya)
             $response = $this->client->post('/sources', [
                 'json' => [
                     'data' => [
                         'attributes' => [
-                            'amount'      => (int) ($amount * 100), // in centavos
+                            'amount'      => (int) round($amount * 100), // centavos, no decimals
                             'currency'    => 'PHP',
                             'type'        => $method,
-                            'description' => $description,
+                            'description' => substr($description, 0, 255),
                             'redirect'    => [
-                                'success' => route('payment.success', ['ref' => $payment->reference_number]),
-                                'failed'  => route('payment.failed', ['ref' => $payment->reference_number]),
+                                'success' => $successUrl,
+                                'failed'  => $failedUrl,
                             ],
                             'billing' => [
                                 'name'  => $parishioner->full_name,
-                                'email' => $parishioner->email ?? '',
+                                'email' => $parishioner->email ?? 'noreply@mhcparish.ph',
                                 'phone' => $parishioner->contact_number ?? '',
                             ],
                             'metadata' => [
@@ -188,12 +194,23 @@ class PaymentService
                 ],
             ]);
 
-            $data = json_decode($response->getBody()->getContents(), true);
-            $checkoutUrl = $data['data']['attributes']['redirect']['checkout_url'];
+            $data        = json_decode($response->getBody()->getContents(), true);
+            $checkoutUrl = $data['data']['attributes']['redirect']['checkout_url'] ?? null;
+
+            if (!$checkoutUrl) {
+                throw new \RuntimeException('PayMongo did not return a checkout_url. Source status: ' . ($data['data']['attributes']['status'] ?? 'unknown'));
+            }
 
             $payment->update([
                 'gateway_reference' => $data['data']['id'],
                 'gateway_response'  => $data['data']['attributes'],
+            ]);
+
+            Log::info('PayMongo source created', [
+                'booking_id'   => $booking?->id,
+                'method'       => $method,
+                'source_id'    => $data['data']['id'],
+                'source_status'=> $data['data']['attributes']['status'] ?? 'unknown',
             ]);
 
             return [
@@ -201,10 +218,48 @@ class PaymentService
                 'checkout_url' => $checkoutUrl,
                 'payment'      => $payment,
             ];
-        } catch (\Exception $e) {
-            Log::error('PayMongo payment creation failed', ['error' => $e->getMessage()]);
-            $payment->update(['status' => 'failed']);
 
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            // 4xx from PayMongo — safe to log the response body (no keys in it)
+            $responseBody = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : 'no body';
+            $statusCode   = $e->getResponse() ? $e->getResponse()->getStatusCode() : 'unknown';
+
+            Log::error('PayMongo source creation failed (client error)', [
+                'booking_id'   => $booking?->id,
+                'method'       => $method,
+                'http_status'  => $statusCode,
+                'paymongo_response' => $responseBody,
+            ]);
+
+            $payment->update(['status' => 'failed']);
+            return [
+                'success' => false,
+                'error'   => $statusCode === 401
+                    ? 'Payment gateway authentication failed. Please contact the parish office.'
+                    : 'Payment gateway declined the request. Please try again.',
+                'payment' => $payment,
+            ];
+
+        } catch (\GuzzleHttp\Exception\ConnectException $e) {
+            Log::error('PayMongo connection failed', [
+                'booking_id' => $booking?->id,
+                'method'     => $method,
+                'error'      => $e->getMessage(),
+            ]);
+            $payment->update(['status' => 'failed']);
+            return [
+                'success' => false,
+                'error'   => 'Unable to connect to the payment gateway. Please check your connection and try again.',
+                'payment' => $payment,
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('PayMongo payment creation failed', [
+                'booking_id' => $booking?->id,
+                'method'     => $method,
+                'error'      => $e->getMessage(),
+            ]);
+            $payment->update(['status' => 'failed']);
             return [
                 'success' => false,
                 'error'   => 'Payment gateway error. Please try again or contact the parish office.',
