@@ -487,19 +487,44 @@ class PaymentController extends Controller
     }
 
     /**
-     * PayMongo redirect — payment success.
+     * PayMongo redirect — payment success return URL.
+     * User arrives here after PayMongo GCash/Maya checkout completes.
+     * NOTE: Payment status is verified server-side via webhook, NOT by this redirect.
+     * The webhook may arrive slightly after the user returns — we poll briefly.
      */
     public function success(Request $request)
     {
         $ref     = $request->get('ref');
         $payment = $ref ? Payment::where('reference_number', $ref)->first() : null;
 
-        // If payment is found and paid, show receipt
+        // If already paid (webhook arrived first), go straight to receipt
         if ($payment && $payment->status === 'paid') {
             return redirect()->route('parishioner.payments.receipt', $payment);
         }
 
+        // Webhook may not have arrived yet — show a pending confirmation page
+        // The page will poll for payment status and redirect when confirmed
         return view('parishioner.payments.success', compact('ref', 'payment'));
+    }
+
+    /**
+     * AJAX: Check payment status — called by the success page while waiting for webhook.
+     */
+    public function checkStatus(Request $request)
+    {
+        $ref     = $request->get('ref');
+        $payment = $ref ? Payment::where('reference_number', $ref)->first() : null;
+
+        if (!$payment) {
+            return response()->json(['status' => 'not_found']);
+        }
+
+        return response()->json([
+            'status'      => $payment->status,
+            'receipt_url' => $payment->status === 'paid'
+                ? route('parishioner.payments.receipt', $payment)
+                : null,
+        ]);
     }
 
     /**

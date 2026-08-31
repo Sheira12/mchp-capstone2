@@ -106,6 +106,7 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
     Route::post('/payments/card/confirm', [ParishionerPaymentController::class, 'confirmCard'])->name('payments.card-confirm');
     Route::get('/payments/success', [ParishionerPaymentController::class, 'success'])->name('payments.success');
     Route::get('/payments/failed', [ParishionerPaymentController::class, 'failed'])->name('payments.failed');
+    Route::get('/payments/status', [ParishionerPaymentController::class, 'checkStatus'])->name('payments.check-status');
 
     // Certificates
     Route::get('/certificates', [\App\Http\Controllers\Parishioner\CertificateController::class, 'index'])->name('certificates.index');

@@ -185,23 +185,21 @@
                 </div>
             </div>
 
-            {{-- Open GCash App button --}}
+            {{-- Pay with PayMongo GCash --}}
             <div class="mb-4">
-                {{-- Demo checkout button --}}
-                <a href="{{ route('parishioner.payments.demo-checkout', [$booking, 'gcash']) }}"
-                   class="open-app-btn open-gcash w-full" style="text-decoration:none;">
+                <button onclick="initiatePaymongoPayment('gcash')"
+                   class="open-app-btn open-gcash w-full cursor-pointer border-none">
                     <svg viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg" class="h-5 w-auto flex-shrink-0">
                         <circle cx="18" cy="20" r="14" fill="none" stroke="white" stroke-width="3"/>
                         <path d="M18 13 A7 7 0 1 0 25 20 L20 20" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
                         <line x1="20" y1="20" x2="25" y2="20" stroke="rgba(255,255,255,0.7)" stroke-width="3" stroke-linecap="round"/>
-                        <path d="M33 14 Q37 20 33 26" stroke="rgba(255,255,255,0.7)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                        <path d="M37 11 Q43 20 37 29" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
                         <text x="50" y="26" font-family="Arial,sans-serif" font-weight="900" font-size="18" fill="white">GCash</text>
                     </svg>
-                    <span>Pay ₱{{ number_format($booking->service_fee, 2) }} via GCash</span>
+                    <span id="gcash-btn-text">Pay ₱{{ number_format($booking->service_fee, 2) }} via GCash</span>
                     <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                </a>
-                <p class="text-xs text-center text-gray-400 mt-2">Secure GCash checkout</p>
+                </button>
+                <p class="text-xs text-center text-gray-400 mt-2">Redirects to PayMongo GCash checkout</p>
+                <div id="gcash-error" class="hidden mt-2 text-xs text-red-600 text-center bg-red-50 rounded-xl p-2"></div>
             </div>
 
             <div class="flex items-center gap-3 mb-4">
@@ -287,15 +285,16 @@
 
             {{-- Open Maya App button --}}
             <div class="mb-4">
-                <a href="{{ route('parishioner.payments.demo-checkout', [$booking, 'maya']) }}"
-                   class="open-app-btn open-maya w-full" style="text-decoration:none;">
+                <button onclick="initiatePaymongoPayment('paymaya')"
+                   class="open-app-btn open-maya w-full cursor-pointer border-none">
                     <svg viewBox="0 0 80 40" xmlns="http://www.w3.org/2000/svg" class="h-5 w-auto flex-shrink-0">
                         <text x="4" y="30" font-family="Arial Rounded MT Bold,Arial,sans-serif" font-weight="900" font-size="26" fill="white" letter-spacing="-1">maya</text>
                     </svg>
-                    <span>Pay ₱{{ number_format($booking->service_fee, 2) }} via Maya</span>
+                    <span id="maya-btn-text">Pay ₱{{ number_format($booking->service_fee, 2) }} via Maya</span>
                     <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                </a>
-                <p class="text-xs text-center text-gray-400 mt-2">Secure Maya checkout</p>
+                </button>
+                <p class="text-xs text-center text-gray-400 mt-2">Redirects to PayMongo Maya checkout</p>
+                <div id="maya-error" class="hidden mt-2 text-xs text-red-600 text-center bg-red-50 rounded-xl p-2"></div>
             </div>
 
             <div class="flex items-center gap-3 mb-4">
@@ -506,6 +505,47 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+// ── Real PayMongo GCash/Maya payment ──────────────────────────────────────
+function initiatePaymongoPayment(method) {
+    const isGcash = method === 'gcash';
+    const btnText = document.getElementById(isGcash ? 'gcash-btn-text' : 'maya-btn-text');
+    const errEl   = document.getElementById(isGcash ? 'gcash-error' : 'maya-error');
+    const csrf    = document.querySelector('meta[name="csrf-token"]').content;
+
+    if (errEl) errEl.classList.add('hidden');
+    if (btnText) btnText.textContent = 'Opening checkout…';
+
+    fetch('{{ route("parishioner.payments.initiate") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrf,
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+            method:     method,
+            booking_id: {{ $booking->id }},
+            amount:     {{ $booking->service_fee }},
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success && data.checkout_url) {
+            window.location.href = data.checkout_url;
+        } else if (data.use_qr) {
+            if (btnText) btnText.textContent = isGcash ? 'Pay ₱{{ number_format($booking->service_fee, 2) }} via GCash' : 'Pay ₱{{ number_format($booking->service_fee, 2) }} via Maya';
+            if (errEl) { errEl.textContent = 'Online checkout unavailable. Please use the QR code or reference number method below.'; errEl.classList.remove('hidden'); }
+        } else {
+            if (btnText) btnText.textContent = isGcash ? 'Pay ₱{{ number_format($booking->service_fee, 2) }} via GCash' : 'Pay ₱{{ number_format($booking->service_fee, 2) }} via Maya';
+            if (errEl) { errEl.textContent = data.error || 'Payment unavailable. Please try again.'; errEl.classList.remove('hidden'); }
+        }
+    })
+    .catch(() => {
+        if (btnText) btnText.textContent = isGcash ? 'Pay ₱{{ number_format($booking->service_fee, 2) }} via GCash' : 'Pay ₱{{ number_format($booking->service_fee, 2) }} via Maya';
+        if (errEl) { errEl.textContent = 'Network error. Please check your connection and try again.'; errEl.classList.remove('hidden'); }
+    });
+}
 
 // ── Card payment (demo mode — instant success) ─────────────────────────────
 function payWithCard() {
