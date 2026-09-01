@@ -529,7 +529,21 @@ class PaymentController extends Controller
     }
 
     /**
-     * AJAX: Check payment status — called by the success page while waiting for webhook.
+     * AJAX: Check payment status — polled by the success page every 3 seconds.
+     *
+     * Response statuses understood by the frontend:
+     *   paid                 → admin approved; redirect to receipt
+     *   pending_verification → PayMongo confirmed charge; waiting for admin approval
+     *   pending              → payment created but PayMongo not yet confirmed
+     *   failed               → payment failed/rejected
+     *   not_found            → reference not found
+     *
+     * Fallback path (webhook not registered / late):
+     *   If payment has a gateway_reference that is a PayMongo source_id (src_...),
+     *   poll PayMongo directly to detect chargeable/consumed/expired state.
+     *   - chargeable → charge the source; return pending so page keeps polling
+     *   - consumed   → set status=pending (awaiting admin), notify admins, return pending_verification
+     *   - cancelled/expired → mark failed
      */
     public function checkStatus(Request $request)
     {
@@ -540,12 +554,115 @@ class PaymentController extends Controller
             return response()->json(['status' => 'not_found']);
         }
 
-        return response()->json([
-            'status'      => $payment->status,
-            'receipt_url' => $payment->status === 'paid'
-                ? route('parishioner.payments.receipt', $payment)
-                : null,
+        \Illuminate\Support\Facades\Log::info('[PARISHIONER_PAYMENT_STATUS_CHECK]', [
+            'payment_id'    => $payment->id,
+            'current_status'=> $payment->status,
+            'has_source_id' => !empty($payment->gateway_reference),
         ]);
+
+        // Admin already approved — send to receipt
+        if ($payment->status === 'paid') {
+            return response()->json([
+                'status'      => 'paid',
+                'receipt_url' => route('parishioner.payments.receipt', $payment),
+            ]);
+        }
+
+        // Terminal failure states
+        if (in_array($payment->status, ['failed', 'voided', 'refunded'])) {
+            return response()->json(['status' => $payment->status]);
+        }
+
+        // The webhook already set this to pending (PayMongo confirmed, admin not yet approved)
+        // gateway_reference is now a PayMongo *payment* id (pay_...) not a source id
+        $gatewayRef = $payment->gateway_reference;
+        $isSource   = $gatewayRef && str_starts_with($gatewayRef, 'src_');
+
+        if ($isSource) {
+            // Fallback: webhook hasn't fired yet — poll PayMongo source directly
+            try {
+                $source       = $this->paymentService->getSourceStatus($gatewayRef);
+                $sourceStatus = $source['status'] ?? 'unknown';
+
+                \Illuminate\Support\Facades\Log::info('[PARISHIONER_PAYMENT_STATUS_CHECK] source polled', [
+                    'payment_id'    => $payment->id,
+                    'source_id'     => $gatewayRef,
+                    'source_status' => $sourceStatus,
+                ]);
+
+                if ($sourceStatus === 'chargeable') {
+                    try {
+                        $this->paymentService->chargeSource($payment, $gatewayRef);
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('[PARISHIONER_PAYMENT_STATUS_CHECK] charge failed', [
+                            'payment_id' => $payment->id,
+                            'error'      => $e->getMessage(),
+                        ]);
+                    }
+                    // Charge request sent; wait for payment.paid webhook
+                    return response()->json(['status' => 'pending']);
+                }
+
+                if ($sourceStatus === 'consumed') {
+                    // PayMongo charged the source but webhook didn't arrive yet.
+                    // Set status=pending (awaiting admin) and notify admins.
+                    if ($payment->status !== 'paid') {
+                        \Illuminate\Support\Facades\DB::transaction(function () use ($payment) {
+                            $payment->update([
+                                'status' => 'pending',
+                                // Do NOT set paid_at — admin hasn't approved yet
+                            ]);
+                        });
+
+                        \Illuminate\Support\Facades\Log::info('[PAYMENT_PENDING_VERIFICATION] set via consumed source fallback', [
+                            'payment_id' => $payment->id,
+                        ]);
+
+                        // Notify admins (non-fatal)
+                        try {
+                            $admins = \App\Models\User::role(['super_admin', 'parish_secretary', 'finance_officer'])
+                                ->where('is_active', true)->get();
+                            foreach ($admins as $admin) {
+                                $admin->notify(new \App\Notifications\AdminPaymentNotification($payment));
+                            }
+                        } catch (\Exception $e) {
+                            \Illuminate\Support\Facades\Log::warning('[PARISHIONER_PAYMENT_STATUS_CHECK] admin notify failed', [
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                    }
+
+                    return response()->json(['status' => 'pending_verification']);
+                }
+
+                if (in_array($sourceStatus, ['cancelled', 'expired', 'failed'])) {
+                    if (!in_array($payment->status, ['failed', 'voided'])) {
+                        $payment->update(['status' => 'failed']);
+                        \Illuminate\Support\Facades\Log::info('[PARISHIONER_PAYMENT_STATUS_CHECK] marked failed', [
+                            'payment_id'    => $payment->id,
+                            'source_status' => $sourceStatus,
+                        ]);
+                    }
+                    return response()->json(['status' => 'failed']);
+                }
+
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning('[PARISHIONER_PAYMENT_STATUS_CHECK] PayMongo poll error', [
+                    'payment_id' => $payment->id,
+                    'error'      => $e->getMessage(),
+                ]);
+            }
+
+            return response()->json(['status' => 'pending']);
+        }
+
+        // Payment is pending and gateway_reference is a PayMongo payment id (pay_...)
+        // meaning the webhook already fired and set it to pending
+        if ($payment->status === 'pending' && $gatewayRef) {
+            return response()->json(['status' => 'pending_verification']);
+        }
+
+        return response()->json(['status' => $payment->status]);
     }
 
     /**

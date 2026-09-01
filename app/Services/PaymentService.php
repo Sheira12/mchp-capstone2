@@ -274,52 +274,66 @@ class PaymentService
     }
 
     /**
-     * Check payment status from PayMongo.
+     * Charge a chargeable PayMongo Source (GCash/Maya).
+     *
+     * Called from:
+     *   - PaymentWebhookController::handleSourceChargeable() — via webhook
+     *   - PaymentController::checkStatus() — as a client-side fallback
+     *
+     * Returns the PayMongo payment object data on success, or throws on failure.
+     * The caller is responsible for catching exceptions.
      */
-    public function checkStatus(Payment $payment): string
+    public function chargeSource(Payment $payment, string $sourceId): array
     {
-        if (!$payment->gateway_reference) return $payment->status;
-
-        try {
-            $response = $this->client->get("/sources/{$payment->gateway_reference}");
-            $data     = json_decode($response->getBody()->getContents(), true);
-            $status   = $data['data']['attributes']['status'] ?? null;
-
-            if ($status === 'chargeable') {
-                // Charge the source
-                $this->chargeSource($payment, $data['data']['id']);
-            }
-
-            return $status ?? $payment->status;
-        } catch (\Exception $e) {
-            Log::error('PayMongo status check failed', ['error' => $e->getMessage()]);
-            return $payment->status;
-        }
-    }
-
-    private function chargeSource(Payment $payment, string $sourceId): void
-    {
-        try {
-            $this->client->post('/payments', [
-                'json' => [
-                    'data' => [
-                        'attributes' => [
-                            'amount'      => (int) ($payment->amount * 100),
-                            'currency'    => 'PHP',
-                            'description' => "Parish payment - {$payment->reference_number}",
-                            'source'      => [
-                                'id'   => $sourceId,
-                                'type' => 'source',
-                            ],
-                            'metadata' => [
-                                'reference_number' => (string) $payment->reference_number,
-                            ],
+        $response = $this->client->post('/payments', [
+            'json' => [
+                'data' => [
+                    'attributes' => [
+                        'amount'      => (int) round($payment->amount * 100),
+                        'currency'    => 'PHP',
+                        'description' => 'Parish payment - ' . $payment->reference_number,
+                        'source'      => [
+                            'id'   => $sourceId,
+                            'type' => 'source',
+                        ],
+                        'metadata' => [
+                            'reference_number' => (string) $payment->reference_number,
+                            'parishioner_id'   => (string) $payment->parishioner_id,
+                            'booking_id'       => $payment->booking_id ? (string) $payment->booking_id : '',
                         ],
                     ],
                 ],
-            ]);
-        } catch (\Exception $e) {
-            Log::error('PayMongo charge failed', ['error' => $e->getMessage()]);
-        }
+            ],
+        ]);
+
+        $data = json_decode($response->getBody()->getContents(), true);
+
+        Log::info('PaymentService: source charged', [
+            'payment_id'         => $payment->id,
+            'source_id'          => $sourceId,
+            'paymongo_charge_id' => $data['data']['id'] ?? null,
+            'charge_status'      => $data['data']['attributes']['status'] ?? 'unknown',
+        ]);
+
+        return $data['data'] ?? [];
+    }
+
+    /**
+     * Poll a PayMongo Source by its source_id and return its current status.
+     * Used by PaymentController::checkStatus() as a webhook fallback.
+     *
+     * Possible source statuses: pending, chargeable, consumed, cancelled, expired
+     */
+    public function getSourceStatus(string $sourceId): array
+    {
+        $response = $this->client->get("/sources/{$sourceId}");
+        $data     = json_decode($response->getBody()->getContents(), true);
+
+        return [
+            'id'     => $data['data']['id'] ?? $sourceId,
+            'status' => $data['data']['attributes']['status'] ?? 'unknown',
+            'amount' => $data['data']['attributes']['amount'] ?? 0,
+            'type'   => $data['data']['attributes']['type'] ?? 'unknown',
+        ];
     }
 }

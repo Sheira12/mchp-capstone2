@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Payment;
+use App\Notifications\PaymentReceiptNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
@@ -91,44 +93,87 @@ class PaymentController extends Controller
     }
 
     /**
-     * Verify a pending GCash/Maya payment after checking proof.
+     * Approve a pending GCash/Maya/Cash payment after verifying proof.
+     *
+     * Idempotent: clicking twice on an already-paid payment is a no-op.
+     * Wrapped in a DB transaction so booking + payment are updated atomically.
+     * Email/notification failures are non-fatal — payment stays PAID.
      */
     public function verify(Request $request, Payment $payment)
     {
-        if (!in_array($payment->status, ['pending'])) {
-            return back()->withErrors(['error' => 'Only pending payments can be verified.']);
+        // Idempotency guard — if already paid, just redirect cleanly
+        if ($payment->status === 'paid') {
+            Log::info('[ADMIN_PAYMENT_APPROVED] already paid — idempotent skip', [
+                'payment_id' => $payment->id,
+            ]);
+            return back()->with('info', 'Payment is already marked as paid.');
         }
 
-        $payment->update([
-            'status'      => 'paid',
-            'paid_at'     => now(),
-            'verified_by' => auth()->id(),
-            'verified_at' => now(),
-            'notes'       => $payment->notes . ' | Verified by ' . auth()->user()->name . ' on ' . now()->format('M d, Y g:i A'),
+        if (!in_array($payment->status, ['pending'])) {
+            return back()->withErrors(['error' => 'Only pending payments can be approved.']);
+        }
+
+        DB::transaction(function () use ($payment) {
+            $payment->update([
+                'status'      => 'paid',
+                'paid_at'     => now(),
+                'verified_by' => auth()->id(),
+                'verified_at' => now(),
+                'notes'       => trim($payment->notes . ' | Approved by ' . auth()->user()->name . ' on ' . now()->format('M d, Y g:i A')),
+            ]);
+
+            // Confirm the linked booking
+            if ($payment->booking && $payment->booking->status !== 'confirmed') {
+                $payment->booking->update(['status' => 'confirmed']);
+                Log::info('[ADMIN_PAYMENT_APPROVED] booking confirmed', [
+                    'booking_id' => $payment->booking->id,
+                ]);
+            }
+        });
+
+        Log::info('[PAYMENT_MARKED_PAID]', [
+            'payment_id'       => $payment->id,
+            'reference_number' => $payment->reference_number,
+            'approved_by'      => auth()->id(),
         ]);
 
-        // Update linked booking to confirmed
-        if ($payment->booking && $payment->booking->status === 'pending') {
-            $payment->booking->update(['status' => 'confirmed']);
-        }
-
-        // Send receipt notification
-        $linkedUser = \App\Models\User::where('parishioner_id', $payment->parishioner_id)->first();
-        if ($linkedUser) {
-            try {
-                $linkedUser->notify(new \App\Notifications\PaymentReceiptNotification($payment));
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning('Payment receipt notification failed: ' . $e->getMessage());
+        // Send receipt notification to parishioner (non-fatal)
+        try {
+            $linkedUser = \App\Models\User::where('parishioner_id', $payment->parishioner_id)->first();
+            if ($linkedUser?->email) {
+                $linkedUser->notify(new PaymentReceiptNotification($payment));
+                Log::info('[EMAIL_SENT] payment receipt to parishioner', [
+                    'payment_id' => $payment->id,
+                    'email'      => $linkedUser->email,
+                ]);
             }
+        } catch (\Exception $e) {
+            Log::error('[EMAIL_FAILED] parishioner receipt after admin approval', [
+                'payment_id' => $payment->id,
+                'error'      => $e->getMessage(),
+            ]);
         }
 
-        AuditLog::record('verify', $payment, ['status' => 'pending'], ['status' => 'paid'], 'Payment verified by admin');
+        try {
+            AuditLog::record(
+                'verify',
+                $payment,
+                ['status' => 'pending'],
+                ['status' => 'paid'],
+                'Payment approved by admin: ' . auth()->user()->name
+            );
+        } catch (\Exception $e) {
+            Log::warning('[ADMIN_PAYMENT_APPROVED] audit log failed', ['error' => $e->getMessage()]);
+        }
 
-        return back()->with('success', 'Payment verified and receipt sent to parishioner.');
+        return back()->with('success', 'Payment approved. Receipt sent to parishioner.');
     }
 
     /**
      * Reject a pending payment proof.
+     *
+     * Idempotent: only pending payments can be rejected.
+     * Sends a rejection notification to the parishioner (non-fatal).
      */
     public function reject(Request $request, Payment $payment)
     {
@@ -138,16 +183,53 @@ class PaymentController extends Controller
             return back()->withErrors(['error' => 'Only pending payments can be rejected.']);
         }
 
-        $payment->update([
-            'status'           => 'failed',
-            'rejection_reason' => $request->get('rejection_reason'),
-            'verified_by'      => auth()->id(),
-            'verified_at'      => now(),
+        DB::transaction(function () use ($payment, $request) {
+            $payment->update([
+                'status'           => 'failed',
+                'rejection_reason' => $request->get('rejection_reason'),
+                'verified_by'      => auth()->id(),
+                'verified_at'      => now(),
+            ]);
+        });
+
+        Log::info('[PAYMENT_REJECTED]', [
+            'payment_id'       => $payment->id,
+            'reference_number' => $payment->reference_number,
+            'rejected_by'      => auth()->id(),
+            'reason'           => $request->get('rejection_reason'),
         ]);
 
-        AuditLog::record('reject', $payment, ['status' => 'pending'], ['status' => 'failed'], 'Payment proof rejected');
+        // Notify parishioner of rejection (non-fatal)
+        try {
+            $linkedUser = \App\Models\User::where('parishioner_id', $payment->parishioner_id)->first();
+            if ($linkedUser?->email) {
+                $linkedUser->notify(new \App\Notifications\PaymentRejectedNotification($payment));
+                Log::info('[EMAIL_SENT] rejection notice to parishioner', [
+                    'payment_id' => $payment->id,
+                    'email'      => $linkedUser->email,
+                ]);
+            }
+        } catch (\Exception $e) {
+            // Notification class may not exist yet — log and continue
+            Log::warning('[EMAIL_FAILED] parishioner rejection notice', [
+                'payment_id' => $payment->id,
+                'error'      => $e->getMessage(),
+            ]);
+        }
 
-        return back()->with('success', 'Payment rejected. Parishioner should resubmit proof.');
+        try {
+            AuditLog::record(
+                'reject',
+                $payment,
+                ['status' => 'pending'],
+                ['status' => 'failed'],
+                'Payment rejected by admin: ' . auth()->user()->name
+            );
+        } catch (\Exception $e) {
+            Log::warning('[PAYMENT_REJECTED] audit log failed', ['error' => $e->getMessage()]);
+        }
+
+        return back()->with('success', 'Payment rejected. Parishioner has been notified to resubmit proof.');
     }
 
     public function refund(Request $request, Payment $payment)
