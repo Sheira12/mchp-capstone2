@@ -175,12 +175,26 @@ class PaymentWebhookController extends Controller
             return;
         }
 
-        // Idempotency: if already pending or paid, skip
-        if (in_array($payment->status, ['pending', 'paid'])) {
-            Log::info('[PAYMONGO_WEBHOOK_RECEIVED] payment.paid: already in pending/paid state — idempotent skip', [
+        // Idempotency: if already paid, skip everything
+        if ($payment->status === 'paid') {
+            Log::info('[PAYMONGO_WEBHOOK_RECEIVED] payment.paid: already paid — idempotent skip', [
                 'payment_id' => $payment->id,
                 'status'     => $payment->status,
             ]);
+            return;
+        }
+
+        // If already pending (e.g. source.chargeable already fired and set pending),
+        // still update gateway_reference and notify admins if not yet notified.
+        $alreadyPending = $payment->status === 'pending' && $payment->gateway_reference
+            && !str_starts_with($payment->gateway_reference, 'src_');
+
+        if ($alreadyPending) {
+            Log::info('[PAYMONGO_WEBHOOK_RECEIVED] payment.paid: already pending_verification — notify admins if needed', [
+                'payment_id' => $payment->id,
+            ]);
+            // Ensure admin notification fires (idempotent — duplicate bell notifications are harmless)
+            $this->notifyAdmins($payment);
             return;
         }
 

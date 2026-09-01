@@ -633,7 +633,7 @@ class PaymentController extends Controller
                     }
                 }
 
-                if ($sourceStatus === 'consumed') {
+                if ($sourceStatus === 'consumed' || $sourceStatus === 'paid') {
                     // PayMongo charged the source but webhook didn't arrive yet.
                     // Set status=pending (awaiting admin) and notify admins.
                     if ($payment->status !== 'paid') {
