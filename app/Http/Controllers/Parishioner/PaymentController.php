@@ -592,15 +592,45 @@ class PaymentController extends Controller
 
                 if ($sourceStatus === 'chargeable') {
                     try {
-                        $this->paymentService->chargeSource($payment, $gatewayRef);
+                        $charged = $this->paymentService->chargeSource($payment, $gatewayRef);
+
+                        // Store the PayMongo payment ID (pay_...) so next poll doesn't
+                        // try to charge again. Once gateway_reference is pay_... (not src_...),
+                        // the polling falls through to the pending_verification response below.
+                        $paymongoPaymentId = $charged['id'] ?? null;
+                        $payment->update([
+                            'gateway_reference' => $paymongoPaymentId ?? 'charged_' . $gatewayRef,
+                        ]);
+
+                        \Illuminate\Support\Facades\Log::info('[PARISHIONER_PAYMENT_STATUS_CHECK] charge submitted, ref updated', [
+                            'payment_id'         => $payment->id,
+                            'paymongo_payment_id' => $paymongoPaymentId,
+                        ]);
+
+                        // Notify admins that payment is awaiting verification
+                        try {
+                            $payment->refresh();
+                            $admins = \App\Models\User::role(['super_admin', 'parish_secretary', 'finance_officer'])
+                                ->where('is_active', true)->get();
+                            foreach ($admins as $admin) {
+                                $admin->notify(new \App\Notifications\AdminPaymentNotification($payment));
+                            }
+                        } catch (\Exception $e) {
+                            \Illuminate\Support\Facades\Log::warning('[PARISHIONER_PAYMENT_STATUS_CHECK] admin notify failed', [
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+
+                        return response()->json(['status' => 'pending_verification']);
+
                     } catch (\Exception $e) {
                         \Illuminate\Support\Facades\Log::error('[PARISHIONER_PAYMENT_STATUS_CHECK] charge failed', [
                             'payment_id' => $payment->id,
                             'error'      => $e->getMessage(),
                         ]);
+                        // Charge failed — keep polling so user doesn't get stuck
+                        return response()->json(['status' => 'pending']);
                     }
-                    // Charge request sent; wait for payment.paid webhook
-                    return response()->json(['status' => 'pending']);
                 }
 
                 if ($sourceStatus === 'consumed') {
