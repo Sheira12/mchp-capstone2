@@ -533,6 +533,9 @@ function initiatePaymongoPayment(method) {
     .then(data => {
         if (data.success && data.checkout_url) {
             window.location.href = data.checkout_url;
+        } else if (data.use_demo && data.demo_url) {
+            // PayMongo unavailable — use demo checkout
+            window.location.href = data.demo_url;
         } else if (data.use_qr) {
             if (btnText) btnText.textContent = isGcash ? 'Pay ₱{{ number_format($booking->service_fee, 2) }} via GCash' : 'Pay ₱{{ number_format($booking->service_fee, 2) }} via Maya';
             if (errEl) { errEl.textContent = 'Online checkout unavailable. Please use the QR code or reference number method below.'; errEl.classList.remove('hidden'); }

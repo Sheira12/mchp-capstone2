@@ -80,7 +80,24 @@ class PaymentController extends Controller
                     method:      $validated['method'],
                     booking:     $booking,
                 );
-                return response()->json($result);
+
+                if ($result['success']) {
+                    return response()->json($result);
+                }
+
+                // PayMongo failed — fall back to demo checkout
+                Log::warning('PayMongo failed, falling back to demo', [
+                    'method' => $validated['method'],
+                    'error'  => $result['error'] ?? 'unknown',
+                ]);
+                return response()->json([
+                    'success'      => false,
+                    'use_demo'     => true,
+                    'demo_url'     => $booking
+                        ? route('parishioner.payments.demo-checkout', [$booking, $validated['method'] === 'paymaya' ? 'maya' : $validated['method']])
+                        : null,
+                    'error'        => $result['error'] ?? 'Payment gateway unavailable.',
+                ]);
 
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error('PayMongo failed: ' . $e->getMessage());
