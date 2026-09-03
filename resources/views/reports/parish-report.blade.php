@@ -9,12 +9,12 @@
            Navy #1F3A5F · Gold #D4AF37
            ═══════════════════════════════════════════════ */
 
-        @page { size: letter portrait; margin: 0.6in 0.65in 0.6in; }
+        @page { size: A4 portrait; margin: 15mm 16mm 18mm 16mm; }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
             font-size: 10pt;
             color: #1a1a2e;
             background: #fff;
@@ -142,15 +142,21 @@
 
         /* ── Footer ── */
         .report-footer {
-            position: fixed; bottom: -0.4in; left: 0; right: 0;
             border-top: 1pt solid #D4AF37;
             padding-top: 4pt;
+            margin-top: 14pt;
             display: table; width: 100%;
             font-size: 7pt; color: #94a3b8;
-            background: #fff;
         }
         .footer-left  { display: table-cell; vertical-align: middle; width: 50%; }
         .footer-right { display: table-cell; vertical-align: middle; text-align: right; width: 50%; }
+
+        /* ── Page break rules ── */
+        .section { page-break-inside: avoid; break-inside: avoid; margin-bottom: 16pt; }
+        table { page-break-inside: auto; }
+        tr { page-break-inside: avoid; break-inside: avoid; }
+        thead { display: table-header-group; }
+        tfoot { display: table-footer-group; }
 
         /* ── Divider ── */
         .gold-bar {
@@ -163,12 +169,6 @@
     </style>
 </head>
 <body>
-
-{{-- Fixed footer on every page --}}
-<div class="report-footer">
-    <div class="footer-left">{{ $parish['name'] }} · {{ $parish['address'] }} · CONFIDENTIAL</div>
-    <div class="footer-right">Generated: {{ now()->format('F d, Y g:i A') }}</div>
-</div>
 
 {{-- ── HEADER ── --}}
 <div class="report-header">
@@ -195,7 +195,7 @@
 
 {{-- ── SUMMARY ── --}}
 <div class="section">
-    <div class="section-title">📊 &nbsp; Executive Summary</div>
+    <div class="section-title">Executive Summary</div>
     <div style="height:1pt;background:#D4AF37;margin-bottom:8pt;"></div>
 
     <div class="stat-grid">
@@ -221,13 +221,13 @@
 
     <div class="revenue-total">
         <div class="revenue-total-left">Total Revenue Collected</div>
-        <div class="revenue-total-right">₱{{ number_format($data['revenue']['total'], 2) }}</div>
+        <div class="revenue-total-right">&#8369;{{ number_format($data['revenue']['total'], 2) }}</div>
     </div>
 </div>
 
 {{-- ── SACRAMENTS ── --}}
 <div class="section">
-    <div class="section-title">✝️ &nbsp; Sacraments Administered</div>
+    <div class="section-title">Sacraments Administered</div>
     <div style="height:1pt;background:#D4AF37;margin-bottom:0;"></div>
 
     @php
@@ -269,7 +269,7 @@
 
 {{-- ── BOOKINGS ── --}}
 <div class="section">
-    <div class="section-title">📅 &nbsp; Bookings Summary</div>
+    <div class="section-title">Bookings Summary</div>
     <div style="height:1pt;background:#D4AF37;margin-bottom:0;"></div>
 
     @php
@@ -304,7 +304,7 @@
 
 {{-- ── REVENUE ── --}}
 <div class="section">
-    <div class="section-title">💰 &nbsp; Revenue by Payment Method</div>
+    <div class="section-title">Revenue by Payment Method</div>
     <div style="height:1pt;background:#D4AF37;margin-bottom:0;"></div>
 
     @php $totalRev = $data['revenue']['total'] ?: 1; @endphp
@@ -322,20 +322,20 @@
             @php $pct = round(($amount / $totalRev) * 100, 1); @endphp
             <tr>
                 <td style="text-transform:capitalize;">{{ $method }}</td>
-                <td class="amount">₱{{ number_format($amount, 2) }}</td>
+                <td class="amount">&#8369;{{ number_format($amount, 2) }}</td>
                 <td class="center" style="color:#64748b;">{{ $pct }}%</td>
             </tr>
             @endforeach
             @if($data['revenue']['refunded'] > 0)
             <tr>
                 <td style="color:#dc2626;">Refunded</td>
-                <td class="amount" style="color:#dc2626;">— ₱{{ number_format($data['revenue']['refunded'], 2) }}</td>
+                <td class="amount" style="color:#dc2626;">— &#8369;{{ number_format($data['revenue']['refunded'], 2) }}</td>
                 <td class="center" style="color:#dc2626;">—</td>
             </tr>
             @endif
             <tr class="total-row">
                 <td>NET TOTAL REVENUE</td>
-                <td class="amount">₱{{ number_format($data['revenue']['total'] - $data['revenue']['refunded'], 2) }}</td>
+                <td class="amount">&#8369;{{ number_format($data['revenue']['total'] - $data['revenue']['refunded'], 2) }}</td>
                 <td class="center">100%</td>
             </tr>
         </tbody>
@@ -344,7 +344,7 @@
 
 {{-- ── NOTES ── --}}
 <div style="background:#f8faff;border:1pt solid #bfdbfe;border-radius:4pt;padding:8pt 10pt;margin-top:4pt;">
-    <p style="font-size:8.5pt;color:#1e40af;font-weight:bold;margin-bottom:3pt;">📌 Report Notes</p>
+    <p style="font-size:8.5pt;color:#1e40af;font-weight:bold;margin-bottom:3pt;">Report Notes</p>
     <p style="font-size:8pt;color:#374151;line-height:1.6;">
         This report covers the period from
         <strong>{{ \Carbon\Carbon::parse($from)->format('F d, Y') }}</strong> to
@@ -366,6 +366,15 @@
                 <p style="font-size:7.5pt;color:#64748b;text-transform:uppercase;letter-spacing:0.5pt;">Parish Priest</p>
             </div>
         </div>
+    </div>
+</div>
+
+{{-- ── FOOTER — date/time bottom-right ── --}}
+<div class="report-footer">
+    <div class="footer-left">{{ $parish['name'] }} &middot; Parish Administrative Report &middot; CONFIDENTIAL</div>
+    <div class="footer-right">
+        Period: {{ \Carbon\Carbon::parse($from)->format('M d, Y') }} &ndash; {{ \Carbon\Carbon::parse($to)->format('M d, Y') }}
+        &nbsp;|&nbsp; Generated: {{ now()->format('M d, Y g:i A') }}
     </div>
 </div>
 
