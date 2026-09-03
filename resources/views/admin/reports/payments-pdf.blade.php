@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <style>
-@page { size: A4 portrait; margin: 0; }
+@page { size: A4 portrait; margin: 15mm 15mm 18mm 15mm; }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 9pt; color: #1a1a2e; line-height:1.4; background:#fff; }
 
@@ -103,6 +103,14 @@ table.dt tbody tr.total-row td { font-weight:bold; background:#dcfce7; border-to
 /* ── FOOTER ── */
 .doc-footer { margin-top:9pt; padding-top:4pt; border-top:0.5pt solid #bbf7d0; width:100%; border-collapse:collapse; }
 .doc-footer td { font-size:6.5pt; color:#9ca3af; }
+
+/* ── PAGE BREAK RULES ── */
+table.dt { page-break-inside: auto; }
+table.dt tr { page-break-inside: avoid; break-inside: avoid; }
+table.dt thead { display: table-header-group; }
+table.dt tfoot { display: table-footer-group; }
+.sig-wrap { page-break-inside: avoid; break-inside: avoid; }
+.doc-footer { page-break-inside: avoid; break-inside: avoid; }
 </style>
 </head>
 <body>
@@ -158,14 +166,14 @@ table.dt tbody tr.total-row td { font-weight:bold; background:#dcfce7; border-to
 <table style="width:100%;border-collapse:collapse;margin:0 0 9pt 0;" cellpadding="0" cellspacing="0"><tr>
     <td style="padding:0 3pt 0 0;">
         <div style="background:#fef2f2;border:0.75pt solid #fecaca;border-left:3pt solid #dc2626;padding:8pt 10pt;">
-            <span style="display:block;font-size:5.5pt;text-transform:uppercase;font-weight:bold;color:#b91c1c;letter-spacing:0.8pt;margin-bottom:2pt;">&#9660; Total Debit</span>
+            <span style="display:block;font-size:5.5pt;text-transform:uppercase;font-weight:bold;color:#b91c1c;letter-spacing:0.8pt;margin-bottom:2pt;">Total Debit</span>
             <span style="display:block;font-size:15pt;font-weight:bold;color:#dc2626;line-height:1;">&#8369;{{ number_format($data['total_debit'] ?? 0, 2) }}</span>
             <span style="display:block;font-size:6.5pt;color:#9ca3af;margin-top:2pt;">{{ $data['debit_count'] ?? 0 }} debit transaction(s) &mdash; fees paid by parishioners</span>
         </div>
     </td>
     <td style="padding:0 0 0 3pt;">
         <div style="background:#f0fdf4;border:0.75pt solid #bbf7d0;border-left:3pt solid #16a34a;padding:8pt 10pt;">
-            <span style="display:block;font-size:5.5pt;text-transform:uppercase;font-weight:bold;color:#15803d;letter-spacing:0.8pt;margin-bottom:2pt;">&#9650; Total Credit</span>
+            <span style="display:block;font-size:5.5pt;text-transform:uppercase;font-weight:bold;color:#15803d;letter-spacing:0.8pt;margin-bottom:2pt;">Total Credit</span>
             <span style="display:block;font-size:15pt;font-weight:bold;color:#16a34a;line-height:1;">&#8369;{{ number_format($data['total_credit'] ?? 0, 2) }}</span>
             <span style="display:block;font-size:6.5pt;color:#9ca3af;margin-top:2pt;">{{ $data['credit_count'] ?? 0 }} credit transaction(s) &mdash; refunds / adjustments</span>
         </div>

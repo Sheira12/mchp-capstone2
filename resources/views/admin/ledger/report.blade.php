@@ -122,9 +122,9 @@
                         <td class="px-3 py-2 text-gray-600 text-xs whitespace-nowrap">{{ $entry->entry_date->format('M d, Y') }}</td>
                         <td class="px-3 py-2">
                             @if($entry->type==='credit')
-                            <span class="text-xs font-bold text-green-700">↑ Income</span>
+                            <span class="text-xs font-bold text-green-700">Income</span>
                             @else
-                            <span class="text-xs font-bold text-red-700">↓ Expense</span>
+                            <span class="text-xs font-bold text-red-700">Expense</span>
                             @endif
                         </td>
                         <td class="px-3 py-2 text-gray-600 text-xs">{{ $entry->category }}</td>
@@ -170,6 +170,19 @@
             <p class="text-center text-xs text-gray-400 mt-6">This is an official financial document of {{ $parish['name'] }}. Generated on {{ $printedAt }}</p>
         </div>
 
+        {{-- Print footer — bottom-right date/time --}}
+        <table id="print-footer" style="display:none;width:100%;border-collapse:collapse;margin-top:12pt;border-top:0.5pt solid #d1d5db;">
+            <tr>
+                <td style="font-size:7pt;color:#9ca3af;padding-top:4pt;">
+                    {{ $parish['name'] }} &middot; Financial Report &middot; Confidential
+                </td>
+                <td style="font-size:7pt;color:#9ca3af;padding-top:4pt;text-align:right;">
+                    Period: {{ \Carbon\Carbon::parse($from)->format('M d, Y') }} &ndash; {{ \Carbon\Carbon::parse($to)->format('M d, Y') }}
+                    &nbsp;|&nbsp; Printed: {{ $printedAt }}
+                </td>
+            </tr>
+        </table>
+
     </div>
 </div>
 @endsection
@@ -189,7 +202,14 @@
     table thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     tr.bg-gray-50, tr.bg-amber-50, tr.bg-green-50, tr.bg-blue-50 {
         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    @page { size: A4 portrait; margin: 15mm 12mm; }
+    @page { size: A4 portrait; margin: 15mm 15mm 18mm 15mm; }
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; break-inside: avoid; }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+    .print-section { page-break-inside: avoid; break-inside: avoid; }
+    .print-signatures { page-break-inside: avoid; break-inside: avoid; margin-top: 20pt !important; }
+    .space-y-5, #print-area { page-break-after: auto; }
 }
 </style>
 @endpush
@@ -202,10 +222,14 @@ window.addEventListener('beforeprint', function() {
     document.querySelectorAll('nav, aside, header, [data-sidebar], .sidebar, .no-print')
         .forEach(el => { el.dataset.hiddenForPrint = '1'; el.style.display = 'none'; });
     document.getElementById('print-area')?.style.setProperty('display', 'block', 'important');
+    const footer = document.getElementById('print-footer');
+    if (footer) footer.style.display = 'table';
 });
 window.addEventListener('afterprint', function() {
     document.querySelectorAll('[data-hidden-for-print]')
         .forEach(el => { el.style.display = ''; delete el.dataset.hiddenForPrint; });
+    const footer = document.getElementById('print-footer');
+    if (footer) footer.style.display = 'none';
 });
 </script>
 @endpush

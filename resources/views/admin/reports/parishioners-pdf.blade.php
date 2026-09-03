@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <style>
-@page { size: A4 portrait; margin: 0; }
+@page { size: A4 portrait; margin: 15mm 15mm 18mm 15mm; }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 9pt; color: #1a1a2e; line-height:1.4; background:#fff; }
 
@@ -108,6 +108,14 @@ table.dt tbody tr.total-row td { font-weight:bold; background:#dbeafe; border-to
 /* ── FOOTER ── */
 .doc-footer { margin-top:9pt; padding-top:4pt; border-top:0.5pt solid #bfdbfe; width:100%; border-collapse:collapse; }
 .doc-footer td { font-size:6.5pt; color:#9ca3af; }
+
+/* ── PAGE BREAK RULES ── */
+table.dt { page-break-inside: auto; }
+table.dt tr { page-break-inside: avoid; break-inside: avoid; }
+table.dt thead { display: table-header-group; }
+table.dt tfoot { display: table-footer-group; }
+.sig-wrap { page-break-inside: avoid; break-inside: avoid; }
+.doc-footer { page-break-inside: avoid; break-inside: avoid; }
 </style>
 </head>
 <body>

@@ -125,27 +125,17 @@
         {{-- Debit / Credit Breakdown --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="bg-white rounded-xl border-l-4 border-red-500 border border-gray-100 shadow-sm p-5">
-                <div class="flex items-center gap-3 mb-2">
-                    <div class="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center">
-                        <span class="text-red-600 font-extrabold text-sm">▼</span>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-red-500 uppercase tracking-wide">Total Debit</p>
-                        <p class="text-xs text-gray-400">Payments made by parishioners</p>
-                    </div>
+                <div class="mb-2">
+                    <p class="text-xs font-bold text-red-500 uppercase tracking-wide">Total Debit</p>
+                    <p class="text-xs text-gray-400">Payments made by parishioners</p>
                 </div>
                 <p class="text-3xl font-extrabold text-red-600">₱{{ number_format($data['total_debit'], 2) }}</p>
                 <p class="text-xs text-gray-400 mt-1">{{ $data['debit_count'] }} debit transaction(s)</p>
             </div>
             <div class="bg-white rounded-xl border-l-4 border-green-500 border border-gray-100 shadow-sm p-5">
-                <div class="flex items-center gap-3 mb-2">
-                    <div class="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center">
-                        <span class="text-green-600 font-extrabold text-sm">▲</span>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-green-500 uppercase tracking-wide">Total Credit</p>
-                        <p class="text-xs text-gray-400">Refunds / adjustments returned</p>
-                    </div>
+                <div class="mb-2">
+                    <p class="text-xs font-bold text-green-500 uppercase tracking-wide">Total Credit</p>
+                    <p class="text-xs text-gray-400">Refunds / adjustments returned</p>
                 </div>
                 <p class="text-3xl font-extrabold text-green-600">₱{{ number_format($data['total_credit'], 2) }}</p>
                 <p class="text-xs text-gray-400 mt-1">{{ $data['credit_count'] }} credit transaction(s)</p>
@@ -209,13 +199,13 @@
                 </tr></thead>
                 <tbody>
                     <tr class="bg-red-50 border-b border-gray-100">
-                        <td class="px-3 py-2 font-bold text-red-700">▼ Debit</td>
+                        <td class="px-3 py-2 font-bold text-red-700">Debit</td>
                         <td class="px-3 py-2 text-right">{{ number_format($data['debit_count']) }}</td>
                         <td class="px-3 py-2 text-right font-bold text-red-700">₱{{ number_format($data['total_debit'], 2) }}</td>
                         <td class="px-3 py-2 text-right text-gray-500 text-xs">Fees paid by parishioners</td>
                     </tr>
                     <tr class="bg-green-50 border-b border-gray-100">
-                        <td class="px-3 py-2 font-bold text-green-700">▲ Credit</td>
+                        <td class="px-3 py-2 font-bold text-green-700">Credit</td>
                         <td class="px-3 py-2 text-right">{{ number_format($data['credit_count']) }}</td>
                         <td class="px-3 py-2 text-right font-bold text-green-700">₱{{ number_format($data['total_credit'], 2) }}</td>
                         <td class="px-3 py-2 text-right text-gray-500 text-xs">Refunds / adjustments</td>
@@ -269,6 +259,19 @@
             </div>
         </div>
 
+        {{-- Print footer — date/time bottom-right, hidden on screen --}}
+        <table id="print-footer" style="display:none;width:100%;border-collapse:collapse;margin-top:12pt;border-top:0.5pt solid #d1d5db;">
+            <tr>
+                <td style="font-size:7pt;color:#9ca3af;padding-top:4pt;">
+                    {{ config('parish.name') }} &middot; Payment Report &middot; Confidential
+                </td>
+                <td style="font-size:7pt;color:#9ca3af;padding-top:4pt;text-align:right;">
+                    Period: {{ \Carbon\Carbon::parse($data['from'])->format('M d, Y') }} &ndash; {{ \Carbon\Carbon::parse($data['to'])->format('M d, Y') }}
+                    &nbsp;|&nbsp; Printed: <span class="print-timestamp">{{ now()->format('M d, Y h:i A') }}</span>
+                </td>
+            </tr>
+        </table>
+
     </div>
 </div>
 @endsection
@@ -281,14 +284,27 @@
     .print-header     { display: flex !important; }
     .print-block      { display: block !important; }
     .print-signatures { display: grid !important; }
+    .print-footer     { display: table !important; }
     body, html { background: white !important; }
     .py-6 { padding: 0 !important; }
     .space-y-5 > * + * { margin-top: 10pt; }
     .bg-white { box-shadow: none !important; }
     table thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    tr.bg-gray-50, tr.bg-red-50, tr.bg-green-50, tr.bg-blue-50 {
+    tr.bg-gray-50, tr.bg-red-50, tr.bg-green-50, tr.bg-blue-50, tr.bg-amber-50 {
         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    @page { size: A4 portrait; margin: 15mm 12mm; }
+    /* A4 margins — professional document */
+    @page { size: A4 portrait; margin: 15mm 15mm 18mm 15mm; }
+    /* Prevent tables from being cut mid-row */
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; break-inside: avoid; }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+    /* Section cards stay together */
+    .print-section { page-break-inside: avoid; break-inside: avoid; }
+    /* Signatures always together */
+    .print-signatures { page-break-inside: avoid; break-inside: avoid; margin-top: 20pt !important; }
+    /* Allow natural page continuation */
+    .space-y-5, #print-area { page-break-after: auto; }
 }
 </style>
 @endpush
@@ -299,10 +315,15 @@ window.addEventListener('beforeprint', function() {
     document.querySelectorAll('nav, aside, header, [data-sidebar], .sidebar, .no-print')
         .forEach(el => { el.dataset.hiddenForPrint = '1'; el.style.display = 'none'; });
     document.getElementById('print-area')?.style.setProperty('display', 'block', 'important');
+    // Show footer with printed date/time
+    const footer = document.getElementById('print-footer');
+    if (footer) footer.style.display = 'table';
 });
 window.addEventListener('afterprint', function() {
     document.querySelectorAll('[data-hidden-for-print]')
         .forEach(el => { el.style.display = ''; delete el.dataset.hiddenForPrint; });
+    const footer = document.getElementById('print-footer');
+    if (footer) footer.style.display = 'none';
 });
 </script>
 @endpush

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <style>
-@page { size: A4 portrait; margin: 20pt 24pt 18pt 24pt; }
+@page { size: A4 portrait; margin: 15mm 15mm 18mm 15mm; }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { 
     font-family: DejaVu Sans, Arial, sans-serif; 
@@ -63,6 +63,13 @@ table.dt tfoot tr.total td { background:#7c3aed; color:#fff; border-top:1.5pt so
 .green { color:#065f46; }
 .red   { color:#991b1b; }
 .blue  { color:#1e40af; }
+
+/* Page-break rules */
+table.dt { page-break-inside: auto; }
+table.dt tr { page-break-inside: avoid; break-inside: avoid; }
+table.dt thead { display: table-header-group; }
+table.dt tfoot { display: table-footer-group; }
+.sig-wrap { page-break-inside: avoid; break-inside: avoid; }
 
 .divider { border:none; border-top:0.5pt solid #ddd6fe; margin:5pt 0; }
 
@@ -130,7 +137,7 @@ table.dt tfoot tr.total td { background:#7c3aed; color:#fff; border-top:1.5pt so
         <tr class="{{ $loop->even ? 'even' : '' }}">
             <td style="font-weight:500;">{{ $cat }}</td>
             <td style="color:{{ $info['type']==='credit' ? '#065f46' : '#991b1b' }};font-weight:bold;font-size:7pt;white-space:nowrap;">
-                {!! $info['type']==='credit' ? '&#x2191; Income' : '&#x2193; Expense' !!}
+                {{ $info['type']==='credit' ? 'Income' : 'Expense' }}
             </td>
             <td class="tr">{{ $info['count'] }}</td>
             <td class="tr {{ $info['type']==='credit' ? 'green' : 'red' }}" style="font-weight:bold;">&#8369;{{ number_format($info['total'],2) }}</td>
@@ -156,7 +163,7 @@ table.dt tfoot tr.total td { background:#7c3aed; color:#fff; border-top:1.5pt so
         <tr class="{{ $i%2===0 ? 'even' : '' }}">
             <td style="font-size:7pt;color:#6b7280;white-space:nowrap;">{{ $entry->entry_date->format('M d, Y') }}</td>
             <td style="font-size:7pt;font-weight:bold;color:{{ $entry->type==='credit' ? '#065f46' : '#991b1b' }};white-space:nowrap;">
-                {!! $entry->type==='credit' ? '&#x2191; Income' : '&#x2193; Expense' !!}
+                {{ $entry->type==='credit' ? 'Income' : 'Expense' }}
             </td>
             <td style="font-size:7pt;color:#6b7280;">{{ $entry->category }}</td>
             <td>{{ $entry->description }}</td>

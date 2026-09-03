@@ -30,7 +30,8 @@ class PaymentWebhookController extends Controller
      * Webhook URL (register in PayMongo Dashboard → Developers → Webhooks):
      *   POST https://mchp-capstone2.onrender.com/webhooks/paymongo
      *
-     * Events to subscribe: source.chargeable, payment.paid, payment.failed
+     * Events to subscribe: source.chargeable, payment.paid, payment.failed,
+     *                      payment_intent.succeeded, payment_intent.payment_failed
      */
     public function paymongo(Request $request)
     {
@@ -64,10 +65,12 @@ class PaymentWebhookController extends Controller
         ]);
 
         match ($type) {
-            'source.chargeable' => $this->handleSourceChargeable($event),
-            'payment.paid'      => $this->handlePaymentPaid($event),
-            'payment.failed'    => $this->handlePaymentFailed($event),
-            default             => Log::info('[PAYMONGO_WEBHOOK_RECEIVED] unhandled type', ['type' => $type]),
+            'source.chargeable'          => $this->handleSourceChargeable($event),
+            'payment.paid'               => $this->handlePaymentPaid($event),
+            'payment.failed'             => $this->handlePaymentFailed($event),
+            'payment_intent.succeeded'   => $this->handlePaymentIntentSucceeded($event),
+            'payment_intent.payment_failed' => $this->handlePaymentIntentFailed($event),
+            default => Log::info('[PAYMONGO_WEBHOOK_RECEIVED] unhandled type', ['type' => $type]),
         };
 
         // Always 200 — PayMongo retries on non-2xx
@@ -291,6 +294,114 @@ class PaymentWebhookController extends Controller
                 'error'      => $e->getMessage(),
             ]);
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // payment_intent.succeeded — Payment Intent flow (GCash/Maya via new API)
+    //
+    // Fired when the customer completes authorization in GCash or Maya app.
+    // Sets payment to 'pending' (awaiting admin verification), notifies admins.
+    // ─────────────────────────────────────────────────────────────────────────
+    private function handlePaymentIntentSucceeded(array $event): void
+    {
+        $intentData  = $event['data']['attributes']['data'] ?? [];
+        $attributes  = $intentData['attributes'] ?? [];
+        $metadata    = $attributes['metadata'] ?? [];
+        $intentId    = $intentData['id'] ?? null;
+
+        $referenceNumber = $metadata['reference_number'] ?? null;
+
+        Log::info('[PAYMONGO_WEBHOOK_RECEIVED] payment_intent.succeeded', [
+            'intent_id'        => $intentId,
+            'reference_number' => $referenceNumber,
+        ]);
+
+        if (!$referenceNumber) {
+            Log::warning('[PAYMONGO_WEBHOOK_RECEIVED] payment_intent.succeeded: no reference_number', [
+                'intent_id' => $intentId,
+                'metadata'  => array_keys($metadata),
+            ]);
+            return;
+        }
+
+        $payment = Payment::where('reference_number', $referenceNumber)->first();
+
+        if (!$payment) {
+            Log::warning('[PAYMONGO_WEBHOOK_RECEIVED] payment_intent.succeeded: payment not found', [
+                'reference_number' => $referenceNumber,
+            ]);
+            return;
+        }
+
+        if ($payment->status === 'paid') {
+            Log::info('[PAYMONGO_WEBHOOK_RECEIVED] payment_intent.succeeded: already paid — skip', [
+                'payment_id' => $payment->id,
+            ]);
+            return;
+        }
+
+        DB::transaction(function () use ($payment, $attributes, $intentId) {
+            $payment->update([
+                'status'            => 'pending',   // awaiting admin approval
+                'gateway_reference' => $intentId,
+                'gateway_response'  => $attributes,
+            ]);
+        });
+
+        Log::info('[PAYMENT_PENDING_VERIFICATION]', [
+            'payment_id'       => $payment->id,
+            'reference_number' => $payment->reference_number,
+            'intent_id'        => $intentId,
+            'note'             => 'Payment Intent succeeded; awaiting admin approval',
+        ]);
+
+        $this->notifyAdmins($payment);
+
+        try {
+            AuditLog::record(
+                'payment_intent_succeeded',
+                $payment,
+                ['status' => 'pending', 'gateway_reference' => null],
+                ['status' => 'pending', 'gateway_reference' => $intentId],
+                'PayMongo Payment Intent succeeded; awaiting admin verification'
+            );
+        } catch (\Exception $e) {
+            Log::warning('[PAYMONGO_WEBHOOK_RECEIVED] audit log failed', ['error' => $e->getMessage()]);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // payment_intent.payment_failed — Payment Intent failed.
+    // ─────────────────────────────────────────────────────────────────────────
+    private function handlePaymentIntentFailed(array $event): void
+    {
+        $intentData = $event['data']['attributes']['data'] ?? [];
+        $attributes = $intentData['attributes'] ?? [];
+        $metadata   = $attributes['metadata'] ?? [];
+        $intentId   = $intentData['id'] ?? null;
+
+        $referenceNumber = $metadata['reference_number'] ?? null;
+
+        Log::info('[PAYMONGO_WEBHOOK_RECEIVED] payment_intent.payment_failed', [
+            'intent_id'        => $intentId,
+            'reference_number' => $referenceNumber,
+        ]);
+
+        if (!$referenceNumber) return;
+
+        $payment = Payment::where('reference_number', $referenceNumber)->first();
+
+        if (!$payment || $payment->status === 'paid') return;
+
+        $payment->update([
+            'status'           => 'failed',
+            'gateway_response' => $attributes,
+        ]);
+
+        Log::info('[PAYMONGO_WEBHOOK_RECEIVED] payment_intent.payment_failed: marked failed', [
+            'payment_id'       => $payment->id,
+            'reference_number' => $referenceNumber,
+        ]);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
