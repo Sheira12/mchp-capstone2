@@ -84,7 +84,6 @@
                     <h1 class="text-xl font-bold text-green-800">{{ config('parish.name') }}</h1>
                     <p class="text-sm text-gray-500">{{ config('parish.address') }} · {{ config('parish.phone') }}</p>
                     <p class="text-lg font-bold text-gray-800 mt-1">PAYMENT REPORT{{ $data['quarter_label'] ? ' — ' . strtoupper($data['quarter_label']) : '' }}</p>
-                    <p class="text-sm text-gray-500">Period: {{ \Carbon\Carbon::parse($data['from'])->format('M d, Y') }} – {{ \Carbon\Carbon::parse($data['to'])->format('M d, Y') }} | Printed: {{ now()->format('M d, Y h:i A') }}</p>
                 </div>
             </div>
         </div>
@@ -259,20 +258,25 @@
             </div>
         </div>
 
-        {{-- Print footer — date/time bottom-right, hidden on screen --}}
-        <table id="print-footer" style="display:none;width:100%;border-collapse:collapse;margin-top:12pt;border-top:0.5pt solid #d1d5db;">
+        {{-- Period/Printed — flows naturally after signatures, NOT fixed --}}
+        <table id="print-meta" style="display:none;width:100%;border-collapse:collapse;margin-top:14pt;padding-top:6pt;border-top:1pt solid #d1d5db;">
             <tr>
-                <td style="font-size:7pt;color:#9ca3af;padding-top:4pt;">
+                <td style="font-size:8pt;color:#374151;padding-top:4pt;">
                     {{ config('parish.name') }} &middot; Payment Report &middot; Confidential
                 </td>
-                <td style="font-size:7pt;color:#9ca3af;padding-top:4pt;text-align:right;">
+                <td style="font-size:8pt;color:#374151;padding-top:4pt;text-align:right;">
                     Period: {{ \Carbon\Carbon::parse($data['from'])->format('M d, Y') }} &ndash; {{ \Carbon\Carbon::parse($data['to'])->format('M d, Y') }}
-                    &nbsp;|&nbsp; Printed: <span class="print-timestamp">{{ now()->format('M d, Y h:i A') }}</span>
+                    &nbsp;|&nbsp; Printed: {{ now()->format('M d, Y h:i A') }}
                 </td>
             </tr>
         </table>
 
     </div>
+</div>
+
+{{-- Copyright — fixed at very bottom of every printed page --}}
+<div id="print-copyright" style="display:none;">
+    &copy; {{ date('Y') }} {{ config('parish.name') }} &mdash; All rights reserved.
 </div>
 @endsection
 
@@ -284,7 +288,6 @@
     .print-header     { display: flex !important; }
     .print-block      { display: block !important; }
     .print-signatures { display: grid !important; }
-    .print-footer     { display: table !important; }
     body, html { background: white !important; }
     .py-6 { padding: 0 !important; }
     .space-y-5 > * + * { margin-top: 10pt; }
@@ -292,38 +295,46 @@
     table thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     tr.bg-gray-50, tr.bg-red-50, tr.bg-green-50, tr.bg-blue-50, tr.bg-amber-50 {
         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    /* A4 margins — professional document */
-    @page { size: A4 portrait; margin: 15mm 15mm 18mm 15mm; }
-    /* Prevent tables from being cut mid-row */
+    @page { size: A4 portrait; margin: 15mm 15mm 22mm 15mm; }
     table { page-break-inside: auto; }
     tr { page-break-inside: avoid; break-inside: avoid; }
     thead { display: table-header-group; }
     tfoot { display: table-footer-group; }
-    /* Section cards stay together */
     .print-section { page-break-inside: avoid; break-inside: avoid; }
-    /* Signatures always together */
     .print-signatures { page-break-inside: avoid; break-inside: avoid; margin-top: 20pt !important; }
-    /* Allow natural page continuation */
     .space-y-5, #print-area { page-break-after: auto; }
+    /* Period/Printed — flows in content */
+    #print-meta { display: table !important; }
+    /* Copyright — fixed at very bottom of every page */
+    #print-copyright {
+        display: block !important;
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        text-align: center;
+        font-size: 7.5pt;
+        color: #6b7280;
+        border-top: 0.5pt solid #d1d5db;
+        padding: 3pt 15mm;
+        background: #fff;
+    }
 }
 </style>
 @endpush
 
 @push('scripts')
 <script>
-window.addEventListener('beforeprint', function() {
+window.addEventListener('beforeprint', function () {
     document.querySelectorAll('nav, aside, header, [data-sidebar], .sidebar, .no-print')
         .forEach(el => { el.dataset.hiddenForPrint = '1'; el.style.display = 'none'; });
     document.getElementById('print-area')?.style.setProperty('display', 'block', 'important');
-    // Show footer with printed date/time
-    const footer = document.getElementById('print-footer');
-    if (footer) footer.style.display = 'table';
+    document.getElementById('print-meta')?.style.setProperty('display', 'table', 'important');
+    document.getElementById('print-copyright')?.style.setProperty('display', 'block', 'important');
 });
-window.addEventListener('afterprint', function() {
+window.addEventListener('afterprint', function () {
     document.querySelectorAll('[data-hidden-for-print]')
         .forEach(el => { el.style.display = ''; delete el.dataset.hiddenForPrint; });
-    const footer = document.getElementById('print-footer');
-    if (footer) footer.style.display = 'none';
+    document.getElementById('print-meta')?.style.setProperty('display', 'none', 'important');
+    document.getElementById('print-copyright')?.style.setProperty('display', 'none', 'important');
 });
 </script>
 @endpush

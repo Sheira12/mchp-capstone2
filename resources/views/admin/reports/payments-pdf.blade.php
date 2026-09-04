@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <style>
-@page { size: A4 portrait; margin: 15mm 15mm 18mm 15mm; }
+@page { size: A4 portrait; margin: 15mm 15mm 22mm 15mm; }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 9pt; color: #1a1a2e; line-height:1.4; background:#fff; }
 
@@ -111,6 +111,18 @@ table.dt thead { display: table-header-group; }
 table.dt tfoot { display: table-footer-group; }
 .sig-wrap { page-break-inside: avoid; break-inside: avoid; }
 .doc-footer { page-break-inside: avoid; break-inside: avoid; }
+
+/* ── COPYRIGHT FOOTER ── */
+.page-copyright {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    text-align: center;
+    font-size: 6.5pt;
+    color: #9ca3af;
+    border-top: 0.5pt solid #bbf7d0;
+    padding: 3pt 15mm;
+    background: #fff;
+}
 </style>
 </head>
 <body>
@@ -129,7 +141,6 @@ table.dt tfoot { display: table-footer-group; }
         <div class="parish-name">{{ $parish['name'] }}</div>
         <div class="parish-sub">{{ $parish['address'] }} &nbsp;&middot;&nbsp; {{ $parish['phone'] }}</div>
         <div class="rpt-title">Payment Report{{ !empty($data['quarter_label']) ? ' — ' . $data['quarter_label'] : '' }}</div>
-        <div class="rpt-meta">Period: {{ \Carbon\Carbon::parse($data['from'])->format('M d, Y') }} &ndash; {{ \Carbon\Carbon::parse($data['to'])->format('M d, Y') }} &nbsp;|&nbsp; Printed: {{ $printedAt }}</div>
     </td>
     <td class="hdr-right"></td>
 </tr></table>
@@ -244,6 +255,17 @@ table.dt tfoot { display: table-footer-group; }
 
 <hr class="divider">
 
+{{-- PERIOD / PRINTED — flows naturally at bottom of content --}}
+<table style="width:100%;border-collapse:collapse;margin-top:10pt;padding-top:5pt;border-top:0.5pt solid #bbf7d0;" cellpadding="0" cellspacing="0">
+    <tr>
+        <td style="font-size:7.5pt;color:#374151;">{{ $parish['name'] }} &middot; Payment Report &middot; Confidential</td>
+        <td style="font-size:7.5pt;color:#374151;text-align:right;">
+            Period: {{ \Carbon\Carbon::parse($data['from'])->format('M d, Y') }} &ndash; {{ \Carbon\Carbon::parse($data['to'])->format('M d, Y') }}
+            &nbsp;|&nbsp; Printed: {{ $printedAt }}
+        </td>
+    </tr>
+</table>
+
 {{-- SIGNATURES --}}
 <table class="sig-wrap" cellpadding="0" cellspacing="0"><tr>
     <td><div class="sig-line">Prepared by</div><div class="sig-role">Parish Secretary</div></td>
@@ -258,5 +280,11 @@ table.dt tfoot { display: table-footer-group; }
 </tr></table>
 
 </div>{{-- /.page-content --}}
+
+{{-- COPYRIGHT — fixed at very bottom of every printed page --}}
+<div class="page-copyright">
+    &copy; {{ date('Y') }} {{ $parish['name'] }} &mdash; All rights reserved.
+</div>
+
 </body>
 </html>

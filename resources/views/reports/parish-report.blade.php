@@ -9,7 +9,7 @@
            Navy #1F3A5F · Gold #D4AF37
            ═══════════════════════════════════════════════ */
 
-        @page { size: A4 portrait; margin: 15mm 16mm 18mm 16mm; }
+        @page { size: A4 portrait; margin: 15mm 16mm 22mm 16mm; }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -151,6 +151,18 @@
         .footer-left  { display: table-cell; vertical-align: middle; width: 50%; }
         .footer-right { display: table-cell; vertical-align: middle; text-align: right; width: 50%; }
 
+        /* ── Copyright — fixed at bottom of every page ── */
+        .page-copyright {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            text-align: center;
+            font-size: 6.5pt;
+            color: #94a3b8;
+            border-top: 0.5pt solid #D4AF37;
+            padding: 3pt 15mm;
+            background: #fff;
+        }
+
         /* ── Page break rules ── */
         .section { page-break-inside: avoid; break-inside: avoid; margin-bottom: 16pt; }
         table { page-break-inside: auto; }
@@ -187,7 +199,6 @@
                 Period: {{ \Carbon\Carbon::parse($from)->format('F d, Y') }}
                 — {{ \Carbon\Carbon::parse($to)->format('F d, Y') }}
             </div>
-            <div class="report-generated">Generated: {{ now()->format('F d, Y g:i A') }}</div>
         </div>
         <div class="header-right"></div>
     </div>
@@ -369,13 +380,18 @@
     </div>
 </div>
 
-{{-- ── FOOTER — date/time bottom-right ── --}}
+{{-- ── FOOTER — period/printed bottom-right, copyright fixed ── --}}
 <div class="report-footer">
     <div class="footer-left">{{ $parish['name'] }} &middot; Parish Administrative Report &middot; CONFIDENTIAL</div>
     <div class="footer-right">
         Period: {{ \Carbon\Carbon::parse($from)->format('M d, Y') }} &ndash; {{ \Carbon\Carbon::parse($to)->format('M d, Y') }}
         &nbsp;|&nbsp; Generated: {{ now()->format('M d, Y g:i A') }}
     </div>
+</div>
+
+{{-- COPYRIGHT — fixed at very bottom of every printed page --}}
+<div class="page-copyright">
+    &copy; {{ date('Y') }} {{ $parish['name'] }} &mdash; All rights reserved.
 </div>
 
 </body>

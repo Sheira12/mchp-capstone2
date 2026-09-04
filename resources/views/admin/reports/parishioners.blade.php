@@ -38,7 +38,6 @@
                     <h1 class="text-xl font-bold text-blue-800">{{ config('parish.name') }}</h1>
                     <p class="text-sm text-gray-500">{{ config('parish.address') }} · {{ config('parish.phone') }}</p>
                     <p class="text-lg font-bold text-gray-800 mt-1">PARISHIONER REPORT</p>
-                    <p class="text-sm text-gray-500">Period: {{ \Carbon\Carbon::parse($data['from'])->format('M d, Y') }} – {{ \Carbon\Carbon::parse($data['to'])->format('M d, Y') }} | Printed: {{ now()->format('M d, Y h:i A') }}</p>
                 </div>
             </div>
         </div>
@@ -122,7 +121,25 @@
             </div>
         </div>
 
+        {{-- Period/Printed — flows naturally after content, above copyright footer --}}
+        <table id="print-meta" style="display:none;width:100%;border-collapse:collapse;margin-top:14pt;padding-top:6pt;border-top:1pt solid #d1d5db;">
+            <tr>
+                <td style="font-size:8pt;color:#374151;padding-top:4pt;">
+                    {{ config('parish.name') }} &middot; Parishioner Report &middot; Confidential
+                </td>
+                <td style="font-size:8pt;color:#374151;padding-top:4pt;text-align:right;">
+                    Period: {{ \Carbon\Carbon::parse($data['from'])->format('M d, Y') }} &ndash; {{ \Carbon\Carbon::parse($data['to'])->format('M d, Y') }}
+                    &nbsp;|&nbsp; Printed: {{ now()->format('M d, Y h:i A') }}
+                </td>
+            </tr>
+        </table>
+
     </div>{{-- /#print-area --}}
+
+    {{-- Copyright — fixed at very bottom of every printed page --}}
+    <div id="print-copyright" style="display:none;">
+        &copy; {{ date('Y') }} {{ config('parish.name') }} &mdash; All rights reserved.
+    </div>
 </div>
 @endsection
 
@@ -147,23 +164,51 @@
     table thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     tr.bg-gray-50, tr.bg-amber-50, tr.bg-green-50, tr.bg-blue-50 {
         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    @page { size: A4 portrait; margin: 15mm 12mm; }
+
+    /* A4 — extra bottom margin leaves room for fixed copyright footer */
+    @page { size: A4 portrait; margin: 15mm 15mm 22mm 15mm; }
+
+    /* Natural page flow — no cut-off rows */
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; break-inside: avoid; }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+    .print-section { page-break-inside: avoid; break-inside: avoid; }
+    .print-signatures { page-break-inside: avoid; break-inside: avoid; margin-top: 20pt !important; }
+
+    /* Period/Printed — flows naturally, NOT fixed */
+    #print-meta { display: table !important; }
+
+    /* Copyright — fixed at very bottom of every page */
+    #print-copyright {
+        display: block !important;
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        text-align: center;
+        font-size: 7.5pt;
+        color: #6b7280;
+        border-top: 0.5pt solid #d1d5db;
+        padding: 3pt 15mm;
+        background: #fff;
+    }
 }
 </style>
 @endpush
 
-
 @push('scripts')
 <script>
-// Hide layout chrome on print, restore after
-window.addEventListener('beforeprint', function() {
+window.addEventListener('beforeprint', function () {
     document.querySelectorAll('nav, aside, header, [data-sidebar], .sidebar, .no-print')
         .forEach(el => { el.dataset.hiddenForPrint = '1'; el.style.display = 'none'; });
     document.getElementById('print-area')?.style.setProperty('display', 'block', 'important');
+    document.getElementById('print-meta')?.style.setProperty('display', 'table', 'important');
+    document.getElementById('print-copyright')?.style.setProperty('display', 'block', 'important');
 });
-window.addEventListener('afterprint', function() {
+window.addEventListener('afterprint', function () {
     document.querySelectorAll('[data-hidden-for-print]')
         .forEach(el => { el.style.display = ''; delete el.dataset.hiddenForPrint; });
+    document.getElementById('print-meta')?.style.setProperty('display', 'none', 'important');
+    document.getElementById('print-copyright')?.style.setProperty('display', 'none', 'important');
 });
 </script>
 @endpush
