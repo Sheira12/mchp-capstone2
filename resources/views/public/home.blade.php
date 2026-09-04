@@ -98,11 +98,11 @@
         </div>
 
         <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:2.5rem;">
-            @foreach([['Est. 2015','Parish Founded'],['Daily','Holy Mass'],['Online','Services']] as $i => $s)
+            @foreach([['Parish Founded','Est. 2015'],['Daily','Holy Mass'],['Online','Services']] as $i => $s)
             @if($i > 0)<div style="width:1px;background:rgba(255,255,255,0.12);align-self:stretch;" class="hidden sm:block"></div>@endif
             <div style="text-align:center;">
                 <p style="font-size:1.4rem;font-weight:800;color:#fff;line-height:1;margin:0;">{{ $s[0] }}</p>
-                <p style="font-size:0.62rem;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#93c5fd;margin-top:4px;">{{ $s[1] }}</p>
+                <p style="font-size:0.5.62rem;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#93c5fd;margin-top:4px;">{{ $s[1] }}</p>
             </div>
             @endforeach
         </div>

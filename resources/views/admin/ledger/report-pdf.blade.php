@@ -196,11 +196,6 @@ table.dt tfoot { display: table-footer-group; }
             &nbsp;|&nbsp; Printed: {{ $printedAt }}
         </td>
     </tr>
-    <tr>
-        <td colspan="2" style="font-size:7pt;color:#9ca3af;text-align:center;padding-top:5pt;border-top:0.5pt solid #e5e7eb;">
-            &copy; {{ date('Y') }} {{ $parish['name'] }} &mdash; All rights reserved.
-        </td>
-    </tr>
 </table>
 
 {{-- SIGNATURES --}}
@@ -212,8 +207,9 @@ table.dt tfoot { display: table-footer-group; }
 
 {{-- FOOTER --}}
 <table class="footer" cellpadding="0" cellspacing="0"><tr>
-    <td>{{ $parish['name'] }} &middot; Financial Report &middot; Confidential</td>
-    <td style="text-align:right;">{{ $printedAt }}</td>
+    <td style="text-align:center;">
+        &copy; {{ date('Y') }} {{ $parish['name'] }} &mdash; All rights reserved.
+    </td>
 </tr></table>
 
 </div>

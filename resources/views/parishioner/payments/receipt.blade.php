@@ -59,9 +59,9 @@
                 <div class="flex justify-between items-center py-2 border-b border-gray-100">
                     <span class="text-sm text-gray-500">Transaction Type</span>
                     @php $badge = $payment->transaction_type_badge; @endphp
-                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold
                         {{ $badge['color'] === 'green' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
-                        {{ $badge['color'] === 'green' ? '▲' : '▼' }} {{ $badge['label'] }}
+                        {{ $badge['label'] }}
                     </span>
                 </div>
                 <div class="flex justify-between items-center py-2 border-b border-gray-100">

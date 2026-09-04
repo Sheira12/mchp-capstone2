@@ -107,9 +107,9 @@
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
                             <p class="font-bold text-gray-900">₱{{ number_format($payment->amount, 2) }}</p>
-                            <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-bold
                                 {{ $badge['color'] === 'green' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                {{ $badge['color'] === 'green' ? '▲' : '▼' }} {{ $badge['label'] }}
+                                {{ $badge['label'] }}
                             </span>
                         </div>
                         <p class="text-xs text-gray-500 mt-0.5">
@@ -167,9 +167,9 @@
                     <td class="px-4 py-3 font-medium text-gray-900">{{ $payment->parishioner?->full_name ?? '—' }}</td>
                     <td class="px-4 py-3 font-semibold text-gray-900">₱{{ number_format($payment->amount, 2) }}</td>
                     <td class="px-4 py-3">
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold
                             {{ $badge['color'] === 'green' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                            {{ $badge['color'] === 'green' ? '▲' : '▼' }} {{ $badge['label'] }}
+                            {{ $badge['label'] }}
                         </span>
                     </td>
                     <td class="px-4 py-3 text-gray-600">{{ \App\Models\Payment::METHODS[$payment->payment_method] ?? ucfirst($payment->payment_method) }}</td>

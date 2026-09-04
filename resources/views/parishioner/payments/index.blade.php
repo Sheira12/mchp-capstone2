@@ -57,7 +57,7 @@
                                 <span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:9999px;font-size:0.7rem;font-weight:700;letter-spacing:0.04em;
                                     background:{{ $badge['color'] === 'green' ? '#dcfce7' : '#fee2e2' }};
                                     color:{{ $badge['color'] === 'green' ? '#166534' : '#991b1b' }};">
-                                    {{ $badge['label'] === 'Debit' ? '▼' : '▲' }} {{ $badge['label'] }}
+                                    {{ $badge['label'] }}
                                 </span>
                             </div>
                             <p class="text-sm text-gray-500 capitalize mt-0.5">{{ \App\Models\Payment::METHODS[$payment->payment_method] ?? $payment->payment_method }}</p>

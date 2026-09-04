@@ -65,9 +65,9 @@ $sc = $statusConfig[$payment->status] ?? $statusConfig['pending'];
                             <p class="text-2xl font-extrabold text-gray-900">₱{{ number_format($payment->amount, 2) }}</p>
                             <p class="text-sm text-gray-500 capitalize">{{ \App\Models\Payment::METHODS[$payment->payment_method] ?? ucfirst($payment->payment_method) }}</p>
                             @php $badge = $payment->transaction_type_badge; @endphp
-                            <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-bold
+                            <span class="inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-xs font-bold
                                 {{ $badge['color'] === 'green' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                {{ $badge['color'] === 'green' ? '▲' : '▼' }} {{ $badge['label'] }}
+                                {{ $badge['label'] }}
                             </span>
                         </div>
                     </div>
