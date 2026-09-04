@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <style>
-@page { size: A4 portrait; margin: 15mm 15mm 22mm 15mm; }
+@page { size: A4 portrait; margin: 15mm 15mm 18mm 15mm; }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 9pt; color: #1a1a2e; line-height:1.4; background:#fff; }
 
@@ -116,18 +116,6 @@ table.dt thead { display: table-header-group; }
 table.dt tfoot { display: table-footer-group; }
 .sig-wrap { page-break-inside: avoid; break-inside: avoid; }
 .doc-footer { page-break-inside: avoid; break-inside: avoid; }
-
-/* ── COPYRIGHT FOOTER — fixed at bottom of every page ── */
-.page-copyright {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    text-align: center;
-    font-size: 6.5pt;
-    color: #9ca3af;
-    border-top: 0.5pt solid #bfdbfe;
-    padding: 3pt 15mm;
-    background: #fff;
-}
 </style>
 </head>
 <body>
@@ -249,11 +237,6 @@ table.dt tfoot { display: table-footer-group; }
 </tr></table>
 
 </div>{{-- /.page-content --}}
-
-{{-- COPYRIGHT — fixed at very bottom of every printed page --}}
-<div class="page-copyright">
-    &copy; {{ date('Y') }} {{ $parish['name'] }} &mdash; All rights reserved.
-</div>
 
 </body>
 </html>

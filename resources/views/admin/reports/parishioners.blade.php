@@ -136,10 +136,6 @@
 
     </div>{{-- /#print-area --}}
 
-    {{-- Copyright — fixed at very bottom of every printed page --}}
-    <div id="print-copyright" style="display:none;">
-        &copy; {{ date('Y') }} {{ config('parish.name') }} &mdash; All rights reserved.
-    </div>
 </div>
 @endsection
 
@@ -166,7 +162,7 @@
         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
     /* A4 — extra bottom margin leaves room for fixed copyright footer */
-    @page { size: A4 portrait; margin: 15mm 15mm 22mm 15mm; }
+    @page { size: A4 portrait; margin: 15mm 15mm 18mm 15mm; }
 
     /* Natural page flow — no cut-off rows */
     table { page-break-inside: auto; }
@@ -178,19 +174,6 @@
 
     /* Period/Printed — flows naturally, NOT fixed */
     #print-meta { display: table !important; }
-
-    /* Copyright — fixed at very bottom of every page */
-    #print-copyright {
-        display: block !important;
-        position: fixed;
-        bottom: 0; left: 0; right: 0;
-        text-align: center;
-        font-size: 7.5pt;
-        color: #6b7280;
-        border-top: 0.5pt solid #d1d5db;
-        padding: 3pt 15mm;
-        background: #fff;
-    }
 }
 </style>
 @endpush
@@ -202,13 +185,11 @@ window.addEventListener('beforeprint', function () {
         .forEach(el => { el.dataset.hiddenForPrint = '1'; el.style.display = 'none'; });
     document.getElementById('print-area')?.style.setProperty('display', 'block', 'important');
     document.getElementById('print-meta')?.style.setProperty('display', 'table', 'important');
-    document.getElementById('print-copyright')?.style.setProperty('display', 'block', 'important');
 });
 window.addEventListener('afterprint', function () {
     document.querySelectorAll('[data-hidden-for-print]')
         .forEach(el => { el.style.display = ''; delete el.dataset.hiddenForPrint; });
     document.getElementById('print-meta')?.style.setProperty('display', 'none', 'important');
-    document.getElementById('print-copyright')?.style.setProperty('display', 'none', 'important');
 });
 </script>
 @endpush

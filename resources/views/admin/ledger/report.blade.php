@@ -185,10 +185,6 @@
     </div>
 </div>
 
-{{-- Copyright — fixed at very bottom of every printed page --}}
-<div id="print-copyright" style="display:none;">
-    &copy; {{ date('Y') }} {{ $parish['name'] }} &mdash; All rights reserved.
-</div>
 @endsection
 
 @push('styles')
@@ -206,7 +202,7 @@
     table thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     tr.bg-gray-50, tr.bg-amber-50, tr.bg-green-50, tr.bg-blue-50 {
         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    @page { size: A4 portrait; margin: 15mm 15mm 22mm 15mm; }
+    @page { size: A4 portrait; margin: 15mm 15mm 18mm 15mm; }
     table { page-break-inside: auto; }
     tr { page-break-inside: avoid; break-inside: avoid; }
     thead { display: table-header-group; }
@@ -215,17 +211,6 @@
     .print-signatures { page-break-inside: avoid; break-inside: avoid; margin-top: 20pt !important; }
     .space-y-5, #print-area { page-break-after: auto; }
     #print-meta { display: table !important; }
-    #print-copyright {
-        display: block !important;
-        position: fixed;
-        bottom: 0; left: 0; right: 0;
-        text-align: center;
-        font-size: 7.5pt;
-        color: #6b7280;
-        border-top: 0.5pt solid #d1d5db;
-        padding: 3pt 15mm;
-        background: #fff;
-    }
 }
 </style>
 @endpush
@@ -239,13 +224,11 @@ window.addEventListener('beforeprint', function() {
         .forEach(el => { el.dataset.hiddenForPrint = '1'; el.style.display = 'none'; });
     document.getElementById('print-area')?.style.setProperty('display', 'block', 'important');
     document.getElementById('print-meta')?.style.setProperty('display', 'table', 'important');
-    document.getElementById('print-copyright')?.style.setProperty('display', 'block', 'important');
 });
 window.addEventListener('afterprint', function() {
     document.querySelectorAll('[data-hidden-for-print]')
         .forEach(el => { el.style.display = ''; delete el.dataset.hiddenForPrint; });
     document.getElementById('print-meta')?.style.setProperty('display', 'none', 'important');
-    document.getElementById('print-copyright')?.style.setProperty('display', 'none', 'important');
 });
 </script>
 @endpush
