@@ -14,15 +14,11 @@ use Illuminate\Database\Seeder;
 /**
  * CurrentMonthSeeder
  *
- * Fills August 2026 (current month) and June 2026 (data gap) with:
- *  - 15 sacramental records for Aug 2026  → fills Sacrament Breakdown chart
- *  - 8  sacramental records for Jun 2026  → fills the June dip in the sacrament trend
- *  - 25 paid payments for Aug 2026        → Revenue (This Month) becomes realistic
- *  - 12 paid payments for Jun 2026        → fills June revenue gap in the chart
- *  - 6  ledger income entries for Aug 2026
+ * Fills the CURRENT month and 2 months ago with realistic data so the
+ * dashboard charts are never empty regardless of when the seeder is run.
+ * All date calculations are dynamic — no hardcoded year/month values.
  *
- * Safe to re-run — uses duplicate checks on sacramental records and
- * booking IDs before inserting payments.
+ * Safe to re-run — duplicate checks prevent duplicate records.
  *
  * Run: php artisan db:seed --class=CurrentMonthSeeder
  */
@@ -31,6 +27,14 @@ class CurrentMonthSeeder extends Seeder
     private QrCodeService $qrService;
     private int $adminId    = 1;
     private int $secretaryId = 2;
+
+    // Dynamic month references — set in run()
+    private Carbon $currentMonth;
+    private Carbon $priorMonth;
+    private int $currentYear;
+    private int $currentMonthNum;
+    private int $priorYear;
+    private int $priorMonthNum;
 
     // Filipino name pools
     private array $firstNames = [
@@ -56,7 +60,18 @@ class CurrentMonthSeeder extends Seeder
     {
         $this->qrService = app(QrCodeService::class);
 
-        $this->command->info('Seeding current-month (Aug 2026) & June 2026 data...');
+        // ── Dynamic month references ────────────────────────────────────────
+        $this->currentMonth    = Carbon::now()->startOfMonth();
+        $this->priorMonth      = Carbon::now()->subMonths(2)->startOfMonth();
+        $this->currentYear     = (int) $this->currentMonth->format('Y');
+        $this->currentMonthNum = (int) $this->currentMonth->format('n');
+        $this->priorYear       = (int) $this->priorMonth->format('Y');
+        $this->priorMonthNum   = (int) $this->priorMonth->format('n');
+
+        $this->command->info(
+            'Seeding data for ' . $this->currentMonth->format('F Y') .
+            ' and ' . $this->priorMonth->format('F Y') . '...'
+        );
 
         $parishioners = Parishioner::inRandomOrder()->limit(80)->get();
 
@@ -74,60 +89,22 @@ class CurrentMonthSeeder extends Seeder
         $this->printSummary();
     }
 
-    // ── AUG 2026 SACRAMENTAL RECORDS ─────────────────────────────────────────
+    // ── CURRENT MONTH SACRAMENTAL RECORDS ────────────────────────────────────
     private function seedSacramentalRecordsAugust($parishioners): void
     {
-        $this->command->line('  Creating August 2026 sacramental records...');
+        $label = $this->currentMonth->format('F Y');
+        $this->command->line("  Creating {$label} sacramental records...");
 
-        // Distribution that makes Sacrament Breakdown chart look realistic
         $plan = [
-            'baptism'         => 7,   // most common
+            'baptism'         => 7,
             'first_communion' => 3,
             'confirmation'    => 2,
             'marriage'        => 2,
             'death_burial'    => 1,
         ];
 
-        $created = 0;
-        foreach ($plan as $type => $count) {
-            $pool = $parishioners->shuffle()->values();
-            $added = 0;
-
-            foreach ($pool as $p) {
-                if ($added >= $count) break;
-
-                // Skip if this parishioner already has this sacrament this month
-                $exists = SacramentalRecord::where('parishioner_id', $p->id)
-                    ->where('type', $type)
-                    ->whereYear('date_administered', 2026)
-                    ->whereMonth('date_administered', 8)
-                    ->exists();
-                if ($exists) continue;
-
-                $day  = rand(1, 25);  // Aug 1–25
-                $date = Carbon::create(2026, 8, $day);
-
-                $data = $this->buildSacramentData($p->id, $type, $date);
-                SacramentalRecord::create($data);
-                $added++;
-                $created++;
-            }
-        }
-
-        $this->command->line("  ✓ Created {$created} sacramental records for August 2026.");
-    }
-
-    // ── JUN 2026 SACRAMENTAL RECORDS ─────────────────────────────────────────
-    private function seedSacramentalRecordsJune($parishioners): void
-    {
-        $this->command->line('  Creating June 2026 sacramental records...');
-
-        $plan = [
-            'baptism'         => 4,
-            'first_communion' => 2,
-            'confirmation'    => 1,
-            'marriage'        => 1,
-        ];
+        $maxDay  = (int) $this->currentMonth->copy()->endOfMonth()->format('j');
+        $safeMax = min($maxDay, 25);
 
         $created = 0;
         foreach ($plan as $type => $count) {
@@ -139,13 +116,13 @@ class CurrentMonthSeeder extends Seeder
 
                 $exists = SacramentalRecord::where('parishioner_id', $p->id)
                     ->where('type', $type)
-                    ->whereYear('date_administered', 2026)
-                    ->whereMonth('date_administered', 6)
+                    ->whereYear('date_administered', $this->currentYear)
+                    ->whereMonth('date_administered', $this->currentMonthNum)
                     ->exists();
                 if ($exists) continue;
 
-                $day  = rand(1, 28);
-                $date = Carbon::create(2026, 6, $day);
+                $day  = rand(1, $safeMax);
+                $date = Carbon::create($this->currentYear, $this->currentMonthNum, $day);
 
                 SacramentalRecord::create($this->buildSacramentData($p->id, $type, $date));
                 $added++;
@@ -153,13 +130,57 @@ class CurrentMonthSeeder extends Seeder
             }
         }
 
-        $this->command->line("  ✓ Created {$created} sacramental records for June 2026.");
+        $this->command->line("  ✓ Created {$created} sacramental records for {$label}.");
     }
 
-    // ── AUG 2026 PAYMENTS ────────────────────────────────────────────────────
+    // ── PRIOR MONTH SACRAMENTAL RECORDS ──────────────────────────────────────
+    private function seedSacramentalRecordsJune($parishioners): void
+    {
+        $label = $this->priorMonth->format('F Y');
+        $this->command->line("  Creating {$label} sacramental records...");
+
+        $plan = [
+            'baptism'         => 4,
+            'first_communion' => 2,
+            'confirmation'    => 1,
+            'marriage'        => 1,
+        ];
+
+        $maxDay  = (int) $this->priorMonth->copy()->endOfMonth()->format('j');
+        $created = 0;
+
+        foreach ($plan as $type => $count) {
+            $pool  = $parishioners->shuffle()->values();
+            $added = 0;
+
+            foreach ($pool as $p) {
+                if ($added >= $count) break;
+
+                $exists = SacramentalRecord::where('parishioner_id', $p->id)
+                    ->where('type', $type)
+                    ->whereYear('date_administered', $this->priorYear)
+                    ->whereMonth('date_administered', $this->priorMonthNum)
+                    ->exists();
+                if ($exists) continue;
+
+                $day  = rand(1, $maxDay);
+                $date = Carbon::create($this->priorYear, $this->priorMonthNum, $day);
+
+                SacramentalRecord::create($this->buildSacramentData($p->id, $type, $date));
+                $added++;
+                $created++;
+            }
+        }
+
+        $this->command->line("  ✓ Created {$created} sacramental records for {$label}.");
+    }
+
+    // ── CURRENT MONTH PAYMENTS ───────────────────────────────────────────────
     private function seedPaymentsAugust($parishioners): void
     {
-        $this->command->line('  Creating August 2026 payments...');
+        $label   = $this->currentMonth->format('F Y');
+        $maxDay  = min((int) $this->currentMonth->copy()->endOfMonth()->format('j'), 25);
+        $this->command->line("  Creating {$label} payments...");
 
         // Booking types with fees — creates bookings then pays them
         $schedule = [
@@ -197,7 +218,7 @@ class CurrentMonthSeeder extends Seeder
 
         foreach ($schedule as $idx => [$type, $fee, $dayOffset, $method]) {
             $p      = $pool[$idx % $pool->count()];
-            $date   = Carbon::create(2026, 8, min($dayOffset, 25));
+            $date   = Carbon::create($this->currentYear, $this->currentMonthNum, min($dayOffset, $maxDay));
             $paidAt = $date->copy()->subDays(rand(0, 2));
 
             // Create completed booking
@@ -242,13 +263,15 @@ class CurrentMonthSeeder extends Seeder
             }
         }
 
-        $this->command->line("  ✓ Created {$created} paid payments for August 2026 — ₱" . number_format($revenue, 2) . ' revenue.');
+        $this->command->line("  ✓ Created {$created} paid payments for {$label} — ₱" . number_format($revenue, 2) . ' revenue.');
     }
 
-    // ── JUN 2026 PAYMENTS ────────────────────────────────────────────────────
+    // ── PRIOR MONTH PAYMENTS ─────────────────────────────────────────────────
     private function seedPaymentsJune($parishioners): void
     {
-        $this->command->line('  Creating June 2026 payments...');
+        $label  = $this->priorMonth->format('F Y');
+        $maxDay = (int) $this->priorMonth->copy()->endOfMonth()->format('j');
+        $this->command->line("  Creating {$label} payments...");
 
         $schedule = [
             ['baptism',       500.00,  1, 'cash'],
@@ -271,7 +294,7 @@ class CurrentMonthSeeder extends Seeder
 
         foreach ($schedule as $idx => [$type, $fee, $day, $method]) {
             $p      = $pool[$idx % $pool->count()];
-            $date   = Carbon::create(2026, 6, min($day, 28));
+            $date   = Carbon::create($this->priorYear, $this->priorMonthNum, min($day, $maxDay));
             $paidAt = $date->copy()->subDays(rand(0, 1));
 
             $booking = Booking::create([
@@ -311,29 +334,35 @@ class CurrentMonthSeeder extends Seeder
             $created++;
         }
 
-        $this->command->line("  ✓ Created {$created} paid payments for June 2026 — ₱" . number_format($revenue, 2) . ' revenue.');
+        $this->command->line("  ✓ Created {$created} paid payments for {$label} — ₱" . number_format($revenue, 2) . ' revenue.');
     }
 
-    // ── AUG 2026 LEDGER ──────────────────────────────────────────────────────
+    // ── CURRENT MONTH LEDGER ─────────────────────────────────────────────────
     private function seedLedgerAugust(): void
     {
-        $this->command->line('  Creating August 2026 ledger income entries...');
+        $label   = $this->currentMonth->format('F Y');
+        $Y       = $this->currentYear;
+        $M       = str_pad($this->currentMonthNum, 2, '0', STR_PAD_LEFT);
+        $maxDay  = (int) $this->currentMonth->copy()->endOfMonth()->format('j');
+        $d       = fn(int $day) => Carbon::create($Y, $this->currentMonthNum, min($day, $maxDay))->toDateString();
+
+        $this->command->line("  Creating {$label} ledger income entries...");
 
         $entries = [
-            ['credit', 'Collection',     'Sunday Collection — Aug 3, 2026',           13500.00, '2026-08-03', 'COL-2608-03'],
-            ['credit', 'Baptism Fee',    'Group Baptism — Aug 7 (5 children)',          7500.00, '2026-08-07', 'BAP-2608-07'],
-            ['credit', 'Collection',     'Sunday Collection — Aug 10, 2026',           12200.00, '2026-08-10', 'COL-2608-10'],
-            ['credit', 'Wedding Fee',    'Wedding — Garcia & Villanueva',               8000.00, '2026-08-16', 'WED-2608-16'],
-            ['credit', 'Collection',     'Sunday Collection — Aug 17, 2026',           11800.00, '2026-08-17', 'COL-2608-17'],
-            ['credit', 'Mass Stipend',   'Weekday Stipends — Aug Week 3',               2100.00, '2026-08-19', 'MS-2608-03'],
-            ['credit', 'Certificate Fee','Certificate Fees — Aug 2026',                 2600.00, '2026-08-21', 'CERT-2608-21'],
-            ['credit', 'House Blessing', 'House Blessing — 4 households',               4800.00, '2026-08-22', 'HB-2608-22'],
-            ['credit', 'Seminar Fee',    'Pre-Baptismal Seminar — 10 attendees',        1500.00, '2026-08-14', 'SEM-2608-14'],
-            ['credit', 'Donation',       'Benefactor Donation — Flores Family',         5000.00, '2026-08-05', 'DON-2608-05'],
-            ['debit',  'Utilities',      'Meralco Bill — August 2026',                  7600.00, '2026-08-10', 'UTIL-2608-10'],
-            ['debit',  'Salary',         'Parish Staff Honorarium — August 2026',      18500.00, '2026-08-31', 'SAL-2608-31'],
-            ['debit',  'Sacramentals',   'Candles & Liturgical Items — Aug 2026',       2800.00, '2026-08-06', 'SACR-2608-06'],
-            ['debit',  'Office Supplies','Toner & Paper — Aug 2026',                    1200.00, '2026-08-13', 'SUPP-2608-13'],
+            ['credit', 'Collection',     "Sunday Collection — {$label} Wk 1",    13500.00, $d(3),  "COL-{$M}{$Y}-01"],
+            ['credit', 'Baptism Fee',    "Group Baptism — {$label} (5 children)", 7500.00,  $d(7),  "BAP-{$M}{$Y}-07"],
+            ['credit', 'Collection',     "Sunday Collection — {$label} Wk 2",    12200.00, $d(10), "COL-{$M}{$Y}-10"],
+            ['credit', 'Wedding Fee',    "Wedding Fee — {$label}",                8000.00,  $d(16), "WED-{$M}{$Y}-16"],
+            ['credit', 'Collection',     "Sunday Collection — {$label} Wk 3",    11800.00, $d(17), "COL-{$M}{$Y}-17"],
+            ['credit', 'Mass Stipend',   "Weekday Stipends — {$label} Week 3",    2100.00,  $d(19), "MS-{$M}{$Y}-03"],
+            ['credit', 'Certificate Fee',"Certificate Fees — {$label}",           2600.00,  $d(21), "CERT-{$M}{$Y}-21"],
+            ['credit', 'House Blessing', "House Blessing — 4 households",          4800.00, $d(22), "HB-{$M}{$Y}-22"],
+            ['credit', 'Seminar Fee',    "Pre-Baptismal Seminar — 10 attendees",  1500.00,  $d(14), "SEM-{$M}{$Y}-14"],
+            ['credit', 'Donation',       "Benefactor Donation — {$label}",        5000.00,  $d(5),  "DON-{$M}{$Y}-05"],
+            ['debit',  'Utilities',      "Electric Bill — {$label}",              7600.00,  $d(10), "UTIL-{$M}{$Y}-10"],
+            ['debit',  'Salary',         "Parish Staff Honorarium — {$label}",   18500.00,  $d(min($maxDay, 28)), "SAL-{$M}{$Y}-28"],
+            ['debit',  'Sacramentals',   "Liturgical Items — {$label}",           2800.00,  $d(6),  "SACR-{$M}{$Y}-06"],
+            ['debit',  'Office Supplies',"Toner & Paper — {$label}",              1200.00,  $d(13), "SUPP-{$M}{$Y}-13"],
         ];
 
         $created = 0;
@@ -352,7 +381,7 @@ class CurrentMonthSeeder extends Seeder
             $created++;
         }
 
-        $this->command->line("  ✓ Created {$created} ledger entries for August 2026.");
+        $this->command->line("  ✓ Created {$created} ledger entries for {$label}.");
     }
 
     // ── HELPERS ───────────────────────────────────────────────────────────────

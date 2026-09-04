@@ -14,19 +14,33 @@
 
     {{-- Header / search --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <form method="GET" class="flex gap-2 flex-1">
+        <form method="GET" id="user-search-form" class="flex gap-2 flex-1">
             <div class="relative flex-1 max-w-xs">
                 <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z"/></svg>
                 </div>
-                <input type="text" name="search" value="{{ request('search') }}"
-                       class="form-input text-sm pl-9 w-full" placeholder="Search name or email…">
+                <input type="text" name="search" id="user-search-input"
+                       value="{{ request('search') }}"
+                       class="form-input text-sm pl-9 w-full"
+                       placeholder="Search name or email…"
+                       autocomplete="off">
             </div>
             <button type="submit" class="btn-secondary text-sm">Search</button>
             @if(request('search'))
             <a href="{{ route('admin.users.index') }}" class="btn-secondary text-sm">Clear</a>
             @endif
         </form>
+        <script>
+        (function () {
+            const input = document.getElementById('user-search-input');
+            const form  = document.getElementById('user-search-form');
+            let timer;
+            input?.addEventListener('input', function () {
+                clearTimeout(timer);
+                timer = setTimeout(function () { form.submit(); }, 400);
+            });
+        })();
+        </script>
         <a href="{{ route('admin.users.create') }}" class="btn-primary text-sm whitespace-nowrap">+ New User</a>
     </div>
 
