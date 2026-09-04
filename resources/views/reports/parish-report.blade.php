@@ -376,6 +376,9 @@
         &nbsp;|&nbsp; Generated: {{ now()->format('M d, Y g:i A') }}
     </div>
 </div>
+<p style="text-align:center;font-size:6.5pt;color:#94a3b8;margin-top:4pt;">
+    &copy; {{ date('Y') }} {{ $parish['name'] }} &mdash; All rights reserved.
+</p>
 
 </body>
 </html>
