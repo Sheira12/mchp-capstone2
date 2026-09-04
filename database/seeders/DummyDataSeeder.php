@@ -308,7 +308,7 @@ class DummyDataSeeder extends Seeder
                     'notes'             => $tag,
                     'recorded_by'       => $secId,
                     'verified_by'       => $adminId,
-                    'verified_at'       => Carbon::parse($date)->addDays(7),
+                    'verified_at'       => now()->subMonths(rand(1, 6)),
                 ]
             );
         }
