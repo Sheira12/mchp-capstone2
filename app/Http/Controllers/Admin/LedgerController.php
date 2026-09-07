@@ -31,23 +31,36 @@ class LedgerController extends Controller
         $entries = $query->paginate(25)->withQueryString();
 
         // ── Single aggregated query for filtered totals (replaces 2 separate SUMs) ──
-        $filteredTotals = (clone $query)->toBase()
-            ->selectRaw("
-                SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END) as total_credit,
-                SUM(CASE WHEN type = 'debit'  THEN amount ELSE 0 END) as total_debit
-            ")
-            ->first();
+        // Build a fresh aggregate query from the same filters — don't reuse the
+        // ordered/paginated builder which already has ORDER BY clauses.
+        $filteredAggregate = LedgerEntry::query();
+
+        if ($type = $request->get('type')) {
+            $filteredAggregate->where('type', $type);
+        }
+        if ($cat = $request->get('category')) {
+            $filteredAggregate->where('category', $cat);
+        }
+        if ($from = $request->get('from')) {
+            $filteredAggregate->whereDate('entry_date', '>=', $from);
+        }
+        if ($to = $request->get('to')) {
+            $filteredAggregate->whereDate('entry_date', '<=', $to);
+        }
+
+        $filteredTotals = $filteredAggregate->selectRaw("
+            SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END) as total_credit,
+            SUM(CASE WHEN type = 'debit'  THEN amount ELSE 0 END) as total_debit
+        ")->first();
 
         $totalCredit = (float) ($filteredTotals->total_credit ?? 0);
         $totalDebit  = (float) ($filteredTotals->total_debit  ?? 0);
 
         // ── Single aggregated query for overall totals ────────────────────────
-        $overallTotals = LedgerEntry::toBase()
-            ->selectRaw("
-                SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END) as total_credit,
-                SUM(CASE WHEN type = 'debit'  THEN amount ELSE 0 END) as total_debit
-            ")
-            ->first();
+        $overallTotals = LedgerEntry::selectRaw("
+            SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END) as total_credit,
+            SUM(CASE WHEN type = 'debit'  THEN amount ELSE 0 END) as total_debit
+        ")->first();
 
         $overallCredit = (float) ($overallTotals->total_credit ?? 0);
         $overallDebit  = (float) ($overallTotals->total_debit  ?? 0);
