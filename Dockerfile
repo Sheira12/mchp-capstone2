@@ -92,10 +92,12 @@ COPY . .
 RUN cp .env.railway .env
 
 # ── Composer: production-only dependencies, optimized autoloader ──────────────
-# PHPRC memory_limit=-1 prevents OOM during classmap generation on Render's
-# build containers which have limited memory (Composer's autoloader dump
-# can spike to 512MB+ with large dependency trees).
-RUN rm -f bootstrap/cache/packages.php bootstrap/cache/services.php \
+# bootstrap/cache must exist BEFORE package:discover runs (artisan needs it).
+# COMPOSER_MEMORY_LIMIT=-1 prevents OOM during classmap generation.
+RUN mkdir -p bootstrap/cache storage/framework/cache storage/framework/views storage/framework/sessions storage/logs \
+    && chmod -R 775 bootstrap/cache storage \
+    && chown -R www-data:www-data bootstrap/cache storage \
+    && rm -f bootstrap/cache/packages.php bootstrap/cache/services.php \
     && COMPOSER_MEMORY_LIMIT=-1 composer install \
         --no-dev \
         --optimize-autoloader \
