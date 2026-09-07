@@ -92,8 +92,16 @@ COPY . .
 RUN cp .env.railway .env
 
 # ── Composer: production-only dependencies, optimized autoloader ──────────────
+# PHPRC memory_limit=-1 prevents OOM during classmap generation on Render's
+# build containers which have limited memory (Composer's autoloader dump
+# can spike to 512MB+ with large dependency trees).
 RUN rm -f bootstrap/cache/packages.php bootstrap/cache/services.php \
-    && composer install --no-dev --optimize-autoloader --no-interaction --no-scripts \
+    && COMPOSER_MEMORY_LIMIT=-1 composer install \
+        --no-dev \
+        --optimize-autoloader \
+        --no-interaction \
+        --no-scripts \
+        --prefer-dist \
     && php artisan package:discover --ansi
 
 # ── Vite production build ─────────────────────────────────────────────────────
