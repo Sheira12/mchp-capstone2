@@ -52,7 +52,7 @@
                          style="min-height: 420px;">
 
                         <video id="qr-video"
-                               class="absolute inset-0 w-full h-full object-cover"
+                               class="absolute inset-0 w-full h-full object-contain"
                                playsinline muted></video>
 
                         {{-- Scanning overlay --}}
