@@ -111,7 +111,10 @@ RUN mkdir -p \
     storage/logs \
     bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache
+    && chown -R www-data:www-data storage bootstrap/cache \
+    # Allow www-data to write .env (runtime secret injection in start-apache.sh)
+    && chmod 664 .env \
+    && chown www-data:www-data .env
 
 # ── Run safe one-time seeders during BUILD phase ──────────────────────────────
 # These used to run on every container startup (adding 7-15s per cold start).

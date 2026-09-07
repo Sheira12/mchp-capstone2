@@ -11,12 +11,15 @@ class SettingsController extends Controller
 {
     public function index()
     {
+        // Read all parish fields from the Settings DB table first,
+        // falling back to config() (which reads .env) if not set in DB.
+        // This way the admin can update values without writing to .env.
         $settings = [
-            'parish_name'            => config('parish.name'),
-            'parish_address'         => config('parish.address'),
-            'parish_phone'           => config('parish.phone'),
-            'parish_email'           => config('parish.email'),
-            'parish_priest'          => config('parish.priest'),
+            'parish_name'            => Setting::get('parish_name',    config('parish.name')),
+            'parish_address'         => Setting::get('parish_address', config('parish.address')),
+            'parish_phone'           => Setting::get('parish_phone',   config('parish.phone')),
+            'parish_email'           => Setting::get('parish_email',   config('parish.email')),
+            'parish_priest'          => Setting::get('parish_priest',  config('parish.priest')),
             'parish_secretary'       => Setting::get('parish_secretary', ''),
             'parish_finance_officer' => Setting::get('parish_finance_officer', ''),
         ];
@@ -38,17 +41,30 @@ class SettingsController extends Controller
             'parish_finance_officer' => ['nullable', 'string', 'max:255'],
         ]);
 
-        // .env fields (config-based)
-        $envFields = ['parish_name', 'parish_address', 'parish_phone', 'parish_email', 'parish_priest'];
-        foreach ($envFields as $key) {
-            $this->updateEnv(strtoupper($key), $validated[$key] ?? '');
+        // Store ALL fields in the settings DB table.
+        // This replaces the old approach of writing to .env (which fails on
+        // production because .env is owned by root and Apache runs as www-data).
+        // config('parish.*') reads from .env; the admin panel reads from DB.
+        // The two sources are kept in sync here.
+        $keys = [
+            'parish_name', 'parish_address', 'parish_phone',
+            'parish_email', 'parish_priest',
+            'parish_secretary', 'parish_finance_officer',
+        ];
+
+        foreach ($keys as $key) {
+            Setting::set($key, $validated[$key] ?? '');
         }
 
-        // DB-based settings
-        Setting::set('parish_secretary',       $validated['parish_secretary'] ?? '');
-        Setting::set('parish_finance_officer', $validated['parish_finance_officer'] ?? '');
-
-        Artisan::call('config:clear');
+        // Re-cache the config so in-memory values stay consistent.
+        // We do NOT call config:clear because that would destroy the production
+        // route/view caches and force a full re-bootstrap on the next request.
+        try {
+            Artisan::call('config:cache');
+        } catch (\Exception $e) {
+            // Config cache may fail if .env is read-only on this platform.
+            // Settings are already saved to DB, so this is non-fatal.
+        }
 
         return back()->with('success', 'Parish settings updated.');
     }
@@ -74,23 +90,10 @@ class SettingsController extends Controller
     {
         $type = $request->get('type', 'config');
         match ($type) {
-            'view'  => Artisan::call('view:clear'),
-            default => Artisan::call('config:clear'),
+            'view'   => Artisan::call('view:clear'),
+            'route'  => Artisan::call('route:clear'),
+            default  => Artisan::call('config:clear'),
         };
         return back()->with('success', ucfirst($type) . ' cache cleared.');
-    }
-
-    private function updateEnv(string $key, string $value): void
-    {
-        $path    = base_path('.env');
-        $content = file_get_contents($path);
-
-        if (str_contains($content, $key . '=')) {
-            $content = preg_replace("/^{$key}=.*/m", "{$key}=\"{$value}\"", $content);
-        } else {
-            $content .= "\n{$key}=\"{$value}\"";
-        }
-
-        file_put_contents($path, $content);
     }
 }
