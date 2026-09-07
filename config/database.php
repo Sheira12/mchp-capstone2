@@ -37,17 +37,36 @@ return [
         ],
 
         'pgsql' => [
-            'driver'   => 'pgsql',
-            'host'     => env('DB_HOST', '127.0.0.1'),
-            'port'     => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'forge'),
-            'username' => env('DB_USERNAME', 'forge'),
-            'password' => env('DB_PASSWORD', ''),
-            'charset'  => 'utf8',
-            'prefix'   => '',
+            'driver'         => 'pgsql',
+            'host'           => env('DB_HOST', '127.0.0.1'),
+            'port'           => env('DB_PORT', '5432'),
+            'database'       => env('DB_DATABASE', 'forge'),
+            'username'       => env('DB_USERNAME', 'forge'),
+            'password'       => env('DB_PASSWORD', ''),
+            'charset'        => 'utf8',
+            'prefix'         => '',
             'prefix_indexes' => true,
-            'search_path' => 'public',
-            'sslmode'  => env('DB_SSLMODE', 'prefer'),
+            'search_path'    => 'public',
+            'sslmode'        => env('DB_SSLMODE', 'prefer'),
+
+            // ── Supabase / Render latency optimisations ──────────────────────
+            // Render Oregon → Supabase ap-south-1 (Mumbai) = ~200ms RTT.
+            // These options reduce per-request overhead on that high-latency link.
+            'options' => [
+                // Abort if the initial TCP connection to the DB takes > 10 s.
+                // Without this, a cold network path can hang for 30+ seconds.
+                PDO::ATTR_TIMEOUT => (int) env('DB_CONNECT_TIMEOUT', 10),
+
+                // Reuse the underlying TCP connection within the same PHP process.
+                // Apache mpm_prefork keeps each worker alive for many requests
+                // (MaxConnectionsPerChild=1000), so each worker opens ONE DB
+                // connection and reuses it — avoids repeated SSL handshakes on
+                // the high-latency Mumbai link.
+                PDO::ATTR_PERSISTENT => (bool) env('DB_PERSISTENT', true),
+
+                // Make errors throw exceptions (already Laravel default, but explicit).
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            ],
         ],
 
         'sqlsrv' => [
