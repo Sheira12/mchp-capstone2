@@ -21,16 +21,15 @@
         @endforeach
     </div>
 
-    {{-- Pending verification alert --}}
-    @php $pendingVerification = \App\Models\Payment::where('status','pending')->whereIn('payment_method',['gcash','maya'])->count(); @endphp
-    @if($pendingVerification > 0)
+    {{-- Pending verification alert — count passed from controller --}}
+    @if(($pendingVerificationCount ?? 0) > 0)
     <div class="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div class="flex items-start gap-3">
             <div class="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
             <div>
-                <p class="font-bold text-amber-900 text-sm">{{ $pendingVerification }} GCash/Maya payment(s) awaiting verification</p>
+                <p class="font-bold text-amber-900 text-sm">{{ $pendingVerificationCount ?? 0 }} GCash/Maya payment(s) awaiting verification</p>
                 <p class="text-xs text-amber-700 mt-0.5">Review submitted reference numbers and proof of payment.</p>
             </div>
         </div>

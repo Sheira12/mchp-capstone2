@@ -91,22 +91,30 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
     Route::get('/bookings/{booking}', [ParishionerBookingController::class, 'show'])->name('bookings.show');
     Route::post('/bookings/{booking}/cancel', [ParishionerBookingController::class, 'cancel'])->name('bookings.cancel');
 
-    // Payments
+    // Payments — static segments MUST come before {payment} wildcard
     Route::get('/payments', [ParishionerPaymentController::class, 'index'])->name('payments.index');
-    Route::get('/payments/pay/{booking}', [ParishionerPaymentController::class, 'payBooking'])->name('payments.pay');
-    Route::post('/payments/pay/{booking}/cash', [ParishionerPaymentController::class, 'payCash'])->name('payments.pay-cash');
-    Route::post('/payments/pay/{booking}/proof', [ParishionerPaymentController::class, 'submitProof'])->name('payments.submit-proof');
-    Route::post('/payments/otp/send', [ParishionerPaymentController::class, 'sendPaymentOtp'])->name('payments.otp-send');
-    Route::get('/payments/pay/{booking}/demo/{method}', [ParishionerPaymentController::class, 'demoCheckout'])->name('payments.demo-checkout');
-    Route::post('/payments/pay/{booking}/demo/card/complete', [ParishionerPaymentController::class, 'demoCardComplete'])->name('payments.demo-card-complete');
-    Route::post('/payments/pay/{booking}/demo/{method}/complete', [ParishionerPaymentController::class, 'demoComplete'])->name('payments.demo-complete');
-    Route::get('/payments/receipt/{payment}', [ParishionerPaymentController::class, 'receipt'])->name('payments.receipt');
-    Route::get('/payments/receipt/{payment}/pdf', [ParishionerPaymentController::class, 'receiptPdf'])->name('payments.receipt-pdf');
-    Route::post('/payments/initiate', [ParishionerPaymentController::class, 'initiate'])->name('payments.initiate');
-    Route::post('/payments/card/confirm', [ParishionerPaymentController::class, 'confirmCard'])->name('payments.card-confirm');
+
+    // Static-segment GET routes (no wildcards that could match string IDs)
     Route::get('/payments/success', [ParishionerPaymentController::class, 'success'])->name('payments.success');
     Route::get('/payments/failed', [ParishionerPaymentController::class, 'failed'])->name('payments.failed');
     Route::get('/payments/status', [ParishionerPaymentController::class, 'checkStatus'])->name('payments.check-status');
+
+    // Static-segment POST routes
+    Route::post('/payments/initiate', [ParishionerPaymentController::class, 'initiate'])->name('payments.initiate');
+    Route::post('/payments/otp/send', [ParishionerPaymentController::class, 'sendPaymentOtp'])->name('payments.otp-send');
+    Route::post('/payments/card/confirm', [ParishionerPaymentController::class, 'confirmCard'])->name('payments.card-confirm');
+
+    // Booking-scoped payment routes
+    Route::get('/payments/pay/{booking}', [ParishionerPaymentController::class, 'payBooking'])->name('payments.pay');
+    Route::post('/payments/pay/{booking}/cash', [ParishionerPaymentController::class, 'payCash'])->name('payments.pay-cash');
+    Route::post('/payments/pay/{booking}/proof', [ParishionerPaymentController::class, 'submitProof'])->name('payments.submit-proof');
+    Route::get('/payments/pay/{booking}/demo/{method}', [ParishionerPaymentController::class, 'demoCheckout'])->name('payments.demo-checkout');
+    Route::post('/payments/pay/{booking}/demo/card/complete', [ParishionerPaymentController::class, 'demoCardComplete'])->name('payments.demo-card-complete');
+    Route::post('/payments/pay/{booking}/demo/{method}/complete', [ParishionerPaymentController::class, 'demoComplete'])->name('payments.demo-complete');
+
+    // Wildcard {payment} routes — constrained to numeric IDs only
+    Route::get('/payments/receipt/{payment}', [ParishionerPaymentController::class, 'receipt'])->name('payments.receipt')->whereNumber('payment');
+    Route::get('/payments/receipt/{payment}/pdf', [ParishionerPaymentController::class, 'receiptPdf'])->name('payments.receipt-pdf')->whereNumber('payment');
 
     // Certificates
     Route::get('/certificates', [\App\Http\Controllers\Parishioner\CertificateController::class, 'index'])->name('certificates.index');
@@ -124,8 +132,9 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
                 'created_at' => $n->created_at->diffForHumans(),
                 'url'        => $n->data['url'] ?? route('parishioner.dashboard'),
             ]);
+        // Use PHP count() — avoids a second DB query for the count
         return response()->json([
-            'count'         => auth()->user()->unreadNotifications()->count(),
+            'count'         => $notifications->count(),
             'notifications' => $notifications,
         ]);
     })->name('notifications.unread');
@@ -136,7 +145,8 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
     })->name('notifications.read');
 
     Route::post('/notifications/read-all', function () {
-        auth()->user()->unreadNotifications->markAsRead();
+        // Use a single UPDATE query instead of loading all notifications into memory
+        auth()->user()->unreadNotifications()->update(['read_at' => now()]);
         return response()->json(['success' => true]);
     })->name('notifications.read-all');
 });
@@ -238,8 +248,9 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
                 'created_at' => $n->created_at->diffForHumans(),
                 'url'        => $n->data['url'] ?? route('admin.bookings.index'),
             ]);
+        // Use PHP count() — avoids a second DB query for the count
         return response()->json([
-            'count'         => auth()->user()->unreadNotifications()->count(),
+            'count'         => $notifications->count(),
             'notifications' => $notifications,
         ]);
     })->name('notifications.unread');
@@ -250,7 +261,8 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
     })->name('notifications.read');
 
     Route::post('/notifications/read-all', function () {
-        auth()->user()->unreadNotifications->markAsRead();
+        // Single UPDATE query instead of loading all unread notifications into memory
+        auth()->user()->unreadNotifications()->update(['read_at' => now()]);
         return response()->json(['success' => true]);
     })->name('notifications.read-all');
 

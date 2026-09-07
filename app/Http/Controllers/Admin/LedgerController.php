@@ -30,13 +30,27 @@ class LedgerController extends Controller
 
         $entries = $query->paginate(25)->withQueryString();
 
-        // Summary for current filters
-        $totalCredit = (clone $query->getQuery())->where('type', 'credit')->sum('amount');
-        $totalDebit  = (clone $query->getQuery())->where('type', 'debit')->sum('amount');
+        // ── Single aggregated query for filtered totals (replaces 2 separate SUMs) ──
+        $filteredTotals = (clone $query)->toBase()
+            ->selectRaw("
+                SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END) as total_credit,
+                SUM(CASE WHEN type = 'debit'  THEN amount ELSE 0 END) as total_debit
+            ")
+            ->first();
 
-        // Overall totals (no filter)
-        $overallCredit = LedgerEntry::where('type', 'credit')->sum('amount');
-        $overallDebit  = LedgerEntry::where('type', 'debit')->sum('amount');
+        $totalCredit = (float) ($filteredTotals->total_credit ?? 0);
+        $totalDebit  = (float) ($filteredTotals->total_debit  ?? 0);
+
+        // ── Single aggregated query for overall totals ────────────────────────
+        $overallTotals = LedgerEntry::toBase()
+            ->selectRaw("
+                SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END) as total_credit,
+                SUM(CASE WHEN type = 'debit'  THEN amount ELSE 0 END) as total_debit
+            ")
+            ->first();
+
+        $overallCredit = (float) ($overallTotals->total_credit ?? 0);
+        $overallDebit  = (float) ($overallTotals->total_debit  ?? 0);
 
         $categories = array_merge(
             array_keys(LedgerEntry::CREDIT_CATEGORIES),

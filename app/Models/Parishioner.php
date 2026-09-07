@@ -39,7 +39,7 @@ class Parishioner extends Model
         'is_active'        => 'boolean',
     ];
 
-    protected $appends = ['full_name', 'age'];
+    protected $appends = ['full_name'];
 
     public function getFullNameAttribute(): string
     {

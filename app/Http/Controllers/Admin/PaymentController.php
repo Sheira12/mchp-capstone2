@@ -54,7 +54,12 @@ class PaymentController extends Controller
             ->groupBy('payment_method')
             ->get();
 
-        return view('admin.payments.index', compact('payments', 'summary'));
+        // Pending GCash/Maya verification count — computed in controller, not in Blade
+        $pendingVerificationCount = Payment::where('status', 'pending')
+            ->whereIn('payment_method', ['gcash', 'maya'])
+            ->count();
+
+        return view('admin.payments.index', compact('payments', 'summary', 'pendingVerificationCount'));
     }
 
     public function show(Payment $payment)

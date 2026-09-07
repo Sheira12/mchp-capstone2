@@ -42,8 +42,17 @@ class ParishionerController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $barangays = Parishioner::distinct()->pluck('barangay')->filter()->sort()->values();
-        $families  = Family::orderBy('family_name')->get(['id', 'family_name']);
+        $barangays = Parishioner::select('barangay')
+            ->distinct()
+            ->whereNotNull('barangay')
+            ->orderBy('barangay')
+            ->pluck('barangay');
+
+        $families  = \Illuminate\Support\Facades\Cache::remember(
+            'admin_families_list',
+            3600,
+            fn() => Family::orderBy('family_name')->get(['id', 'family_name'])
+        );
 
         return view('admin.parishioners.index', compact('parishioners', 'barangays', 'families'));
     }
@@ -170,15 +179,15 @@ class ParishionerController extends Controller
     {
         $query = $parishioner->payments()->with(['booking', 'certificate'])->orderBy('created_at');
 
-        if ($from = $request->get('from')) $query->whereDate('created_at', '>=', $from);
-        if ($to   = $request->get('to'))   $query->whereDate('created_at', '<=', $to);
-        if ($type = $request->get('type'))  $query->where('payment_method', $type);
+        if ($from   = $request->get('from'))   $query->whereDate('created_at', '>=', $from);
+        if ($to     = $request->get('to'))     $query->whereDate('created_at', '<=', $to);
+        if ($method = $request->get('method')) $query->where('payment_method', $method);
 
         $payments = $query->get();
 
-        $totalDue       = $parishioner->bookings()->sum('service_fee');
-        $totalPaid      = $payments->where('status', 'paid')->sum('amount');
-        $outstanding    = max(0, $totalDue - $totalPaid);
+        $totalDue    = $parishioner->bookings()->sum('service_fee');
+        $totalPaid   = $payments->where('status', 'paid')->sum('amount');
+        $outstanding = max(0, $totalDue - $totalPaid);
 
         return view('admin.parishioners.soa', compact('parishioner', 'payments', 'totalDue', 'totalPaid', 'outstanding'));
     }
