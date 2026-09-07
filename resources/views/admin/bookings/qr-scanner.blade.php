@@ -49,10 +49,11 @@
 
                     {{-- Camera viewport — tall and prominent --}}
                     <div class="relative rounded-2xl overflow-hidden bg-gray-950 flex-1"
-                         style="min-height: 420px;">
+                         style="min-height: 430px;">
 
                         <video id="qr-video"
-                               class="absolute inset-0 w-full h-full object-contain"
+                               class="absolute inset-0 w-full h-full"
+                               style="object-fit:cover;transform:scale(0.75);transform-origin:center center;"
                                playsinline muted></video>
 
                         {{-- Scanning overlay --}}
