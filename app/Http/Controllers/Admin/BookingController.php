@@ -107,6 +107,11 @@ class BookingController extends Controller
             'admin_notes'  => $request->get('admin_notes'),
         ]);
 
+        // Flush dashboard cache so sacrament chart reflects new confirmed booking immediately
+        \Illuminate\Support\Facades\Cache::forget('dashboard_stats_month_' . now()->startOfMonth()->toDateString());
+        \Illuminate\Support\Facades\Cache::forget('dashboard_stats_week_' . now()->startOfWeek()->toDateString());
+        \Illuminate\Support\Facades\Cache::forget('dashboard_stats_year_' . now()->startOfYear()->toDateString());
+
         $linkedUser = \App\Models\User::where('parishioner_id', $booking->parishioner_id)->first();
         if ($linkedUser) {
             try {

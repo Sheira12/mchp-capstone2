@@ -45,6 +45,21 @@ class PaymentController extends Controller
             return response()->json(['success' => false, 'error' => 'Unauthorized.'], 403);
         }
 
+        // SECURITY: Block payment initiation for unconfirmed bookings
+        if ($booking && $booking->status === 'pending') {
+            return response()->json([
+                'success' => false,
+                'error'   => 'Booking is not yet confirmed by admin. Payment cannot be processed until the booking is confirmed.',
+            ], 403);
+        }
+
+        if ($booking && $booking->status === 'cancelled') {
+            return response()->json([
+                'success' => false,
+                'error'   => 'This booking has been cancelled.',
+            ], 403);
+        }
+
         $secretKey    = config('services.paymongo.secret_key');
         $isConfigured = $secretKey
             && strlen($secretKey) > 20
@@ -135,6 +150,17 @@ class PaymentController extends Controller
             abort(403);
         }
 
+        // SECURITY: Booking must be confirmed before payment is allowed
+        if ($booking->status === 'pending') {
+            return redirect()->route('parishioner.bookings.show', $booking)
+                ->with('info', 'Your booking is waiting for admin confirmation. Payment will be available once your booking has been confirmed.');
+        }
+
+        if ($booking->status === 'cancelled') {
+            return redirect()->route('parishioner.bookings.show', $booking)
+                ->with('error', 'This booking has been cancelled and cannot be paid.');
+        }
+
         $existingPayment = $booking->payment;
 
         // Already paid — go to receipt
@@ -197,6 +223,15 @@ class PaymentController extends Controller
     {
         if ($booking->parishioner_id !== auth()->user()->parishioner?->id) {
             abort(403);
+        }
+
+        // Backend guard: block if booking is still pending admin confirmation
+        if ($booking->status === 'pending') {
+            return back()->withErrors(['error' => 'This booking is not yet confirmed by admin. Payment is not allowed until the booking is confirmed.']);
+        }
+
+        if ($booking->status === 'cancelled') {
+            return back()->withErrors(['error' => 'This booking has been cancelled and cannot be paid.']);
         }
 
         // Backend guard: block if already pending or paid (security — cannot bypass frontend)

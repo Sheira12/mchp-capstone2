@@ -165,6 +165,7 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
     Route::post('/dashboard/export', [DashboardController::class, 'exportReport'])->name('dashboard.export');
+    Route::post('/dashboard/clear-cache', [DashboardController::class, 'clearCache'])->name('dashboard.clear-cache');
 
     // Parishioners
     Route::get('/parishioners/search', [ParishionerController::class, 'search'])->name('parishioners.search');

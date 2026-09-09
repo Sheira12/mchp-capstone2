@@ -44,12 +44,66 @@ class DashboardController extends Controller
 
         $cached = Cache::remember($cacheKey, 60, function () use ($start, $driver) {
 
-            // Sacrament breakdown
-            $sacramentCounts = SacramentalRecord::select('type', DB::raw('count(*) as total'))
+            // ── Sacrament counts for "Sacraments This Month" chart ────────────────
+            // Uses BOTH sources:
+            //   1. sacramental_records (official records, date_administered this period)
+            //   2. bookings (current scheduled services, for real-time dashboard accuracy)
+            // Both are merged so the chart reflects what actually happened this period.
+
+            // Source 1: actual sacramental records administered this period
+            $sacramentFromRecords = SacramentalRecord::select('type', DB::raw('count(*) as total'))
                 ->where('date_administered', '>=', $start)
                 ->groupBy('type')
                 ->pluck('total', 'type')
                 ->toArray();
+
+            // Source 2: bookings scheduled this period — map booking_type → sacrament category
+            // This ensures the chart updates in real-time with new bookings even before
+            // the formal sacramental record is entered.
+            $sacramentBookingMap = [
+                'baptism'          => 'baptism',
+                'wedding'          => 'marriage',
+                'marriage'         => 'marriage',
+                'funeral_mass'     => 'death_burial',
+                'funeral_service'  => 'death_burial',
+                'death_burial'     => 'death_burial',
+                'first_communion'  => 'first_communion',
+                'confirmation'     => 'confirmation',
+                'confirmation_catechesis' => 'confirmation',
+            ];
+
+            $sacramentFromBookings = Booking::select('booking_type', DB::raw('count(*) as total'))
+                ->where('scheduled_date', '>=', $start)
+                ->whereIn('booking_type', array_keys($sacramentBookingMap))
+                ->whereIn('status', ['confirmed', 'completed', 'pending'])
+                ->whereNull('deleted_at')
+                ->groupBy('booking_type')
+                ->pluck('total', 'booking_type')
+                ->toArray();
+
+            // Merge: use sacramental records as base, add booking counts where records are missing or lower
+            $sacramentCounts = [
+                'baptism'        => 0,
+                'first_communion'=> 0,
+                'confirmation'   => 0,
+                'marriage'       => 0,
+                'death_burial'   => 0,
+            ];
+
+            // Add from sacramental records
+            foreach ($sacramentFromRecords as $type => $count) {
+                if (array_key_exists($type, $sacramentCounts)) {
+                    $sacramentCounts[$type] = max($sacramentCounts[$type], (int) $count);
+                }
+            }
+
+            // Add from bookings (take the higher of the two sources)
+            foreach ($sacramentFromBookings as $bookingType => $count) {
+                $category = $sacramentBookingMap[$bookingType] ?? null;
+                if ($category && array_key_exists($category, $sacramentCounts)) {
+                    $sacramentCounts[$category] = max($sacramentCounts[$category], (int) $count);
+                }
+            }
 
             // Sacrament stats (frequency + percentage)
             $totalSacraments = array_sum($sacramentCounts);
@@ -203,5 +257,22 @@ class DashboardController extends Controller
 
         $reportService = app(\App\Services\ReportService::class);
         return $reportService->generate($validated);
+    }
+
+    /**
+     * Clear all dashboard caches — called when admin wants fresh stats.
+     */
+    public function clearCache()
+    {
+        $periods = ['month', 'week', 'year'];
+        $dates   = [
+            now()->startOfMonth()->toDateString(),
+            now()->startOfWeek()->toDateString(),
+            now()->startOfYear()->toDateString(),
+        ];
+        foreach ($periods as $i => $period) {
+            Cache::forget('dashboard_stats_' . $period . '_' . $dates[$i]);
+        }
+        return back()->with('success', 'Dashboard cache cleared. Statistics will refresh on next load.');
     }
 }

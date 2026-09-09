@@ -192,15 +192,42 @@
 
         @elseif(in_array($booking->status, ['pending', 'confirmed']))
         {{-- NOT YET PAID --}}
-        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-            <p class="text-sm font-semibold text-amber-800 mb-1">Payment Required</p>
-            <p class="text-sm text-amber-700">Amount due: <strong>₱{{ number_format($booking->service_fee, 2) }}</strong></p>
+        @if($booking->status === 'pending')
+        {{-- PENDING: Waiting for admin confirmation —  payment NOT available yet --}}
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+            <div class="flex items-start gap-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div>
+                    <p class="font-bold text-blue-900">Waiting for Admin Confirmation</p>
+                    <p class="text-sm text-blue-700 mt-0.5">
+                        Your booking is currently <strong>pending admin approval</strong>.
+                    </p>
+                    <p class="text-sm text-blue-600 mt-1">
+                        Payment will be available once the parish office confirms your booking.
+                        You will receive a notification when confirmed.
+                    </p>
+                    <p class="text-xs text-blue-500 mt-1.5">Amount due upon confirmation: <strong>₱{{ number_format($booking->service_fee, 2) }}</strong></p>
+                </div>
+            </div>
+        </div>
+        {{-- No Pay Now button when pending --}}
+        @else
+        {{-- CONFIRMED: payment is now available --}}
+        <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+            <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <p class="text-sm font-semibold text-green-800">Booking Confirmed — Payment Required</p>
+            </div>
+            <p class="text-sm text-green-700 mt-1 ml-6">Amount due: <strong>₱{{ number_format($booking->service_fee, 2) }}</strong></p>
         </div>
         <a href="{{ route('parishioner.payments.pay', $booking) }}"
            class="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition text-sm shadow-md hover:shadow-lg">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
             Pay Now — GCash, Maya or Cash
         </a>
+        @endif
         @else
         <p class="text-sm text-gray-400">No payment required for this booking.</p>
         @endif
