@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Announcement;
 use App\Models\Certificate;
 use App\Models\Event;
 use App\Models\GalleryItem;
@@ -52,6 +53,7 @@ class FullDemoSeeder extends Seeder
 
         $this->seedCertificates();
         $this->seedEvents();
+        $this->seedAnnouncements();
         $this->seedGallery();
         $this->seedLivestreams();
         $this->seedLedger();
@@ -62,6 +64,7 @@ class FullDemoSeeder extends Seeder
         $this->command->line('  <fg=green>FINAL TOTALS:</>');
         $this->command->line('    Certificates:    ' . Certificate::count());
         $this->command->line('    Events:          ' . Event::count());
+        $this->command->line('    Announcements:   ' . Announcement::count());
         $this->command->line('    Gallery Items:   ' . GalleryItem::count());
         $this->command->line('    Livestreams:     ' . Livestream::count());
         $this->command->line('    Ledger Entries:  ' . LedgerEntry::count());
@@ -171,6 +174,98 @@ class FullDemoSeeder extends Seeder
         }
 
         $this->command->line("  ✓ Created {$created} certificates.");
+    }
+
+    // ── ANNOUNCEMENTS ─────────────────────────────────────────────────────────
+    private function seedAnnouncements(): void
+    {
+        $this->command->line('  Creating announcements...');
+
+        $announcements = [
+            [
+                'title'       => 'Mass Schedule Updates — September 2026',
+                'content'     => '<p>Please be informed of the updated Mass schedule effective September 1, 2026:</p><ul><li><strong>Monday to Saturday:</strong> 6:00 AM</li><li><strong>Saturday (Anticipated):</strong> 6:00 PM</li><li><strong>Sunday:</strong> 6:00 AM, 8:00 AM, 10:00 AM, 6:00 PM</li></ul><p>Special Masses and additional schedules during feasts and holidays will be announced separately. God bless!</p>',
+                'category'    => 'general',
+                'published_at'=> now()->subDays(3),
+                'expires_at'  => now()->addMonths(2),
+                'is_published'=> true,
+            ],
+            [
+                'title'       => 'Pre-Baptismal Seminar — September 20, 2026',
+                'content'     => '<p>Parents and godparents intending to have their children baptized are required to attend the <strong>Pre-Baptismal Seminar</strong>.</p><p><strong>Date:</strong> September 20, 2026 (Saturday)<br><strong>Time:</strong> 2:00 PM – 5:00 PM<br><strong>Venue:</strong> Parish Hall, Mary Help of Christians Parish</p><p>Please bring the following:</p><ul><li>Birth Certificate of the child (NSO/PSA copy)</li><li>Marriage Certificate of parents (if married in the Church)</li><li>Baptismal Certificate of parents and godparents</li><li>Confirmation Certificate of parents and godparents</li></ul><p>For registration and inquiries, please visit the Parish Office during office hours: Tuesday to Sunday, 9:00 AM – 12:00 NN and 2:00 PM – 5:00 PM.</p>',
+                'category'    => 'general',
+                'published_at'=> now()->subDays(7),
+                'expires_at'  => now()->addDays(20),
+                'is_published'=> true,
+            ],
+            [
+                'title'       => 'Registration Open: Confirmation 2026–2027',
+                'content'     => '<p>The Parish is now accepting applications for the <strong>Confirmation Catechesis Program 2026–2027</strong>.</p><p><strong>Who can apply:</strong> Catholic youth aged 13 and above who have received the Sacraments of Baptism and First Holy Communion.</p><p><strong>Requirements:</strong></p><ul><li>Photocopy of Baptismal Certificate</li><li>Photocopy of First Communion Certificate</li><li>Recent 1×1 ID photo (2 copies)</li><li>Registration fee: ₱200.00</li></ul><p>Registration forms are available at the Parish Office. Deadline of submission is <strong>October 15, 2026</strong>.</p>',
+                'category'    => 'general',
+                'published_at'=> now()->subDays(5),
+                'expires_at'  => now()->addDays(40),
+                'is_published'=> true,
+            ],
+            [
+                'title'       => 'Cemetery Blessing & Memorial Mass — November 1, 2026',
+                'content'     => '<p>In observance of <strong>All Saints Day and All Souls Day</strong>, the Parish will celebrate a <strong>Memorial Mass and Cemetery Blessing</strong> on November 1, 2026.</p><p><strong>Schedule:</strong><br>Memorial Mass: 8:00 AM at the Parish Church<br>Cemetery Blessing (Southville Cemetery): 10:00 AM<br>Cemetery Blessing (Niugan Cemetery): 11:30 AM</p><p>We encourage all parishioners to visit the graves of their departed loved ones and pray for the repose of their souls.</p><p><em>Eternal rest grant unto them, O Lord, and let perpetual light shine upon them. May they rest in peace. Amen.</em></p>',
+                'category'    => 'general',
+                'published_at'=> now()->subDays(10),
+                'expires_at'  => now()->addMonths(2),
+                'is_published'=> true,
+            ],
+            [
+                'title'       => 'Parish Office Closed — September 8, 2026 (Nativity of the BVM)',
+                'content'     => '<p>Please be advised that the <strong>Parish Office will be closed</strong> on <strong>September 8, 2026</strong> in observance of the Feast of the Nativity of the Blessed Virgin Mary.</p><p>A Solemn Mass will be celebrated at <strong>9:00 AM</strong> in honor of Our Lady\'s birthday.</p><p>Normal office hours will resume on September 9, 2026 (Tuesday), 9:00 AM.</p><p>For urgent matters, please call the parish mobile number: <strong>(049) 5668994</strong>.</p>',
+                'category'    => 'general',
+                'published_at'=> now()->subDays(2),
+                'expires_at'  => now()->addDays(8),
+                'is_published'=> true,
+            ],
+            [
+                'title'       => 'Marriage Banns — Torres & Mendez',
+                'content'     => '<p>The following is hereby announced for the purpose of any impediment:</p><p><strong>First Reading of Banns</strong></p><p>We announce the forthcoming marriage of:</p><ul><li><strong>Juan Carlo Torres</strong>, son of Ramon Torres and Rosa Dela Cruz Torres, of Brgy. Niugan, Cabuyao, Laguna</li><li><strong>Ana Maria Mendez</strong>, daughter of Pedro Mendez and Lourdes Santos Mendez, of Brgy. Sala, Cabuyao, Laguna</li></ul><p>If anyone knows of any impediment to this marriage, they are asked to make it known to the Parish Priest.</p><p>Solemnization of Marriage: <strong>October 12, 2026, 10:00 AM</strong> at Mary Help of Christians Parish.</p>',
+                'category'    => 'general',
+                'published_at'=> now()->subDays(14),
+                'expires_at'  => now()->addDays(30),
+                'is_published'=> true,
+            ],
+            [
+                'title'       => 'Lenten Season Confession Schedule 2026',
+                'content'     => '<p>In preparation for the celebration of the Lord\'s Passion, Death, and Resurrection, confessions will be available on the following dates:</p><ul><li><strong>Every Friday of Lent:</strong> 4:00 PM – 6:00 PM</li><li><strong>Holy Saturday, April 4:</strong> 8:00 AM – 12:00 NN</li></ul><p>Additional confessors from neighboring parishes will assist during the <strong>Communal Penance Service on March 27, 2026</strong> at 7:00 PM.</p><p>We encourage all parishioners to receive the Sacrament of Reconciliation during this holy season.</p>',
+                'category'    => 'general',
+                'published_at'=> now()->subMonths(5),
+                'expires_at'  => now()->subMonths(4)->addDays(10),
+                'is_published'=> true,
+            ],
+            [
+                'title'       => 'Volunteers Needed — Outreach Ministry',
+                'content'     => '<p>The <strong>Parish Social Action Ministry</strong> is looking for volunteers for the upcoming <strong>Medical and Dental Mission</strong> at Southville 5 on <strong>September 28, 2026</strong>.</p><p><strong>We need:</strong></p><ul><li>Volunteer doctors and nurses</li><li>Student nurses and medtech students</li><li>Logistics volunteers</li><li>Registration / documentation volunteers</li></ul><p>No medical background? You can still help with registration, distribution of medicines, and crowd management.</p><p>Please coordinate with <strong>Mrs. Elena Flores</strong> at the Parish Social Action desk or email <strong>outreach@mhcparish.ph</strong>.</p>',
+                'category'    => 'general',
+                'published_at'=> now()->subDays(4),
+                'expires_at'  => now()->addDays(24),
+                'is_published'=> true,
+            ],
+        ];
+
+        $insertedCount = 0;
+        foreach ($announcements as $a) {
+            if (Announcement::where('title', $a['title'])->exists()) continue;
+
+            Announcement::create([
+                'title'        => $a['title'],
+                'content'      => $a['content'],
+                'category'     => $a['category'],
+                'is_published' => $a['is_published'],
+                'published_at' => $a['published_at'],
+                'expires_at'   => $a['expires_at'],
+                'created_by'   => $this->admin->id,
+                'image_path'   => null,
+            ]);
+            $insertedCount++;
+        }
+
+        $this->command->line("  ✓ Created {$insertedCount} announcements.");
     }
 
     // ── EVENTS ────────────────────────────────────────────────────────────────
