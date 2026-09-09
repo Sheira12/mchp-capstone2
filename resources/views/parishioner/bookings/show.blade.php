@@ -137,6 +137,59 @@
             </div>
         </div>
 
+        @elseif($booking->payment && $booking->payment->status === 'pending')
+        {{-- GCASH / MAYA / OTHER PENDING VERIFICATION --}}
+        <div class="bg-amber-50 border border-amber-300 rounded-xl p-4 mb-3">
+            <div class="flex items-start gap-3">
+                <div class="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div>
+                    <p class="font-bold text-amber-900">Payment Request Submitted</p>
+                    <p class="text-sm text-amber-800 mt-0.5">
+                        Status: <span class="font-bold">PENDING ADMIN VERIFICATION</span>
+                    </p>
+                    <p class="text-xs text-amber-700 mt-1.5">
+                        Your {{ strtoupper(\App\Models\Payment::METHODS[$booking->payment->payment_method] ?? $booking->payment->payment_method) }}
+                        payment of <strong>₱{{ number_format($booking->payment->amount, 2) }}</strong> has been submitted.
+                    </p>
+                    <p class="text-xs text-amber-600 mt-1">
+                        You will be notified once the parish office verifies your payment. This usually takes up to 24 hours during office hours.
+                    </p>
+                    @if($booking->payment->submitted_reference)
+                    <p class="text-xs text-amber-700 mt-1.5 font-mono">
+                        Reference: <strong>{{ $booking->payment->submitted_reference }}</strong>
+                    </p>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        @elseif($booking->payment && $booking->payment->status === 'failed')
+        {{-- REJECTED — allow re-submission --}}
+        <div class="bg-red-50 border border-red-300 rounded-xl p-4 mb-4">
+            <div class="flex items-start gap-3">
+                <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </div>
+                <div>
+                    <p class="font-bold text-red-900">Payment Request Rejected</p>
+                    @if($booking->payment->rejection_reason)
+                    <p class="text-sm text-red-700 mt-0.5">Reason: <strong>{{ $booking->payment->rejection_reason }}</strong></p>
+                    @endif
+                    <p class="text-xs text-red-600 mt-1">Please resubmit your payment with the correct reference number or contact the parish office.</p>
+                </div>
+            </div>
+        </div>
+        {{-- Allow re-submission after rejection --}}
+        @if(in_array($booking->status, ['pending', 'confirmed']))
+        <a href="{{ route('parishioner.payments.pay', $booking) }}"
+           class="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition text-sm shadow-md hover:shadow-lg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            Resubmit Payment
+        </a>
+        @endif
+
         @elseif(in_array($booking->status, ['pending', 'confirmed']))
         {{-- NOT YET PAID --}}
         <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">

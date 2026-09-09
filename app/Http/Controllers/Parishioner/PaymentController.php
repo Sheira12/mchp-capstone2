@@ -126,6 +126,7 @@ class PaymentController extends Controller
 
     /**
      * Show the payment selection page for a booking.
+     * Redirects with status message if payment already exists.
      */
     public function payBooking(Booking $booking)
     {
@@ -134,12 +135,23 @@ class PaymentController extends Controller
             abort(403);
         }
 
-        if ($booking->payment?->status === 'paid') {
-            return redirect()->route('parishioner.payments.receipt', $booking->payment)
+        $existingPayment = $booking->payment;
+
+        // Already paid — go to receipt
+        if ($existingPayment?->status === 'paid') {
+            return redirect()->route('parishioner.payments.receipt', $existingPayment)
                 ->with('info', 'This booking has already been paid.');
         }
 
-        return view('parishioner.payments.pay', compact('booking'));
+        // Pending admin verification — show status, don't allow new payment
+        if ($existingPayment?->status === 'pending') {
+            return redirect()->route('parishioner.bookings.show', $booking)
+                ->with('info', 'Your payment is pending admin verification. You will be notified once approved.');
+        }
+
+        // Failed/rejected — allow re-submission (show form again)
+        // For all other statuses (no payment, failed), show the payment form
+        return view('parishioner.payments.pay', compact('booking', 'existingPayment'));
     }
 
     /**
@@ -154,6 +166,11 @@ class PaymentController extends Controller
 
         if ($booking->payment?->status === 'paid') {
             return back()->with('error', 'This booking has already been paid.');
+        }
+
+        // Block if already pending verification
+        if ($booking->payment?->status === 'pending') {
+            return back()->with('info', 'Your payment is already pending admin verification. Please wait for approval.');
         }
 
         // Create a pending cash payment — admin will mark as paid when cash is received
@@ -180,6 +197,15 @@ class PaymentController extends Controller
     {
         if ($booking->parishioner_id !== auth()->user()->parishioner?->id) {
             abort(403);
+        }
+
+        // Backend guard: block if already pending or paid (security — cannot bypass frontend)
+        if ($booking->payment?->status === 'paid') {
+            return back()->withErrors(['error' => 'This booking has already been paid.']);
+        }
+
+        if ($booking->payment?->status === 'pending') {
+            return back()->with('info', 'Your payment proof has already been submitted and is pending admin verification.');
         }
 
         $validated = $request->validate([

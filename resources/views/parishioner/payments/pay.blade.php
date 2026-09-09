@@ -69,6 +69,25 @@
         </div>
     </div>
 
+    {{-- ── PAYMENT STATUS BANNER ── --}}
+    @if(isset($existingPayment) && $existingPayment)
+        @if($existingPayment->status === 'failed')
+        {{-- Rejected: show form again with rejection notice --}}
+        <div class="bg-red-50 border border-red-300 rounded-2xl p-4 flex items-start gap-3">
+            <div class="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </div>
+            <div>
+                <p class="font-bold text-red-900 text-sm">Previous Payment Rejected</p>
+                @if($existingPayment->rejection_reason)
+                <p class="text-sm text-red-700 mt-0.5">Reason: <strong>{{ $existingPayment->rejection_reason }}</strong></p>
+                @endif
+                <p class="text-xs text-red-600 mt-1">Please submit a new payment below.</p>
+            </div>
+        </div>
+        @endif
+    @endif
+
     {{-- Booking Summary --}}
     <div class="bg-gradient-to-br from-blue-700 to-indigo-800 rounded-2xl p-5 text-white shadow-lg">
         <p class="text-blue-200 text-xs font-bold uppercase tracking-wider mb-1">Booking Summary</p>
