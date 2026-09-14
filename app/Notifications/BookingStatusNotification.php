@@ -26,12 +26,35 @@ class BookingStatusNotification extends Notification
     public function toDatabase($notifiable): array
     {
         return [
+            'title'      => $this->getTitleForEvent(),
             'message'    => $this->getStatusMessage(),
             'booking_id' => $this->booking->id,
             'reference'  => $this->booking->reference_number,
             'event'      => $this->event,
+            'icon'       => $this->getIconForEvent(),
             'url'        => url('/portal/bookings/' . $this->booking->id),
         ];
+    }
+
+    private function getTitleForEvent(): string
+    {
+        return match ($this->event) {
+            'created'   => 'Booking Received',
+            'confirmed' => 'Booking Confirmed',
+            'cancelled' => 'Booking Cancelled',
+            'reminder'  => 'Booking Reminder',
+            default     => 'Booking Update',
+        };
+    }
+
+    private function getIconForEvent(): string
+    {
+        return match ($this->event) {
+            'confirmed' => 'check',
+            'cancelled' => 'bell',
+            'reminder'  => 'calendar',
+            default     => 'calendar',
+        };
     }
 
     /**

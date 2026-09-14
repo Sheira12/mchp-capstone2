@@ -208,7 +208,7 @@
                 </div>
                 @endif
 
-                <form method="POST" action="{{ route('contact.submit') }}" style="padding:1.5rem 2rem;display:flex;flex-direction:column;gap:1.25rem;">
+                <form method="POST" action="{{ route('contact.submit') }}" enctype="multipart/form-data" style="padding:1.5rem 2rem;display:flex;flex-direction:column;gap:1.25rem;" id="inquiry-form">
                     @csrf
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -229,26 +229,56 @@
 
                     <div class="form-field">
                         <label>Subject <span style="color:#ef4444;">*</span></label>
-                        <select name="subject" required>
+                        <select name="subject" id="inquiry-subject" required onchange="updateInquiryFields()">
                             <option value="">Select a subject…</option>
-                            @foreach([
-                                'General Inquiry',
-                                'Mass Schedule',
-                                'Sacrament Requirements',
-                                'Booking / Appointment',
-                                'Certificate Request',
-                                'Donation / Support',
-                                'Complaint / Feedback',
-                                'Other',
-                            ] as $s)
+                            @foreach(array_keys(\App\Services\InquirySubjectConfig::all()) as $s)
                             <option value="{{ $s }}" {{ old('subject') === $s ? 'selected' : '' }}>{{ $s }}</option>
                             @endforeach
                         </select>
                     </div>
 
+                    {{-- Subject requirements hint (shown dynamically) --}}
+                    <div id="subject-requirements" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:0.75rem;padding:0.875rem 1rem;">
+                        <p style="font-size:0.8125rem;font-weight:700;color:#1d4ed8;margin:0 0 6px;">📋 Requirements for this inquiry type:</p>
+                        <ul id="requirements-list" style="margin:0;padding-left:1.25rem;font-size:0.8125rem;color:#1e40af;line-height:1.8;"></ul>
+                    </div>
+
+                    {{-- Preferred Date & Time (Booking / Appointment only) --}}
+                    <div id="field-datetime" style="display:none;" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="form-field">
+                            <label>Preferred Date <span style="color:#ef4444;" id="date-req-star">*</span></label>
+                            <input type="date" name="preferred_date" id="preferred-date"
+                                   value="{{ old('preferred_date') }}"
+                                   min="{{ date('Y-m-d') }}">
+                        </div>
+                        <div class="form-field">
+                            <label>Preferred Time <span style="color:#ef4444;" id="time-req-star">*</span></label>
+                            <select name="preferred_time" id="preferred-time">
+                                <option value="">Select time…</option>
+                                @foreach(['6:00 AM','7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM',
+                                          '12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM'] as $t)
+                                <option value="{{ $t }}" {{ old('preferred_time') === $t ? 'selected' : '' }}>{{ $t }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="form-field">
                         <label>Message <span style="color:#ef4444;">*</span></label>
                         <textarea name="message" rows="5" required placeholder="How can we help you? Please provide as much detail as possible…">{{ old('message') }}</textarea>
+                    </div>
+
+                    {{-- File Attachment (shown dynamically per subject) --}}
+                    <div id="field-attachment" style="display:none;">
+                        <div class="form-field">
+                            <label id="attach-label">Attachment</label>
+                            <input type="file" name="attachments[]" id="attachment-input"
+                                   multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                                   style="padding:0.5rem;border:1.5px dashed #cbd5e1;border-radius:0.625rem;width:100%;cursor:pointer;background:#f8fafc;font-size:0.8125rem;">
+                            <p style="font-size:0.75rem;color:#94a3b8;margin:4px 0 0;">
+                                Accepted: JPG, PNG, PDF, DOC, DOCX · Max 5 MB per file · Up to 5 files
+                            </p>
+                        </div>
                     </div>
 
                     <button type="submit"
@@ -263,6 +293,58 @@
                         Or call us directly at <strong style="color:#374151;">{{ config('parish.phone') }}</strong>
                     </p>
                 </form>
+
+                <script>
+                const SUBJECT_CONFIG = {!! \App\Services\InquirySubjectConfig::forJs() !!};
+
+                function updateInquiryFields() {
+                    const subject  = document.getElementById('inquiry-subject').value;
+                    const cfg      = SUBJECT_CONFIG[subject] || null;
+
+                    const reqBox   = document.getElementById('subject-requirements');
+                    const reqList  = document.getElementById('requirements-list');
+                    const dtField  = document.getElementById('field-datetime');
+                    const attField = document.getElementById('field-attachment');
+                    const attInput = document.getElementById('attachment-input');
+                    const attLabel = document.getElementById('attach-label');
+
+                    // Hide all conditional fields first
+                    reqBox.style.display   = 'none';
+                    dtField.style.display  = 'none';
+                    attField.style.display = 'none';
+
+                    if (!cfg) return;
+
+                    // Requirements hint
+                    if (cfg.requirements && cfg.requirements.length) {
+                        reqList.innerHTML = cfg.requirements.map(r => `<li>${r}</li>`).join('');
+                        reqBox.style.display = 'block';
+                    }
+
+                    // Preferred date/time
+                    if (cfg.fields.includes('preferred_date')) {
+                        dtField.style.display = 'grid';
+                        document.getElementById('preferred-date').required = true;
+                        document.getElementById('preferred-time').required = true;
+                    } else {
+                        document.getElementById('preferred-date').required = false;
+                        document.getElementById('preferred-time').required = false;
+                    }
+
+                    // Attachment
+                    if (cfg.attachment) {
+                        attField.style.display = 'block';
+                        attLabel.innerHTML     = cfg.attachLabel + (cfg.attachReq ? ' <span style="color:#ef4444;">*</span>' : ' <span style="color:#94a3b8;font-size:0.75rem;">(optional)</span>');
+                        attInput.required      = cfg.attachReq;
+                    }
+                }
+
+                // Trigger on page load to restore old() values after validation failure
+                document.addEventListener('DOMContentLoaded', function() {
+                    const subjectEl = document.getElementById('inquiry-subject');
+                    if (subjectEl.value) updateInquiryFields();
+                });
+                </script>
             </div>
         </div>
 

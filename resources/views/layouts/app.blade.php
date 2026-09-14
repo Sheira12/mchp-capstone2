@@ -180,6 +180,14 @@
             @endrole
 
             <div class="pt-2 pb-1 px-3 text-xs font-semibold text-blue-400 uppercase tracking-wider">Website</div>
+            <a href="{{ route('admin.inquiries.index') }}" class="nav-link {{ request()->routeIs('admin.inquiries.*') ? 'active' : '' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                Inquiries
+                @php $newInquiryCount = \App\Models\Inquiry::where('status','new')->count(); @endphp
+                @if($newInquiryCount > 0)
+                <span class="ml-auto bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">{{ $newInquiryCount }}</span>
+                @endif
+            </a>
             <a href="{{ route('admin.announcements.index') }}" class="nav-link {{ request()->routeIs('admin.announcements.*') ? 'active' : '' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
                 Announcements
@@ -432,13 +440,22 @@
         list.innerHTML = notifications.map(n => `
             <a href="${n.url}" onclick="markRead('${n.id}')"
                class="flex items-start gap-3 px-4 py-3 hover:bg-blue-50 transition cursor-pointer block">
-                <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="${n.data.notif_type === 'certificate_request' ? 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z' : 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'}"/>
+                <div class="w-8 h-8 rounded-full ${n.data.notif_type === 'certificate_request' ? 'bg-purple-100' : n.data.notif_type === 'inquiry' ? 'bg-teal-100' : 'bg-amber-100'} flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg class="w-4 h-4 ${n.data.notif_type === 'certificate_request' ? 'text-purple-600' : n.data.notif_type === 'inquiry' ? 'text-teal-600' : 'text-amber-600'}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="${
+                            n.data.notif_type === 'certificate_request'
+                                ? 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'
+                                : n.data.notif_type === 'inquiry'
+                                    ? 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'
+                                    : 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
+                        }"/>
                     </svg>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-sm text-gray-800 font-medium leading-snug">${n.data.message}</p>
+                    <p class="text-xs font-bold uppercase tracking-wide mb-0.5 ${n.data.notif_type === 'certificate_request' ? 'text-purple-600' : n.data.notif_type === 'inquiry' ? 'text-teal-600' : 'text-amber-600'}">
+                        ${n.data.notif_type === 'certificate_request' ? 'Certificate Request' : n.data.notif_type === 'inquiry' ? 'New Inquiry' : 'New Booking'}
+                    </p>
+                    <p class="text-sm text-gray-800 font-medium leading-snug">${n.data.message || 'You have a new notification.'}</p>
                     <p class="text-xs text-gray-400 mt-0.5">${n.created_at}</p>
                 </div>
                 <div class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-2"></div>
@@ -452,15 +469,21 @@
         const toast = document.createElement('div');
         toast.className = 'pointer-events-auto flex items-start gap-3 bg-white border border-gray-200 rounded-xl shadow-xl px-4 py-3 w-80 transform translate-x-full opacity-0 transition-all duration-300';
         toast.innerHTML = `
-            <div class="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            <div class="w-9 h-9 rounded-full ${notif.data.notif_type === 'certificate_request' ? 'bg-purple-100' : notif.data.notif_type === 'inquiry' ? 'bg-teal-100' : 'bg-amber-100'} flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 ${notif.data.notif_type === 'certificate_request' ? 'text-purple-600' : notif.data.notif_type === 'inquiry' ? 'text-teal-600' : 'text-amber-600'}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="${
+                        notif.data.notif_type === 'certificate_request'
+                            ? 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'
+                            : notif.data.notif_type === 'inquiry'
+                                ? 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'
+                                : 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
+                    }"/>
                 </svg>
             </div>
             <div class="flex-1 min-w-0">
-                <p class="text-xs font-bold text-gray-700 uppercase tracking-wide">New Booking</p>
-                <p class="text-sm text-gray-800 leading-snug mt-0.5">${notif.data.message}</p>
-                <a href="${notif.url}" class="text-xs text-blue-600 hover:underline font-semibold mt-1 inline-block">View booking →</a>
+                <p class="text-xs font-bold text-gray-700 uppercase tracking-wide">${notif.data.notif_type === 'certificate_request' ? 'Certificate Request' : notif.data.notif_type === 'inquiry' ? 'New Inquiry' : 'New Booking'}</p>
+                <p class="text-sm text-gray-800 leading-snug mt-0.5">${notif.data.message || 'You have a new notification.'}</p>
+                <a href="${notif.url}" class="text-xs text-blue-600 hover:underline font-semibold mt-1 inline-block">View details →</a>
             </div>
             <button onclick="this.closest('div.pointer-events-auto').remove()" class="text-gray-300 hover:text-gray-500 flex-shrink-0 mt-0.5">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>

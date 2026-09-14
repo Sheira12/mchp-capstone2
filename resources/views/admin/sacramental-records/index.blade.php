@@ -15,7 +15,7 @@
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Type</label>
-                <select name="type" class="form-select text-sm" data-live-input>
+                <select name="type" class="form-select text-sm" onchange="this.form.submit()">
                     <option value="">All Types</option>
                     <option value="baptism"         @selected(request('type')==='baptism')>Baptism</option>
                     <option value="first_communion" @selected(request('type')==='first_communion')>First Communion</option>
@@ -26,11 +26,11 @@
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">From</label>
-                <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-input text-sm" data-live-input>
+                <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-input text-sm" onchange="this.form.submit()">
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">To</label>
-                <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-input text-sm" data-live-input>
+                <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-input text-sm" onchange="this.form.submit()">
             </div>
             <button type="submit" class="btn-secondary text-sm">Filter</button>
             @if(request()->hasAny(['search','type','date_from','date_to']))

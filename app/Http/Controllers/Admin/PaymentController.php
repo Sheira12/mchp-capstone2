@@ -24,18 +24,33 @@ class PaymentController extends Controller
             $query->where('payment_method', $method);
         }
 
+        // Date filter: use paid_at for paid payments, created_at for others
         if ($from = $request->get('date_from')) {
-            $query->where('paid_at', '>=', $from);
+            $query->where(function ($q) use ($from) {
+                $q->where('paid_at', '>=', $from)
+                  ->orWhere(function ($q2) use ($from) {
+                      $q2->whereNull('paid_at')->where('created_at', '>=', $from);
+                  });
+            });
         }
 
         if ($to = $request->get('date_to')) {
-            $query->where('paid_at', '<=', $to . ' 23:59:59');
+            $query->where(function ($q) use ($to) {
+                $q->where('paid_at', '<=', $to . ' 23:59:59')
+                  ->orWhere(function ($q2) use ($to) {
+                      $q2->whereNull('paid_at')->where('created_at', '<=', $to . ' 23:59:59');
+                  });
+            });
         }
 
+        // FIX: wrap search in a grouped where() so it ANDs with other filters
+        // Previously the orWhereHas was at the top level, breaking all other filters
         if ($search = $request->get('search')) {
-            $query->where('reference_number', 'like', "%{$search}%")
+            $query->where(function ($q) use ($search) {
+                $q->where('reference_number', 'like', "%{$search}%")
                   ->orWhere('receipt_number', 'like', "%{$search}%")
-                  ->orWhereHas('parishioner', fn($q) => $q->search($search));
+                  ->orWhereHas('parishioner', fn($sq) => $sq->search($search));
+            });
         }
 
         $payments = $query->orderByDesc('created_at')

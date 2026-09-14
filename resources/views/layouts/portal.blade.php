@@ -673,8 +673,8 @@ function portalRenderList(notifications) {
                 ${iconMap[n.data.icon] || '🔔'}
             </div>
             <div style="flex:1;min-width:0;">
-                <p style="font-size:12px;font-weight:700;color:#1e3a8a;margin:0 0 2px;">${n.data.title}</p>
-                <p style="font-size:12px;color:#475569;margin:0;line-height:1.4;">${n.data.message}</p>
+                <p style="font-size:12px;font-weight:700;color:#1e3a8a;margin:0 0 2px;">${n.data.title || 'Parish Notification'}</p>
+                <p style="font-size:12px;color:#475569;margin:0;line-height:1.4;">${n.data.message || ''}</p>
                 <p style="font-size:11px;color:#94a3b8;margin:3px 0 0;">${n.created_at}</p>
             </div>
             <div style="width:8px;height:8px;border-radius:50%;background:#3b82f6;flex-shrink:0;margin-top:4px;"></div>
@@ -691,8 +691,8 @@ function portalShowToast(notif) {
     toast.innerHTML = `
         <div style="width:36px;height:36px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;">${icon}</div>
         <div style="flex:1;min-width:0;">
-            <p style="font-size:12px;font-weight:700;color:#1e40af;margin:0 0 3px;">${notif.data.title}</p>
-            <p style="font-size:12px;color:#374151;margin:0;line-height:1.4;">${notif.data.message}</p>
+            <p style="font-size:12px;font-weight:700;color:#1e40af;margin:0 0 3px;">${notif.data.title || 'Parish Notification'}</p>
+            <p style="font-size:12px;color:#374151;margin:0;line-height:1.4;">${notif.data.message || ''}</p>
             <a href="${notif.url}" style="font-size:11px;color:#2563eb;font-weight:600;text-decoration:none;margin-top:4px;display:inline-block;">View →</a>
         </div>
         <button onclick="this.closest('div').remove()" style="background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:16px;line-height:1;padding:0;flex-shrink:0;">×</button>

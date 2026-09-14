@@ -50,7 +50,7 @@
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Status</label>
-                <select name="status" class="form-select text-sm" data-live-input>
+                <select name="status" class="form-select text-sm" onchange="this.form.submit()">
                     <option value="">All</option>
                     <option value="pending"  @selected(request('status')==='pending')>Pending</option>
                     <option value="paid"     @selected(request('status')==='paid')>Paid</option>
@@ -60,7 +60,7 @@
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Method</label>
-                <select name="method" class="form-select text-sm" data-live-input>
+                <select name="method" class="form-select text-sm" onchange="this.form.submit()">
                     <option value="">All</option>
                     <option value="cash"    @selected(request('method')==='cash')>Cash</option>
                     <option value="gcash"   @selected(request('method')==='gcash')>GCash</option>
@@ -70,11 +70,11 @@
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">From</label>
-                <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-input text-sm" data-live-input>
+                <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-input text-sm" onchange="this.form.submit()">
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">To</label>
-                <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-input text-sm" data-live-input>
+                <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-input text-sm" onchange="this.form.submit()">
             </div>
             <button type="submit" class="btn-secondary text-sm">Filter</button>
             @if(request()->hasAny(['search','status','method','date_from','date_to']))

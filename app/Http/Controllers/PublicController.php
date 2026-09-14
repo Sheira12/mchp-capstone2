@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Announcement;
 use App\Models\Event;
+use App\Models\Inquiry;
 use App\Models\MassSchedule;
 use App\Models\Service;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 
 class PublicController extends Controller
 {
@@ -49,13 +52,24 @@ class PublicController extends Controller
 
     public function submitInquiry(Request $request)
     {
-        $validated = $request->validate([
-            'name'    => ['required', 'string', 'max:255'],
-            'email'   => ['required', 'email'],
-            'phone'   => ['nullable', 'string', 'max:20'],
-            'subject' => ['required', 'string', 'max:255'],
-            'message' => ['required', 'string', 'max:2000'],
-        ]);
+        // Dynamic validation per subject
+        $subject      = $request->input('subject', '');
+        $rules        = \App\Services\InquirySubjectConfig::rulesFor($subject);
+        $validated    = $request->validate($rules);
+
+        // Store user-uploaded attachments
+        $storedAttachments = [];
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('inquiries/user', 'public');
+                $storedAttachments[] = [
+                    'original_name' => $file->getClientOriginalName(),
+                    'path'          => $path,
+                    'mime'          => $file->getMimeType(),
+                    'size'          => $file->getSize(),
+                ];
+            }
+        }
 
         // Resolve the parish email — fall back to MAIL_FROM_ADDRESS if not set
         $parishEmail = config('parish.email');
@@ -64,6 +78,34 @@ class PublicController extends Controller
         }
 
         \Mail::to($parishEmail)->send(new \App\Mail\InquiryMail($validated));
+
+        // Save inquiry to the database
+        $inquiry = Inquiry::create([
+            'name'           => $validated['name'],
+            'email'          => $validated['email'],
+            'phone'          => $validated['phone'] ?? null,
+            'subject'        => $validated['subject'],
+            'message'        => $validated['message'],
+            'preferred_date' => $validated['preferred_date'] ?? null,
+            'preferred_time' => $validated['preferred_time'] ?? null,
+            'attachments'    => $storedAttachments ?: null,
+            'status'         => 'new',
+        ]);
+
+        // Notify all admin users via the bell notification system
+        $admins = User::role(['super_admin', 'parish_secretary', 'finance_officer'])->get();
+        if ($admins->isNotEmpty()) {
+            Notification::send(
+                $admins,
+                new \App\Notifications\AdminInquiryNotification(
+                    $validated['name'],
+                    $validated['email'],
+                    $validated['subject'],
+                    $validated['message'],
+                    $inquiry->id
+                )
+            );
+        }
 
         return back()->with('success', 'Your inquiry has been sent. We will get back to you shortly.');
     }

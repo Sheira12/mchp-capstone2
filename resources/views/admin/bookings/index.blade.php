@@ -51,33 +51,37 @@
                            class="form-input text-sm w-full pl-9">
                 </div>
             </div>
-            <select name="status" class="form-select text-sm" style="min-width:130px;">
+            <select name="status" class="form-select text-sm" style="min-width:130px;" onchange="this.form.submit()">
                 <option value="">All Statuses</option>
                 @foreach(\App\Models\Booking::STATUSES as $val => $label)
                 <option value="{{ $val }}" {{ request('status')===$val ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
-            <select name="type" class="form-select text-sm" style="min-width:150px;">
+            <select name="type" class="form-select text-sm" style="min-width:150px;" onchange="this.form.submit()">
                 <option value="">All Services</option>
                 @foreach(\App\Models\Booking::TYPES as $val => $label)
                 <option value="{{ $val }}" {{ request('type')===$val ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
-            <input type="date" name="date_from" value="{{ request('date_from') }}"
-                   class="form-input text-sm" style="min-width:140px;">
-            <input type="date" name="date_to" value="{{ request('date_to') }}"
-                   class="form-input text-sm" style="min-width:140px;">
-            <button type="submit"
-                    class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition flex items-center gap-2 whitespace-nowrap">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-                Filter
-            </button>
-            @if(request()->hasAny(['search','status','type','date_from','date_to']))
-            <a href="{{ route('admin.bookings.index') }}"
-               class="px-4 py-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium rounded-lg transition whitespace-nowrap">
-                Clear
-            </a>
-            @endif
+            <div class="flex flex-wrap gap-2 items-center w-full">
+                <div class="flex flex-1 gap-2" style="min-width:260px;">
+                    <input type="date" name="date_from" value="{{ request('date_from') }}"
+                           class="form-input text-sm flex-1" onchange="this.form.submit()">
+                    <input type="date" name="date_to" value="{{ request('date_to') }}"
+                           class="form-input text-sm flex-1" onchange="this.form.submit()">
+                </div>
+                <button type="submit"
+                        class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition flex items-center gap-2 whitespace-nowrap">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                    Filter
+                </button>
+                @if(request()->hasAny(['search','status','type','date_from','date_to']))
+                <a href="{{ route('admin.bookings.index') }}"
+                   class="px-4 py-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium rounded-lg transition whitespace-nowrap">
+                    Clear
+                </a>
+                @endif
+            </div>
         </form>
     </div>
 
@@ -132,7 +136,7 @@
     {{-- ── DESKTOP TABLE ── --}}
     <div id="bookings-table" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hidden lg:block">
         <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="w-full text-sm" style="min-width:750px;">
                 <thead class="bg-gray-50 border-b border-gray-100">
                     <tr>
                         <th class="text-left px-4 py-3 font-medium text-gray-600">Reference</th>
@@ -185,10 +189,10 @@
                                 {{ $booking->getStatusLabel() }}
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-right">
+                        <td class="px-4 py-3 text-right" style="white-space:nowrap;min-width:90px;">
                             <a href="{{ route('admin.bookings.show', $booking) }}"
                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold transition whitespace-nowrap">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                 View
                             </a>
                         </td>

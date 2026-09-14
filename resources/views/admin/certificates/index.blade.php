@@ -22,7 +22,7 @@
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Type</label>
-                <select name="type" class="form-select text-sm" data-live-input>
+                <select name="type" class="form-select text-sm" onchange="this.form.submit()">
                     <option value="">All Types</option>
                     <option value="baptism"         @selected(request('type')==='baptism')>Baptism</option>
                     <option value="confirmation"    @selected(request('type')==='confirmation')>Confirmation</option>
@@ -33,7 +33,7 @@
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Status</label>
-                <select name="status" class="form-select text-sm" data-live-input>
+                <select name="status" class="form-select text-sm" onchange="this.form.submit()">
                     <option value="">All Status</option>
                     <option value="draft"    @selected(request('status')==='draft')>Draft</option>
                     <option value="issued"   @selected(request('status')==='issued')>Issued</option>

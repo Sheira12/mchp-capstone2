@@ -226,6 +226,13 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
         Route::resource('payments', PaymentController::class)->only(['index', 'show']);
     });
 
+    // Inquiries
+    Route::get('/inquiries', [\App\Http\Controllers\Admin\InquiryController::class, 'index'])->name('inquiries.index');
+    Route::get('/inquiries/{inquiry}', [\App\Http\Controllers\Admin\InquiryController::class, 'show'])->name('inquiries.show');
+    Route::post('/inquiries/{inquiry}/reply', [\App\Http\Controllers\Admin\InquiryController::class, 'reply'])->name('inquiries.reply');
+    Route::post('/inquiries/{inquiry}/status', [\App\Http\Controllers\Admin\InquiryController::class, 'updateStatus'])->name('inquiries.updateStatus');
+    Route::get('/inquiries/attachment/{path}', [\App\Http\Controllers\Admin\InquiryController::class, 'attachment'])->name('inquiries.attachment')->where('path', '.+');
+
     // User Management (Super Admin only)
     Route::middleware('role:super_admin')->group(function () {
         Route::resource('users', UserController::class);

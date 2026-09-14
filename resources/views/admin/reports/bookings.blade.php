@@ -63,9 +63,9 @@
             @if(count($data['by_type']))
             <table class="w-full text-sm">
                 <thead><tr class="bg-amber-600 text-white text-left">
-                    <th class="px-3 py-2">Service Type</th>
-                    <th class="px-3 py-2 text-right">Count</th>
-                    <th class="px-3 py-2 text-right">% Share</th>
+                    <th class="px-3 py-2 whitespace-nowrap">Service Type</th>
+                    <th class="px-3 py-2 text-right whitespace-nowrap">Count</th>
+                    <th class="px-3 py-2 text-right whitespace-nowrap">% Share</th>
                 </tr></thead>
                 <tbody>
                     @php $gtotal = max($data['total'], 1); @endphp
@@ -104,9 +104,9 @@
             <h3 class="font-bold text-gray-800 mb-4 text-base border-b border-gray-100 pb-2">Status Breakdown</h3>
             <table class="w-full text-sm">
                 <thead><tr class="bg-amber-700 text-white text-left">
-                    <th class="px-3 py-2">Status</th>
-                    <th class="px-3 py-2 text-right">Count</th>
-                    <th class="px-3 py-2 text-right">% of Total</th>
+                    <th class="px-3 py-2 whitespace-nowrap">Status</th>
+                    <th class="px-3 py-2 text-right whitespace-nowrap">Count</th>
+                    <th class="px-3 py-2 text-right whitespace-nowrap">% of Total</th>
                 </tr></thead>
                 <tbody>
                     @foreach(['Pending'=>$data['pending'],'Confirmed'=>$data['confirmed'],'Completed'=>$data['completed'],'Cancelled'=>$data['cancelled']] as $s => $c)

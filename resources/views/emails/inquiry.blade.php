@@ -5,4 +5,4 @@
 <hr>
 <p>{{ nl2br(e($inquiry['message'])) }}</p>
 <hr>
-<p><small>Sent from the MHC Parish website contact form.</small></p>
+<p><small>Sent from the {{ config('parish.name') }} website contact form.</small></p>

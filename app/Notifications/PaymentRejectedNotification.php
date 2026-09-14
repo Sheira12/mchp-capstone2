@@ -26,6 +26,8 @@ class PaymentRejectedNotification extends Notification
     public function toDatabase($notifiable): array
     {
         return [
+            'title'            => 'Payment Not Verified',
+            'icon'             => 'document',
             'payment_id'       => $this->payment->id,
             'reference_number' => $this->payment->reference_number,
             'amount'           => $this->payment->amount,

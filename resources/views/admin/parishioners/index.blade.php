@@ -78,7 +78,7 @@
                     <div id="parishioner-dropdown"
                          class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-xl z-40 hidden mt-1 max-h-64 overflow-y-auto"></div>
                 </div>
-                <select name="barangay" class="form-select text-sm" data-live-input style="min-width:130px;">
+                <select name="barangay" class="form-select text-sm" style="min-width:130px;" onchange="this.form.submit()">
                     <option value="">All Barangays</option>
                     @foreach($barangays as $b)
                     <option value="{{ $b }}" {{ request('barangay') === $b ? 'selected' : '' }}>{{ $b }}</option>
@@ -87,13 +87,13 @@
             </div>
             {{-- Row 2: family + sacrament + buttons --}}
             <div class="flex flex-wrap gap-2 items-center">
-                <select name="family_id" class="form-select text-sm" data-live-input style="min-width:130px;">
+                <select name="family_id" class="form-select text-sm" style="min-width:130px;" onchange="this.form.submit()">
                     <option value="">All Families</option>
                     @foreach($families as $f)
                     <option value="{{ $f->id }}" {{ request('family_id') == $f->id ? 'selected' : '' }}>{{ $f->family_name }}</option>
                     @endforeach
                 </select>
-                <select name="sacrament" class="form-select text-sm" data-live-input style="min-width:130px;">
+                <select name="sacrament" class="form-select text-sm" style="min-width:130px;" onchange="this.form.submit()">
                     <option value="">Any Sacrament</option>
                     @foreach(\App\Models\SacramentalRecord::TYPES as $key => $label)
                     <option value="{{ $key }}" {{ request('sacrament') === $key ? 'selected' : '' }}>Has {{ $label }}</option>
@@ -204,16 +204,16 @@
     {{-- ── DESKTOP TABLE (hidden below lg) ── --}}
     <div id="parishioners-table" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hidden lg:block">
         <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="w-full text-sm" style="min-width:800px;">
                 <thead class="bg-gray-50 border-b border-gray-100">
                     <tr>
                         <th class="text-left px-4 py-3 font-medium text-gray-600">Name</th>
                         <th class="text-left px-4 py-3 font-medium text-gray-600">Contact</th>
                         <th class="text-left px-4 py-3 font-medium text-gray-600">Barangay</th>
                         <th class="text-left px-4 py-3 font-medium text-gray-600">Family</th>
-                        <th class="text-center px-4 py-3 font-medium text-gray-600">Sacraments</th>
-                        <th class="text-left px-4 py-3 font-medium text-gray-600">Status</th>
-                        <th class="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
+                        <th class="text-center px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Sacraments</th>
+                        <th class="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap" style="min-width:90px;">Status</th>
+                        <th class="text-right px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
@@ -266,29 +266,30 @@
                             <span class="text-gray-300 text-sm font-medium">—</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3" style="white-space:nowrap;">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold
-                                {{ $parishioner->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' }}">
+                                {{ $parishioner->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' }}"
+                                style="white-space:nowrap;">
                                 <span class="w-1.5 h-1.5 rounded-full flex-shrink-0 {{ $parishioner->is_active ? 'bg-green-500' : 'bg-gray-400' }}"></span>
                                 {{ $parishioner->is_active ? 'Active' : 'Inactive' }}
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-right">
-                            <div class="flex items-center justify-end gap-1">
+                        <td class="px-4 py-3 text-right" style="white-space:nowrap;min-width:160px;">
+                            <div class="flex items-center justify-end gap-1" style="flex-wrap:nowrap;">
                                 <a href="{{ route('admin.parishioners.show', $parishioner) }}"
-                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold transition">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold transition whitespace-nowrap flex-shrink-0">
+                                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                     View
                                 </a>
                                 <a href="{{ route('admin.parishioners.soa', $parishioner) }}"
-                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 text-xs font-semibold transition"
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 text-xs font-semibold transition whitespace-nowrap flex-shrink-0"
                                    title="Statement of Account">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                     SOA
                                 </a>
                                 <a href="{{ route('admin.parishioners.edit', $parishioner) }}"
-                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 text-xs font-semibold transition">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 text-xs font-semibold transition whitespace-nowrap flex-shrink-0">
+                                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     Edit
                                 </a>
                             </div>
