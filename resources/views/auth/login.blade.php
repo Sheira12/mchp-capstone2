@@ -52,22 +52,25 @@
             </div>
             <div>
                 <label class="form-label">Password</label>
-                <div class="relative">
+                <div style="position:relative;">
                     <input type="password" name="password" id="password-input" required
-                           class="form-input w-full pr-10"
+                           class="form-input w-full"
+                           style="padding-right:2.5rem;"
                            placeholder="••••••••">
-                    <button type="button" id="toggle-password"
+                    <button type="button"
                             onclick="togglePassword()"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
-                            tabindex="-1" aria-label="Show/hide password">
-                        {{-- Eye icon (shown when password is hidden) --}}
-                        <svg id="eye-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            style="position:absolute;right:0.625rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;color:#9ca3af;display:flex;align-items:center;justify-content:center;line-height:0;"
+                            tabindex="-1"
+                            aria-label="Toggle password visibility">
+                        {{-- Eye open (shown when password is hidden) --}}
+                        <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
                         </svg>
-                        {{-- Eye-slash icon (shown when password is visible) --}}
-                        <svg id="eye-slash-icon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                        {{-- Eye off / slash (shown when password is visible) --}}
+                        <svg id="eye-slash-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="display:none;">
+                            <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                            <line x1="1" y1="1" x2="23" y2="23"/>
                         </svg>
                     </button>
                 </div>
@@ -109,9 +112,9 @@ function togglePassword() {
     const eyeOn   = document.getElementById('eye-icon');
     const eyeOff  = document.getElementById('eye-slash-icon');
     const showing = input.type === 'text';
-    input.type    = showing ? 'password' : 'text';
-    eyeOn.classList.toggle('hidden',  !showing);
-    eyeOff.classList.toggle('hidden', showing);
+    input.type           = showing ? 'password' : 'text';
+    eyeOn.style.display  = showing ? ''      : 'none';
+    eyeOff.style.display = showing ? 'none'  : '';
 }
 </script>
 </body>
