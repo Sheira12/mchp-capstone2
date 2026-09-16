@@ -97,15 +97,15 @@
     {{-- ── DESKTOP TABLE ── --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hidden lg:block">
         <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+        <table class="w-full text-sm" style="min-width:860px;">
             <thead class="bg-gray-50 border-b border-gray-100">
                 <tr class="text-left text-gray-500">
                     <th class="px-4 py-3 font-medium">Event</th>
-                    <th class="px-4 py-3 font-medium">Category</th>
-                    <th class="px-4 py-3 font-medium">Date &amp; Time</th>
+                    <th class="px-4 py-3 font-medium whitespace-nowrap">Category</th>
+                    <th class="px-4 py-3 font-medium whitespace-nowrap">Date &amp; Time</th>
                     <th class="px-4 py-3 font-medium">Location</th>
-                    <th class="px-4 py-3 font-medium">Status</th>
-                    <th class="px-4 py-3 font-medium">Actions</th>
+                    <th class="px-4 py-3 font-medium whitespace-nowrap">Status</th>
+                    <th class="px-4 py-3 font-medium whitespace-nowrap">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
@@ -135,7 +135,7 @@
                         </div>
                     </td>
                     <td class="px-4 py-3">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 whitespace-nowrap">
                             {{ $event->category_label }}
                         </span>
                     </td>
@@ -145,17 +145,17 @@
                     </td>
                     <td class="px-4 py-3 text-gray-600">{{ $event->location ?? '—' }}</td>
                     <td class="px-4 py-3">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $badge }}">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap {{ $badge }}">
                             {{ ucfirst($event->status) }}
                         </span>
                     </td>
-                    <td class="px-4 py-3">
-                        <div class="flex items-center gap-1">
-                            <a href="{{ route('admin.events.show', $event) }}" class="action-btn action-btn-view">View</a>
-                            <a href="{{ route('admin.events.edit', $event) }}" class="action-btn action-btn-edit">Edit</a>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="flex items-center gap-1" style="flex-wrap:nowrap;">
+                            <a href="{{ route('admin.events.show', $event) }}" class="action-btn action-btn-view whitespace-nowrap">View</a>
+                            <a href="{{ route('admin.events.edit', $event) }}" class="action-btn action-btn-edit whitespace-nowrap">Edit</a>
                             <form method="POST" action="{{ route('admin.events.destroy', $event) }}" onsubmit="return confirm('Delete this event?')">
                                 @csrf @method('DELETE')
-                                <button type="submit" class="action-btn action-btn-delete">Delete</button>
+                                <button type="submit" class="action-btn action-btn-delete whitespace-nowrap">Delete</button>
                             </form>
                         </div>
                     </td>

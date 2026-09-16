@@ -259,9 +259,10 @@ class BookingController extends Controller
         return view('admin.bookings.stub', compact('booking', 'qrBase64'));
     }
 
-    public function calendar(Request $request)    {
-        $month = $request->get('month', now()->month);
-        $year  = $request->get('year', now()->year);
+    public function calendar(Request $request)
+    {
+        $month = (int) $request->get('month', now()->month);
+        $year  = (int) $request->get('year', now()->year);
 
         $bookings = Booking::whereYear('scheduled_date', $year)
             ->whereMonth('scheduled_date', $month)
@@ -275,6 +276,15 @@ class BookingController extends Controller
                 'color' => $b->status === 'confirmed' ? '#16a34a' : '#d97706',
                 'url'   => route('admin.bookings.show', $b),
             ]);
+
+        // AJAX request — return JSON for month navigation
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'bookings' => $bookings,
+                'month'    => $month,
+                'year'     => $year,
+            ]);
+        }
 
         return view('admin.bookings.calendar', compact('bookings', 'month', 'year'));
     }
