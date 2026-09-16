@@ -450,7 +450,7 @@
             @foreach([
                 ['#eff6ff','#2563eb','M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z','Location','Southville 1, Niugan<br>Cabuyao, Laguna'],
                 ['#eff6ff','#2563eb','M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z','Office Hours','Tue–Sun: 9AM–12NN<br>2PM–5PM'],
-                ['#eff6ff','#2563eb','M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z','Contact Us','<a href="{{ route(\'contact\') }}" style="color:#2563eb;font-weight:600;text-decoration:none;">Send us a message &rarr;</a>']
+                ['#eff6ff','#2563eb','M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z','Contact Us','<a href="'.route('contact').'" style="color:#2563eb;font-weight:600;text-decoration:none;">Send us a message &rarr;</a>']
             ] as $c)
             <div style="display:flex;flex-direction:column;align-items:center;gap:0.75rem;">
                 <div style="width:48px;height:48px;border-radius:50%;background:{{ $c[0] }};display:flex;align-items:center;justify-content:center;">
