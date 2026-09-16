@@ -96,6 +96,25 @@ $sc = $statusConfig[$booking->status] ?? $statusConfig['pending'];
                     <dd class="text-gray-700 bg-gray-50 rounded-lg p-3 text-sm">{{ $booking->notes }}</dd>
                 </div>
                 @endif
+                {{-- Wedding sponsor names --}}
+                @if($booking->booking_type === 'wedding')
+                @if($booking->spouse_name)
+                <div class="col-span-2">
+                    <dt class="text-xs font-semibold text-pink-400 uppercase tracking-wide mb-1">Spouse / Partner</dt>
+                    <dd class="font-semibold text-gray-800">{{ $booking->spouse_name }}</dd>
+                </div>
+                @endif
+                @if($booking->ninong_name || $booking->ninang_name)
+                <div>
+                    <dt class="text-xs font-semibold text-pink-400 uppercase tracking-wide mb-1">Principal Sponsor (Ninong)</dt>
+                    <dd class="font-medium text-gray-700">{{ $booking->ninong_name ?? '—' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-semibold text-pink-400 uppercase tracking-wide mb-1">Principal Sponsor (Ninang)</dt>
+                    <dd class="font-medium text-gray-700">{{ $booking->ninang_name ?? '—' }}</dd>
+                </div>
+                @endif
+                @endif
                 @if($booking->admin_notes)
                 <div class="col-span-2">
                     <dt class="text-xs font-semibold text-blue-500 uppercase tracking-wide mb-1">Admin Notes</dt>
@@ -325,7 +344,11 @@ $sc = $statusConfig[$booking->status] ?? $statusConfig['pending'];
         {{-- ── CASH PAYMENT ── --}}
         @if(!$booking->payment && in_array($booking->status, ['pending','confirmed']) && $booking->service_fee > 0)
         <div class="pt-3 border-t border-gray-100">
-            <a href="{{ route('admin.payments.record-cash') }}?booking_id={{ $booking->id }}&parishioner_id={{ $booking->parishioner_id }}&amount={{ $booking->service_fee }}"
+            {{-- Opens the cash-payment modal on the payments page pre-filled for this booking.
+                 Do NOT link directly to route('admin.payments.record-cash') — that is POST-only
+                 and would be matched by the GET /payments/{payment} resource route, causing a
+                 "invalid input syntax for bigint: record-cash" SQL error. --}}
+            <a href="{{ route('admin.payments.index') }}?open_cash=1&booking_id={{ $booking->id }}&parishioner_id={{ $booking->parishioner_id }}&amount={{ $booking->service_fee }}"
                class="w-full flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-sm py-2.5 px-4 rounded-lg hover:bg-emerald-100 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 Record Cash Payment (₱{{ number_format($booking->service_fee, 2) }})

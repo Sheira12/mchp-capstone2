@@ -38,6 +38,18 @@ $ornSm = '<svg width="130" height="7" viewBox="0 0 130 7" xmlns="http://www.w3.o
             <div class="det-item"><span class="det-lbl">Venue</span><span class="det-val">{{ $certificate->sacramentalRecord->venue ?? $parish['name'] }}</span></div>
             @endif
             <div class="det-item"><span class="det-lbl">Date of Birth</span><span class="det-val {{ $certificate->parishioner->birthdate ? '' : 'na' }}">{{ $certificate->parishioner->birthdate?->format('F d, Y') ?? 'Not recorded' }}</span></div>
+            @if(in_array($certificate->type, ['marriage']))
+            @php
+                // Try to get sponsor names from the linked booking (most recent wedding booking for this parishioner)
+                $weddingBooking = \App\Models\Booking::where('parishioner_id', $certificate->parishioner_id)
+                    ->where('booking_type', 'wedding')
+                    ->whereNotNull('ninong_name')
+                    ->latest()
+                    ->first();
+            @endphp
+            <div class="det-item"><span class="det-lbl">Principal Sponsor (Ninong)</span><span class="det-val {{ $weddingBooking?->ninong_name ? '' : 'na' }}">{{ $weddingBooking?->ninong_name ?? 'Not recorded' }}</span></div>
+            <div class="det-item"><span class="det-lbl">Principal Sponsor (Ninang)</span><span class="det-val {{ $weddingBooking?->ninang_name ? '' : 'na' }}">{{ $weddingBooking?->ninang_name ?? 'Not recorded' }}</span></div>
+            @endif
         </td>
         <td class="det-gap"></td>
         <td class="det-right">

@@ -207,15 +207,18 @@
             @csrf
             <div>
                 <label class="form-label">Parishioner ID <span class="text-red-500">*</span></label>
-                <input type="number" name="parishioner_id" required class="form-input w-full" placeholder="Parishioner ID">
+                <input type="number" name="parishioner_id" id="cash-parishioner-id" required class="form-input w-full" placeholder="Parishioner ID"
+                       value="{{ request('parishioner_id') }}">
             </div>
             <div>
                 <label class="form-label">Amount (₱) <span class="text-red-500">*</span></label>
-                <input type="number" name="amount" step="0.01" min="1" required class="form-input w-full" placeholder="0.00">
+                <input type="number" name="amount" id="cash-amount" step="0.01" min="1" required class="form-input w-full" placeholder="0.00"
+                       value="{{ request('amount') }}">
             </div>
             <div>
                 <label class="form-label">Booking ID (optional)</label>
-                <input type="number" name="booking_id" class="form-input w-full" placeholder="Leave blank if not linked">
+                <input type="number" name="booking_id" id="cash-booking-id" class="form-input w-full" placeholder="Leave blank if not linked"
+                       value="{{ request('booking_id') }}">
             </div>
             <div>
                 <label class="form-label">Notes</label>
@@ -230,3 +233,12 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+// Auto-open cash modal when redirected from booking show page
+if (new URLSearchParams(window.location.search).get('open_cash') === '1') {
+    document.getElementById('cash-modal').classList.remove('hidden');
+}
+</script>
+@endpush

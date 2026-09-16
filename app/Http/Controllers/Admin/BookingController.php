@@ -289,6 +289,9 @@ class BookingController extends Controller
             'service_fee'    => ['nullable', 'numeric', 'min:0'],
             'address'        => ['nullable', 'string', 'max:255'],
             'notes'          => ['nullable', 'string'],
+            'spouse_name'    => ['nullable', 'string', 'max:255'],
+            'ninong_name'    => ['nullable', 'string', 'max:255'],
+            'ninang_name'    => ['nullable', 'string', 'max:255'],
         ]);
     }
 
@@ -309,6 +312,9 @@ class BookingController extends Controller
             'notes'          => ['nullable', 'string'],
             'admin_notes'    => ['nullable', 'string'],
             'status'         => ['required', 'in:pending,confirmed,completed,cancelled'],
+            'spouse_name'    => ['nullable', 'string', 'max:255'],
+            'ninong_name'    => ['nullable', 'string', 'max:255'],
+            'ninang_name'    => ['nullable', 'string', 'max:255'],
         ]);
 
         $oldValues = $booking->toArray();

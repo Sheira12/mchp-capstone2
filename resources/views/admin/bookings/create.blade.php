@@ -120,6 +120,38 @@
             </div>
         </div>
 
+        {{-- Wedding / Marriage Sponsor Fields (shown when booking_type = wedding) --}}
+        <div id="wedding-fields" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hidden">
+            <h2 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-pink-500 text-white text-xs flex items-center justify-center font-bold">3</span>
+                Marriage Details
+                <span class="text-xs font-normal text-gray-400 ml-1">(required for wedding bookings)</span>
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                    <label class="form-label">Spouse / Partner Name</label>
+                    <input type="text" name="spouse_name" value="{{ old('spouse_name') }}"
+                           class="form-input w-full" placeholder="Full name of the other party">
+                    @error('spouse_name')<p class="form-error">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    {{-- spacer --}}
+                </div>
+                <div>
+                    <label class="form-label">Principal Sponsor — Ninong</label>
+                    <input type="text" name="ninong_name" value="{{ old('ninong_name') }}"
+                           class="form-input w-full" placeholder="Full name of the Ninong">
+                    @error('ninong_name')<p class="form-error">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="form-label">Principal Sponsor — Ninang</label>
+                    <input type="text" name="ninang_name" value="{{ old('ninang_name') }}"
+                           class="form-input w-full" placeholder="Full name of the Ninang">
+                    @error('ninang_name')<p class="form-error">{{ $message }}</p>@enderror
+                </div>
+            </div>
+        </div>
+
         <div class="flex gap-3">
             <button type="submit"
                     class="inline-flex items-center gap-2 bg-blue-600 text-white font-bold px-7 py-2.5 rounded-xl hover:bg-blue-700 shadow-lg transition">
@@ -140,6 +172,8 @@ const serviceFees = @json(\App\Models\Service::pluck('fee','slug'));
 function updateFee(select) {
     const fee = serviceFees[select.value] ?? 0;
     document.getElementById('service_fee').value = parseFloat(fee).toFixed(2);
+    // Show wedding fields only for wedding booking type
+    document.getElementById('wedding-fields').classList.toggle('hidden', select.value !== 'wedding');
 }
 
 // Parishioner search
@@ -186,6 +220,14 @@ function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 
 document.addEventListener('click', e => {
     if (!e.target.closest('#p-search-wrap')) pResults.classList.add('hidden');
+});
+
+// Restore wedding fields on validation error reload
+document.addEventListener('DOMContentLoaded', () => {
+    const typeSelect = document.querySelector('select[name="booking_type"]');
+    if (typeSelect && typeSelect.value === 'wedding') {
+        document.getElementById('wedding-fields').classList.remove('hidden');
+    }
 });
 </script>
 @endpush

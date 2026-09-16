@@ -171,9 +171,19 @@ class CertificateController extends Controller
 
         $oldValues = $certificate->toArray();
         $certificate->update($validated);
-        AuditLog::record('update', $certificate, $oldValues, $certificate->fresh()->toArray(), 'Certificate updated');
+        AuditLog::record('update', $certificate, $oldValues, $certificate->fresh()->toArray(), 'Certificate updated by ' . auth()->user()->name);
 
-        return redirect()->route('admin.certificates.show', $certificate)->with('success', 'Certificate updated.');
+        // Re-generate the PDF so it reflects the new data
+        set_time_limit(120);
+        try {
+            $this->certificateService->generate($certificate);
+            $message = 'Certificate updated and PDF regenerated.';
+        } catch (\Exception $e) {
+            \Log::error('Certificate re-generation after edit failed: ' . $e->getMessage());
+            $message = 'Certificate updated. PDF re-generation failed — use Regenerate to retry.';
+        }
+
+        return redirect()->route('admin.certificates.show', $certificate)->with('success', $message);
     }
 
     public function destroy(Certificate $certificate)

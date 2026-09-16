@@ -25,13 +25,16 @@
 .ann-card { background: #fff; border-radius: 1rem; border: 1px solid #f1f5f9; overflow: hidden; transition: all 0.25s ease; text-decoration: none; display: flex; flex-direction: column; }
 .ann-card:hover { box-shadow: 0 16px 40px rgba(0,0,0,0.10); transform: translateY(-4px); }
 .mass-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 1rem; }
-.mass-card { background: #fff; border-radius: 1rem; border: 1px solid #f1f5f9; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-.mass-card-head { background: #1d4ed8; color: #fff; text-align: center; padding: 0.6rem 0.5rem; font-weight: 700; font-size: 0.8rem; }
+.mass-card { background: #fff; border-radius: 1rem; border: 1px solid #e8edf5; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: box-shadow 0.2s, transform 0.2s; }
+.mass-card:hover { box-shadow: 0 8px 24px rgba(37,99,235,0.12); transform: translateY(-2px); }
+.mass-card-head { color: #fff; text-align: center; padding: 0.7rem 0.5rem; font-weight: 800; font-size: 0.825rem; letter-spacing: 0.04em; }
+.mass-card-head.weekend { background: linear-gradient(135deg, #b8860b, #c9a227); }
+.mass-card-head.weekday { background: linear-gradient(135deg, #1e3a8a, #2563eb); }
 .mass-card-body { padding: 0.75rem 0.5rem; }
-.mass-time { text-align: center; padding: 0.35rem 0; border-bottom: 1px solid #f8faff; }
+.mass-time { text-align: center; padding: 0.4rem 0.25rem; border-bottom: 1px solid #f0f4ff; }
 .mass-time:last-child { border-bottom: none; }
-.mass-time p { font-weight: 700; font-size: 0.85rem; color: #1e3a8a; margin: 0; }
-.mass-time span { font-size: 0.7rem; color: #94a3b8; }
+.mass-time p { font-weight: 700; font-size: 0.875rem; color: #1e3a8a; margin: 0; }
+.mass-time span { font-size: 0.68rem; color: #94a3b8; font-weight: 500; }
 </style>
 @endpush
 
@@ -102,7 +105,7 @@
             @if($i > 0)<div style="width:1px;background:rgba(255,255,255,0.12);align-self:stretch;" class="hidden sm:block"></div>@endif
             <div style="text-align:center;">
                 <p style="font-size:1.4rem;font-weight:800;color:#fff;line-height:1;margin:0;">{{ $s[0] }}</p>
-                <p style="font-size:0.5.62rem;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#93c5fd;margin-top:4px;">{{ $s[1] }}</p>
+                <p style="font-size:0.625rem;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#93c5fd;margin-top:4px;">{{ $s[1] }}</p>
             </div>
             @endforeach
         </div>
@@ -128,14 +131,13 @@
             $grouped = $massSchedules->sortBy('day_of_week')->groupBy('day_of_week');
             $days = [0=>'Sunday',1=>'Monday',2=>'Tuesday',3=>'Wednesday',4=>'Thursday',5=>'Friday',6=>'Saturday'];
             $dayShort = [0=>'Sun',1=>'Mon',2=>'Tue',3=>'Wed',4=>'Thu',5=>'Fri',6=>'Sat'];
-            $headColors = [0=>'#1d4ed8',1=>'#1e40af',2=>'#1e40af',3=>'#1e40af',4=>'#1e40af',5=>'#1e40af',6=>'#1d4ed8'];
         @endphp
 
         @if($grouped->count())
         <div class="mass-grid">
             @foreach($grouped as $day => $schedules)
             <div class="mass-card">
-                <div class="mass-card-head" style="background:{{ $headColors[$day] ?? '#1d4ed8' }};">
+                <div class="mass-card-head {{ in_array($day, [0, 6]) ? 'weekend' : 'weekday' }}">
                     {{ $days[$day] ?? 'Special' }}
                 </div>
                 <div class="mass-card-body">
@@ -178,16 +180,17 @@
                 ['bg'=>'#eff6ff','ic'=>'#2563eb','svg'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>','name'=>'Baptism','desc'=>'Welcome into the faith'],
                 ['bg'=>'#fdf2f8','ic'=>'#db2777','svg'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>','name'=>'Marriage','desc'=>'Holy Matrimony'],
                 ['bg'=>'#f5f3ff','ic'=>'#7c3aed','svg'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>','name'=>'Confirmation','desc'=>'Strengthen your faith'],
-                ['bg'=>'#f0fdf4','ic'=>'#16a34a','svg'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>','name'=>'First Communion','desc'=>'Receive the Eucharist'],
+                ['bg'=>'#f0fdf4','ic'=>'#16a34a','svg'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>','name'=>'First Communion','desc'=>'Receive the Eucharist'],
                 ['bg'=>'#fff7ed','ic'=>'#ea580c','svg'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>','name'=>'House Blessing','desc'=>'Bless your home'],
-                ['bg'=>'#fefce8','ic'=>'#ca8a04','svg'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>','name'=>'Certificates','desc'=>'Official documents'],
+                ['bg'=>'#fefce8','ic'=>'#c9a227','svg'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>','name'=>'Certificates','desc'=>'Official documents'],
                 ['bg'=>'#f0f9ff','ic'=>'#0284c7','svg'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>','name'=>'Mass Intentions','desc'=>'Offer Mass for loved ones'],
-                ['bg'=>'#f0fdfa','ic'=>'#0d9488','svg'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>','name'=>'Book Online','desc'=>'Schedule your appointment'],
+                ['bg'=>'#f0fdfa','ic'=>'#0d9488','svg'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>','name'=>'Book Online','desc'=>'Schedule your appointment'],
             ];
             @endphp
 
             @foreach($svcs as $svc)
-            <a href="{{ route('services') }}" class="svc-card">
+            <a href="{{ route('services') }}" class="svc-card" style="position:relative;overflow:hidden;">
+                <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,{{ $svc['ic'] }},transparent);opacity:0;transition:opacity 0.25s;" class="svc-top-bar"></div>
                 <div class="svc-icon" style="background:{{ $svc['bg'] }};">
                     <svg width="24" height="24" fill="none" stroke="{{ $svc['ic'] }}" stroke-width="2" viewBox="0 0 24 24">
                         {!! $svc['svg'] !!}
@@ -195,7 +198,7 @@
                 </div>
                 <div>
                     <p style="font-weight:700;font-size:0.875rem;color:#0f172a;margin:0 0 4px;">{{ $svc['name'] }}</p>
-                    <p style="font-size:0.75rem;color:#94a3b8;margin:0;">{{ $svc['desc'] }}</p>
+                    <p style="font-size:0.75rem;color:#94a3b8;margin:0;line-height:1.4;">{{ $svc['desc'] }}</p>
                 </div>
             </a>
             @endforeach
@@ -342,43 +345,101 @@
 @endif
 
 {{-- CTA BANNER --}}
-<section style="padding:5rem 0;background:linear-gradient(135deg,#1e3a8a 0%,#312e81 100%);position:relative;overflow:hidden;">
-    <div style="position:absolute;top:-80px;right:-80px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(96,165,250,0.15),transparent 70%);"></div>
-    <div style="position:absolute;bottom:-80px;left:-80px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(129,140,248,0.15),transparent 70%);"></div>
+<section style="padding:5rem 0;background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 50%,#1e40af 100%);position:relative;overflow:hidden;">
+    <div style="position:absolute;top:-80px;right:-80px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(96,165,250,0.12),transparent 70%);pointer-events:none;"></div>
+    <div style="position:absolute;bottom:-100px;left:-60px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(201,162,39,0.08),transparent 70%);pointer-events:none;"></div>
 
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8" style="position:relative;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;" class="lg:grid-cols-2">
-            <div style="color:#fff;">
-                <span style="display:inline-block;font-size:0.7rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#93c5fd;margin-bottom:1rem;">Digital Parish Services</span>
-                <h2 style="font-size:clamp(1.6rem,3vw,2.25rem);font-weight:800;line-height:1.2;margin:0 0 1rem;">Manage Your Parish<br>Services Online</h2>
-                <p style="color:#bfdbfe;font-size:0.95rem;line-height:1.7;margin:0 0 2rem;">Register as a parishioner to book services, request certificates, pay fees via GCash or Maya, and track your sacramental records — all from home.</p>
-                <div style="display:flex;flex-wrap:wrap;gap:12px;">
-                    <a href="{{ route('register') }}"
-                       style="display:inline-flex;align-items:center;gap:8px;background:#fff;color:#1e3a8a;font-weight:700;font-size:0.875rem;padding:0.8rem 1.75rem;border-radius:9999px;box-shadow:0 4px 20px rgba(0,0,0,0.3);text-decoration:none;transition:all 0.2s;"
-                       onmouseover="this.style.background='#eff6ff';this.style.transform='translateY(-2px)';"
-                       onmouseout="this.style.background='#fff';this.style.transform='';">
-                        Create Account
-                    </a>
-                    <a href="{{ route('login') }}"
-                       style="display:inline-flex;align-items:center;gap:8px;background:transparent;color:#fff;font-weight:600;font-size:0.875rem;padding:0.8rem 1.75rem;border-radius:9999px;border:1.5px solid rgba(255,255,255,0.3);text-decoration:none;transition:all 0.2s;"
-                       onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.transform='translateY(-2px)';"
-                       onmouseout="this.style.background='transparent';this.style.transform='';">
-                        Sign In
-                    </a>
-                </div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-                @foreach([['📅','Book Services','Schedule sacraments online'],['📜','Get Certificates','Request parish documents'],['💳','Pay Online','GCash & Maya supported'],['📋','Track Records','View sacramental history']] as $f)
-                <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:1.25rem;backdrop-filter:blur(8px);transition:all 0.2s;"
-                     onmouseover="this.style.background='rgba(255,255,255,0.12)';"
-                     onmouseout="this.style.background='rgba(255,255,255,0.07)';">
-                    <div style="font-size:1.5rem;margin-bottom:0.5rem;">{{ $f[0] }}</div>
-                    <p style="font-weight:700;font-size:0.875rem;color:#fff;margin:0 0 4px;">{{ $f[1] }}</p>
-                    <p style="font-size:0.75rem;color:#93c5fd;margin:0;">{{ $f[2] }}</p>
-                </div>
-                @endforeach
-            </div>
+
+        {{-- Section label --}}
+        <div style="text-align:center;margin-bottom:3rem;">
+            <span style="display:inline-flex;align-items:center;gap:8px;font-size:0.7rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#c9a227;margin-bottom:0.875rem;">
+                <span style="width:24px;height:1px;background:#c9a227;"></span>
+                Digital Parish Services
+                <span style="width:24px;height:1px;background:#c9a227;"></span>
+            </span>
+            <h2 style="font-size:clamp(1.6rem,3vw,2.25rem);font-weight:800;color:#fff;line-height:1.2;margin:0 0 1rem;">
+                Manage Your Parish Services Online
+            </h2>
+            <p style="color:#93c5fd;font-size:0.95rem;line-height:1.7;margin:0 auto;max-width:540px;">
+                Register as a parishioner to book services, request certificates, pay fees via GCash or Maya, and track your sacramental records — all from home.
+            </p>
         </div>
+
+        {{-- Digital Services 4-card grid --}}
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.25rem;margin-bottom:3rem;">
+            @php
+            $digitalServices = [
+                [
+                    'bg'    => 'rgba(37,99,235,0.15)',
+                    'border'=> 'rgba(96,165,250,0.3)',
+                    'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>',
+                    'color' => '#60a5fa',
+                    'title' => 'Book Services',
+                    'desc'  => 'Schedule baptisms, blessings, weddings, and more — online.',
+                    'href'  => '#',
+                ],
+                [
+                    'bg'    => 'rgba(201,162,39,0.12)',
+                    'border'=> 'rgba(201,162,39,0.3)',
+                    'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>',
+                    'color' => '#c9a227',
+                    'title' => 'Get Certificates',
+                    'desc'  => 'Request baptismal, marriage, and confirmation certificates.',
+                    'href'  => '#',
+                ],
+                [
+                    'bg'    => 'rgba(16,185,129,0.12)',
+                    'border'=> 'rgba(52,211,153,0.3)',
+                    'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>',
+                    'color' => '#34d399',
+                    'title' => 'Pay Online',
+                    'desc'  => 'Settle parish fees via GCash, Maya, or credit card.',
+                    'href'  => '#',
+                ],
+                [
+                    'bg'    => 'rgba(139,92,246,0.12)',
+                    'border'=> 'rgba(167,139,250,0.3)',
+                    'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>',
+                    'color' => '#a78bfa',
+                    'title' => 'Track Records',
+                    'desc'  => 'View your sacramental history and booking status anytime.',
+                    'href'  => '#',
+                ],
+            ];
+            @endphp
+            @foreach($digitalServices as $ds)
+            <div style="background:{{ $ds['bg'] }};border:1px solid {{ $ds['border'] }};border-radius:1.25rem;padding:1.5rem;backdrop-filter:blur(8px);transition:all 0.25s;cursor:default;"
+                 onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(0,0,0,0.25)';"
+                 onmouseout="this.style.background='{{ $ds['bg'] }}';this.style.transform='';this.style.boxShadow='';">
+                <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;border:1px solid rgba(255,255,255,0.08);">
+                    <svg width="22" height="22" fill="none" stroke="{{ $ds['color'] }}" stroke-width="2" viewBox="0 0 24 24">
+                        {!! $ds['icon'] !!}
+                    </svg>
+                </div>
+                <p style="font-weight:700;font-size:0.9375rem;color:#fff;margin:0 0 6px;line-height:1.3;">{{ $ds['title'] }}</p>
+                <p style="font-size:0.8125rem;color:#94a3b8;margin:0;line-height:1.6;">{{ $ds['desc'] }}</p>
+            </div>
+            @endforeach
+        </div>
+
+        {{-- CTA buttons --}}
+        <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:1rem;">
+            <a href="{{ route('register') }}"
+               style="display:inline-flex;align-items:center;gap:8px;background:#c9a227;color:#0f172a;font-weight:700;font-size:0.9rem;padding:0.875rem 2rem;border-radius:9999px;box-shadow:0 4px 20px rgba(201,162,39,0.4);text-decoration:none;transition:all 0.2s;"
+               onmouseover="this.style.background='#d4af37';this.style.transform='translateY(-2px)';"
+               onmouseout="this.style.background='#c9a227';this.style.transform='';">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                Create Free Account
+            </a>
+            <a href="{{ route('login') }}"
+               style="display:inline-flex;align-items:center;gap:8px;background:transparent;color:#fff;font-weight:600;font-size:0.9rem;padding:0.875rem 2rem;border-radius:9999px;border:1.5px solid rgba(255,255,255,0.3);text-decoration:none;transition:all 0.2s;"
+               onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.transform='translateY(-2px)';"
+               onmouseout="this.style.background='transparent';this.style.transform='';">
+                Sign In to My Account
+            </a>
+        </div>
+
     </div>
 </section>
 

@@ -9,7 +9,8 @@
     {{-- Header --}}
     <div class="flex items-center gap-3">
         <a href="{{ route('admin.certificates.index') }}" class="text-sm text-gray-500 hover:text-gray-700">← Certificates</a>
-        <div class="ml-auto flex gap-2">
+        <div class="ml-auto flex flex-wrap gap-2">
+            <a href="{{ route('admin.certificates.edit', $certificate) }}" class="btn-secondary text-sm">✏️ Edit</a>
             <a href="{{ route('admin.certificates.download', $certificate) }}" class="btn-secondary text-sm">⬇ Download PDF</a>
             <form method="POST" action="{{ route('admin.certificates.regenerate', $certificate) }}">
                 @csrf
@@ -23,6 +24,18 @@
             @endif
         </div>
     </div>
+
+    {{-- Released warning --}}
+    @if($certificate->status === 'released')
+    <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3">
+        <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        <p class="text-sm text-amber-800">
+            <strong>This certificate has been released.</strong>
+            Editing a released certificate will re-generate the PDF with the updated details.
+            Changes are logged to the audit trail.
+        </p>
+    </div>
+    @endif
 
     {{-- Certificate Info --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">

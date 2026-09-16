@@ -223,7 +223,7 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
         Route::post('/payments/{payment}/refund', [PaymentController::class, 'refund'])->name('payments.refund');
         Route::post('/payments/{payment}/void', [PaymentController::class, 'void'])->name('payments.void');
         Route::get('/payments/report', [PaymentController::class, 'report'])->name('payments.report');
-        Route::resource('payments', PaymentController::class)->only(['index', 'show']);
+        Route::resource('payments', PaymentController::class)->only(['index', 'show'])->whereNumber('payment');
     });
 
     // Inquiries

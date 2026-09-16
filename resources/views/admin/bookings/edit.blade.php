@@ -95,6 +95,34 @@
                               placeholder="Internal admin notes…">{{ old('admin_notes', $booking->admin_notes) }}</textarea>
                 </div>
 
+                {{-- Wedding-specific fields (always visible in edit so admin can fill if missed) --}}
+                @if($booking->booking_type === 'wedding')
+                <div class="sm:col-span-2 pt-3 border-t border-gray-100">
+                    <p class="text-sm font-bold text-gray-700 mb-3">💍 Marriage Details</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="form-label">Spouse / Partner Name</label>
+                            <input type="text" name="spouse_name"
+                                   value="{{ old('spouse_name', $booking->spouse_name) }}"
+                                   class="form-input w-full" placeholder="Full name of the other party">
+                        </div>
+                        <div>{{-- spacer --}}</div>
+                        <div>
+                            <label class="form-label">Principal Sponsor — Ninong</label>
+                            <input type="text" name="ninong_name"
+                                   value="{{ old('ninong_name', $booking->ninong_name) }}"
+                                   class="form-input w-full" placeholder="Full name of the Ninong">
+                        </div>
+                        <div>
+                            <label class="form-label">Principal Sponsor — Ninang</label>
+                            <input type="text" name="ninang_name"
+                                   value="{{ old('ninang_name', $booking->ninang_name) }}"
+                                   class="form-input w-full" placeholder="Full name of the Ninang">
+                        </div>
+                    </div>
+                </div>
+                @endif
+
             </div>
 
             <div class="flex gap-3 pt-2 border-t border-gray-100">

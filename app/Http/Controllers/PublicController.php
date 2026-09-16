@@ -53,9 +53,9 @@ class PublicController extends Controller
     public function submitInquiry(Request $request)
     {
         // Dynamic validation per subject
-        $subject      = $request->input('subject', '');
-        $rules        = \App\Services\InquirySubjectConfig::rulesFor($subject);
-        $validated    = $request->validate($rules);
+        $subject   = $request->input('subject', '');
+        $rules     = \App\Services\InquirySubjectConfig::rulesFor($subject);
+        $validated = $request->validate($rules);
 
         // Store user-uploaded attachments
         $storedAttachments = [];
@@ -71,15 +71,7 @@ class PublicController extends Controller
             }
         }
 
-        // Resolve the parish email — fall back to MAIL_FROM_ADDRESS if not set
-        $parishEmail = config('parish.email');
-        if (!$parishEmail || !filter_var($parishEmail, FILTER_VALIDATE_EMAIL)) {
-            $parishEmail = config('mail.from.address');
-        }
-
-        \Mail::to($parishEmail)->send(new \App\Mail\InquiryMail($validated));
-
-        // Save inquiry to the database
+        // ── 1. Save inquiry to DB FIRST — mail failure must never lose the record ──
         $inquiry = Inquiry::create([
             'name'           => $validated['name'],
             'email'          => $validated['email'],
@@ -92,22 +84,45 @@ class PublicController extends Controller
             'status'         => 'new',
         ]);
 
-        // Notify all admin users via the bell notification system
-        $admins = User::role(['super_admin', 'parish_secretary', 'finance_officer'])->get();
-        if ($admins->isNotEmpty()) {
-            Notification::send(
-                $admins,
-                new \App\Notifications\AdminInquiryNotification(
-                    $validated['name'],
-                    $validated['email'],
-                    $validated['subject'],
-                    $validated['message'],
-                    $inquiry->id
-                )
-            );
+        // ── 2. Send notification email to parish (non-fatal) ──
+        // Resend/Brevo block unverified sender domains — log the error gracefully
+        // so the parishioner still gets the success message and the record is saved.
+        $mailWarning = null;
+        try {
+            $parishEmail = config('parish.email');
+            if (!$parishEmail || !filter_var($parishEmail, FILTER_VALIDATE_EMAIL)) {
+                $parishEmail = config('mail.from.address');
+            }
+            \Mail::to($parishEmail)->send(new \App\Mail\InquiryMail($validated));
+        } catch (\Exception $e) {
+            \Log::error('InquiryMail failed (inquiry already saved): ' . $e->getMessage(), [
+                'inquiry_id' => $inquiry->id,
+            ]);
+            // Don't crash the request — inquiry is already in the database.
         }
 
-        return back()->with('success', 'Your inquiry has been sent. We will get back to you shortly.');
+        // ── 3. Notify admin users via bell notification (non-fatal) ──
+        try {
+            $admins = User::role(['super_admin', 'parish_secretary', 'finance_officer'])->get();
+            if ($admins->isNotEmpty()) {
+                Notification::send(
+                    $admins,
+                    new \App\Notifications\AdminInquiryNotification(
+                        $validated['name'],
+                        $validated['email'],
+                        $validated['subject'],
+                        $validated['message'],
+                        $inquiry->id
+                    )
+                );
+            }
+        } catch (\Exception $e) {
+            \Log::warning('AdminInquiryNotification failed: ' . $e->getMessage(), [
+                'inquiry_id' => $inquiry->id,
+            ]);
+        }
+
+        return back()->with('success', 'Your inquiry has been received. We will get back to you shortly.');
     }
 
     public function announcements(Request $request)
