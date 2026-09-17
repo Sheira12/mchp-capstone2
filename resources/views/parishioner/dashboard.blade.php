@@ -140,6 +140,17 @@
 }
 .upcoming-row:last-child { border-bottom: none; }
 .upcoming-row:hover { background: #f8faff; }
+/* Status pills — prevent text wrapping */
+.status-pill {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 3px 10px; border-radius: 9999px;
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; white-space: nowrap; flex-shrink: 0;
+}
+.status-pending   { background:#fef3c7; color:#92400e; }
+.status-confirmed { background:#d1fae5; color:#065f46; }
+.status-completed { background:#dbeafe; color:#1e40af; }
+.status-cancelled { background:#fee2e2; color:#991b1b; }
 /* Notification dot */
 @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
 .pulse-dot { animation: pulse-dot 2s infinite; }
@@ -147,6 +158,7 @@
 @media(max-width:640px){
   .hero-banner { padding: 1.5rem; }
   .hero-banner h1 { font-size: 1.4rem; }
+  .upcoming-row { gap: 0.75rem; padding: 0.75rem 1rem; }
 }
 </style>
 @endpush
@@ -399,10 +411,10 @@
                 <p class="text-xs text-gray-400 font-mono mt-0.5">{{ $booking->reference_number }}</p>
             </div>
             {{-- Status + action --}}
-            <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+            <div class="flex flex-col items-end gap-1.5 flex-shrink-0" style="min-width:80px;">
                 <span class="status-pill {{ $sc }}">{{ $booking->getStatusLabel() }}</span>
                 <a href="{{ route('parishioner.bookings.show', $booking) }}"
-                   class="text-xs text-blue-600 hover:underline font-semibold">Details →</a>
+                   class="text-xs text-blue-600 hover:underline font-semibold whitespace-nowrap">Details →</a>
             </div>
         </div>
         @empty

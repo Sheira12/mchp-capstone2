@@ -167,13 +167,59 @@ class CertificateController extends Controller
             'purpose'               => ['nullable', 'string', 'max:255'],
             'notes'                 => ['nullable', 'string'],
             'status'                => ['required', 'in:draft,issued,released,revoked'],
+            // Sacramental record fields (all optional)
+            'rec_date_administered' => ['nullable', 'date'],
+            'rec_celebrant'         => ['nullable', 'string', 'max:255'],
+            'rec_venue'             => ['nullable', 'string', 'max:255'],
+            'rec_notes'             => ['nullable', 'string', 'max:500'],
+            'rec_register_number'   => ['nullable', 'string', 'max:100'],
+            'rec_page_number'       => ['nullable', 'string', 'max:20'],
+            'rec_line_number'       => ['nullable', 'string', 'max:20'],
+            'rec_godparents'        => ['nullable', 'array'],
+            'rec_godparents.*'      => ['nullable', 'string', 'max:255'],
+            'rec_sponsors'          => ['nullable', 'array'],
+            'rec_sponsors.*'        => ['nullable', 'string', 'max:255'],
+            'rec_witnesses'         => ['nullable', 'array'],
+            'rec_witnesses.*'       => ['nullable', 'string', 'max:255'],
         ]);
 
         $oldValues = $certificate->toArray();
-        $certificate->update($validated);
+
+        // ── Update the certificate itself ──────────────────────────────────
+        $certificate->update([
+            'type'        => $validated['type'],
+            'issued_date' => $validated['issued_date'],
+            'purpose'     => $validated['purpose'] ?? null,
+            'notes'       => $validated['notes'] ?? null,
+            'status'      => $validated['status'],
+        ]);
+
+        // ── Update the linked sacramental record (if present) ─────────────
+        if ($certificate->sacramentalRecord) {
+            $record = $certificate->sacramentalRecord;
+
+            // Filter out empty strings from array fields so they don't pollute the JSON
+            $godparents = array_values(array_filter($validated['rec_godparents'] ?? [], fn($v) => trim($v ?? '') !== ''));
+            $sponsors   = array_values(array_filter($validated['rec_sponsors']   ?? [], fn($v) => trim($v ?? '') !== ''));
+            $witnesses  = array_values(array_filter($validated['rec_witnesses']  ?? [], fn($v) => trim($v ?? '') !== ''));
+
+            $record->update([
+                'date_administered' => $validated['rec_date_administered'] ?? $record->date_administered,
+                'celebrant'         => $validated['rec_celebrant'] ?? $record->celebrant,
+                'venue'             => $validated['rec_venue']     ?? $record->venue,
+                'notes'             => $validated['rec_notes']     ?? $record->notes,
+                'register_number'   => $validated['rec_register_number'] ?? $record->register_number,
+                'page_number'       => $validated['rec_page_number']     ?? $record->page_number,
+                'line_number'       => $validated['rec_line_number']      ?? $record->line_number,
+                'godparents'        => empty($godparents) ? $record->godparents : $godparents,
+                'sponsors'          => empty($sponsors)   ? $record->sponsors   : $sponsors,
+                'witnesses'         => empty($witnesses)  ? $record->witnesses  : $witnesses,
+            ]);
+        }
+
         AuditLog::record('update', $certificate, $oldValues, $certificate->fresh()->toArray(), 'Certificate updated by ' . auth()->user()->name);
 
-        // Re-generate the PDF so it reflects the new data
+        // ── Re-generate the PDF so it reflects updated sacramental data ────
         set_time_limit(120);
         try {
             $this->certificateService->generate($certificate);

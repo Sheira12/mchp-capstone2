@@ -145,34 +145,36 @@
         {{-- Debit / Credit Transaction Summary table --}}
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 print-section">
             <h3 class="font-bold text-gray-800 mb-4 text-base border-b border-gray-100 pb-2">Transaction Type Summary</h3>
-            <table class="w-full text-sm">
+            <div class="overflow-x-auto -mx-5 px-5">
+            <table class="w-full text-sm" style="min-width:420px;">
                 <thead><tr class="bg-gray-800 text-white text-left">
-                    <th class="px-3 py-2">Transaction Type</th>
-                    <th class="px-3 py-2 text-right">Count</th>
-                    <th class="px-3 py-2 text-right">Total Amount (PHP)</th>
-                    <th class="px-3 py-2 text-right">Description</th>
+                    <th class="px-3 py-2 whitespace-nowrap">Transaction Type</th>
+                    <th class="px-3 py-2 text-right whitespace-nowrap">Count</th>
+                    <th class="px-3 py-2 text-right whitespace-nowrap">Total Amount (PHP)</th>
+                    <th class="px-3 py-2 text-right whitespace-nowrap">Description</th>
                 </tr></thead>
                 <tbody>
                     <tr class="bg-red-50 border-b border-gray-100">
-                        <td class="px-3 py-2 font-bold text-red-700">Debit</td>
+                        <td class="px-3 py-2 font-bold text-red-700 whitespace-nowrap">Debit</td>
                         <td class="px-3 py-2 text-right">{{ number_format($data['debit_count']) }}</td>
-                        <td class="px-3 py-2 text-right font-bold text-red-700">₱{{ number_format($data['total_debit'], 2) }}</td>
+                        <td class="px-3 py-2 text-right font-bold text-red-700 whitespace-nowrap">₱{{ number_format($data['total_debit'], 2) }}</td>
                         <td class="px-3 py-2 text-right text-gray-500 text-xs">Fees paid by parishioners</td>
                     </tr>
                     <tr class="bg-green-50 border-b border-gray-100">
-                        <td class="px-3 py-2 font-bold text-green-700">Credit</td>
+                        <td class="px-3 py-2 font-bold text-green-700 whitespace-nowrap">Credit</td>
                         <td class="px-3 py-2 text-right">{{ number_format($data['credit_count']) }}</td>
-                        <td class="px-3 py-2 text-right font-bold text-green-700">₱{{ number_format($data['total_credit'], 2) }}</td>
+                        <td class="px-3 py-2 text-right font-bold text-green-700 whitespace-nowrap">₱{{ number_format($data['total_credit'], 2) }}</td>
                         <td class="px-3 py-2 text-right text-gray-500 text-xs">Refunds / adjustments</td>
                     </tr>
                     <tr class="bg-blue-50 font-bold border-t-2 border-blue-600">
-                        <td class="px-3 py-2 text-blue-900">NET TOTAL</td>
+                        <td class="px-3 py-2 text-blue-900 whitespace-nowrap">NET TOTAL</td>
                         <td class="px-3 py-2 text-right text-blue-900">{{ number_format($data['debit_count'] + $data['credit_count']) }}</td>
-                        <td class="px-3 py-2 text-right text-blue-900">₱{{ number_format($data['total_debit'] - $data['total_credit'], 2) }}</td>
+                        <td class="px-3 py-2 text-right text-blue-900 whitespace-nowrap">₱{{ number_format($data['total_debit'] - $data['total_credit'], 2) }}</td>
                         <td class="px-3 py-2 text-right text-gray-400 text-xs">Debit minus Credit</td>
                     </tr>
                 </tbody>
             </table>
+            </div>
         </div>
 
         {{-- Daily Collections --}}
@@ -181,27 +183,29 @@
             <div class="px-5 py-3 border-b border-gray-100 bg-green-700">
                 <h3 class="font-bold text-white">Daily Collections Summary</h3>
             </div>
-            <table class="w-full text-sm">
+            <div class="overflow-x-auto">
+            <table class="w-full text-sm" style="min-width:320px;">
                 <thead><tr class="bg-green-800 text-white text-left">
-                    <th class="px-4 py-2">Date</th>
-                    <th class="px-4 py-2 text-right">Amount Collected (PHP)</th>
-                    <th class="px-4 py-2 text-right no-print">Transactions</th>
+                    <th class="px-4 py-2 whitespace-nowrap">Date</th>
+                    <th class="px-4 py-2 text-right whitespace-nowrap">Amount Collected (PHP)</th>
+                    <th class="px-4 py-2 text-right no-print whitespace-nowrap">Transactions</th>
                 </tr></thead>
                 <tbody class="divide-y divide-gray-50">
                     @foreach($data['daily'] as $i => $d)
                     <tr class="{{ $i%2===0 ? 'bg-gray-50' : '' }}">
-                        <td class="px-4 py-2 text-gray-700">{{ \Carbon\Carbon::parse($d->date)->format('M d, Y (l)') }}</td>
-                        <td class="px-4 py-2 text-right font-semibold text-green-700">₱{{ number_format($d->total, 2) }}</td>
+                        <td class="px-4 py-2 text-gray-700 whitespace-nowrap">{{ \Carbon\Carbon::parse($d->date)->format('M d, Y (l)') }}</td>
+                        <td class="px-4 py-2 text-right font-semibold text-green-700 whitespace-nowrap">₱{{ number_format($d->total, 2) }}</td>
                         <td class="px-4 py-2 text-right text-gray-400 no-print">{{ $d->count ?? '—' }}</td>
                     </tr>
                     @endforeach
                     <tr class="bg-green-50 font-bold border-t-2 border-green-600">
-                        <td class="px-4 py-2">SUBTOTAL</td>
-                        <td class="px-4 py-2 text-right text-green-700">₱{{ number_format($data['daily']->sum('total'), 2) }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">SUBTOTAL</td>
+                        <td class="px-4 py-2 text-right text-green-700 whitespace-nowrap">₱{{ number_format($data['daily']->sum('total'), 2) }}</td>
                         <td class="px-4 py-2 text-right no-print">{{ $data['daily']->sum('count') }}</td>
                     </tr>
                 </tbody>
             </table>
+            </div>
         </div>
         @endif
 
