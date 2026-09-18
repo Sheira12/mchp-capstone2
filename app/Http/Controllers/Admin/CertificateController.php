@@ -32,7 +32,8 @@ class CertificateController extends Controller
 
         if ($search = $request->get('search')) {
             // Wrap all OR conditions in a grouped where so type/status filters
-            // are not bypassed by the orWhere on certificate_number.
+            // are not bypassed. Only search columns that actually exist on the
+            // certificates table — sponsor/priest data lives on sacramental_records.
             $query->where(function ($q) use ($search) {
                 $q->where('certificate_number', 'like', "%{$search}%")
                   ->orWhereHas('parishioner', function ($pq) use ($search) {
@@ -44,12 +45,13 @@ class CertificateController extends Controller
                          ->orWhereRaw("CONCAT(first_name, ' ', middle_name, ' ', last_name) ILIKE ?", ["%{$search}%"]);
                   })
                   ->orWhere('purpose', 'like', "%{$search}%")
-                  ->orWhere('officiating_priest', 'like', "%{$search}%")
-                  ->orWhere('sponsor_ninong', 'like', "%{$search}%")
-                  ->orWhere('sponsor_ninang', 'like', "%{$search}%")
-                  ->orWhere('register_no', 'like', "%{$search}%")
-                  ->orWhere('page_no', 'like', "%{$search}%")
-                  ->orWhere('line_no', 'like', "%{$search}%");
+                  ->orWhere('notes', 'like', "%{$search}%")
+                  // Sponsor/priest/register data lives on sacramental_records
+                  ->orWhereHas('sacramentalRecord', function ($sq) use ($search) {
+                      $sq->where('celebrant', 'like', "%{$search}%")
+                         ->orWhere('register_number', 'like', "%{$search}%")
+                         ->orWhere('venue', 'like', "%{$search}%");
+                  });
             });
         }
 
@@ -113,6 +115,9 @@ class CertificateController extends Controller
 
         AuditLog::record('create', $certificate, [], $certificate->toArray(), 'Certificate created');
 
+        // Log initial status
+        \App\Models\CertificateStatusHistory::log($certificate, null, $certificate->status, 'Certificate created by admin');
+
         return redirect()->route('admin.certificates.show', $certificate)
             ->with('success', $message);
     }
@@ -161,6 +166,8 @@ class CertificateController extends Controller
 
         AuditLog::record('verify_record', $certificate, ['record_verification_status' => 'pending'], ['record_verification_status' => 'verified'], 'Record manually verified by admin');
 
+        \App\Models\CertificateStatusHistory::log($certificate, null, 'verified', 'Record manually verified by ' . auth()->user()->name);
+
         // Notify the parishioner
         $linkedUser = \App\Models\User::where('parishioner_id', $certificate->parishioner_id)->first();
         if ($linkedUser) {
@@ -180,10 +187,24 @@ class CertificateController extends Controller
     }
 
     public function release(Certificate $certificate)
-    {        $certificate->update(['status' => 'released']);
-        AuditLog::record('release', $certificate, ['status' => 'issued'], ['status' => 'released'], 'Certificate released');
+    {
+        $old = $certificate->status;
 
-        // Notify the parishioner their certificate is ready
+        $certificate->update([
+            'status'      => 'released',
+            'released_at' => now(),
+            'handled_by'  => auth()->id(),
+        ]);
+
+        // Log the status transition with IP
+        \App\Models\CertificateStatusHistory::log(
+            $certificate, $old, 'released',
+            'Released by ' . auth()->user()->name, request()->ip()
+        );
+
+        AuditLog::record('release', $certificate, ['status' => $old], ['status' => 'released'], 'Certificate released by ' . auth()->user()->name);
+
+        // Notify the parishioner their certificate is ready to download
         $linkedUser = \App\Models\User::where('parishioner_id', $certificate->parishioner_id)->first();
         if ($linkedUser) {
             try {
@@ -198,7 +219,7 @@ class CertificateController extends Controller
             }
         }
 
-        return back()->with('success', 'Certificate marked as released.');
+        return back()->with('success', 'Certificate marked as released. Parishioner has been notified.');
     }
 
     public function batchPrint(Request $request)

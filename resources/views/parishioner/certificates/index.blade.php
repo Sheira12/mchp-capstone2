@@ -252,16 +252,77 @@
                     </span>
                     @endif
 
-                    {{-- QR Verify link --}}
-                    @if($cert->qrCode)
-                    <a href="{{ $cert->qrCode->verification_url }}" target="_blank"
+                    {{-- Request Correction — only for verified, not yet released --}}
+                    @if($verStatus === 'verified' && $cert->status !== 'released')
+                    <a href="{{ route('parishioner.certificates.edit-request.create', $cert) }}"
                        style="display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;color:#16a34a;font-weight:600;font-size:0.8125rem;padding:0.5rem 1.125rem;border-radius:0.625rem;text-decoration:none;border:1px solid #bbf7d0;transition:all 0.2s;"
                        onmouseover="this.style.background='#dcfce7';" onmouseout="this.style.background='#f0fdf4';">
-                        <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                        Verify
+                        <svg style="width:13px;height:13px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        Request Correction
                     </a>
                     @endif
 
+                    {{-- Cancel request — only while draft --}}
+                    @if($cert->status === 'draft')
+                    <a href="{{ route('parishioner.certificates.cancel', $cert) }}"
+                       style="display:inline-flex;align-items:center;gap:6px;background:#fff;color:#ef4444;font-weight:600;font-size:0.8125rem;padding:0.5rem 1.125rem;border-radius:0.625rem;text-decoration:none;border:1px solid #fca5a5;transition:all 0.2s;"
+                       onmouseover="this.style.background='#fef2f2';" onmouseout="this.style.background='#fff';"
+                       onclick="return confirm('Cancel this certificate request? This cannot be undone.')">
+                        <svg style="width:13px;height:13px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        Cancel Request
+                    </a>
+                    @endif
+
+                    {{-- QR Verify link --}}
+                    @if($cert->qrCode)
+                    <a href="{{ $cert->qrCode->verification_url }}" target="_blank"
+                       style="display:inline-flex;align-items:center;gap:6px;background:#f8faff;color:#64748b;font-weight:600;font-size:0.8125rem;padding:0.5rem 1.125rem;border-radius:0.625rem;text-decoration:none;border:1px solid #e2e8f0;transition:all 0.2s;"
+                       onmouseover="this.style.background='#eff6ff';" onmouseout="this.style.background='#f8faff';">
+                        <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        Verify QR
+                    </a>
+                    @endif
+
+                </div>
+
+                {{-- Status stepper --}}
+                @php
+                    $steps = [
+                        ['key'=>'draft',    'label'=>'Submitted',   'icon'=>'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+                        ['key'=>'verified', 'label'=>'Verified',    'icon'=>'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                        ['key'=>'issued',   'label'=>'Processing',  'icon'=>'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
+                        ['key'=>'released', 'label'=>'Ready',       'icon'=>'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4'],
+                    ];
+                    $currentStep = match($cert->status) {
+                        'draft'    => 0,
+                        'issued'   => $verStatus === 'verified' ? 2 : 1,
+                        'released' => 3,
+                        default    => 0,
+                    };
+                    if ($verStatus === 'verified' && $cert->status === 'draft') $currentStep = 1;
+                @endphp
+                <div style="display:flex;align-items:center;gap:0;padding-top:1rem;width:100%;overflow-x:auto;">
+                    @foreach($steps as $si => $step)
+                    @php $done = $si < $currentStep; $active = $si === $currentStep; @endphp
+                    <div style="display:flex;align-items:center;flex:1;min-width:0;">
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;">
+                            <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;
+                                background:{{ $done ? '#2563eb' : ($active ? '#dbeafe' : '#f1f5f9') }};
+                                border:2px solid {{ $done ? '#2563eb' : ($active ? '#2563eb' : '#e2e8f0') }};
+                                color:{{ $done ? '#fff' : ($active ? '#2563eb' : '#94a3b8') }};">
+                                @if($done)
+                                <svg style="width:12px;height:12px;" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                @else
+                                <svg style="width:11px;height:11px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $step['icon'] }}"/></svg>
+                                @endif
+                            </div>
+                            <span style="font-size:0.62rem;font-weight:{{ $active ? '700' : '500' }};color:{{ $active ? '#1d4ed8' : ($done ? '#374151' : '#94a3b8') }};white-space:nowrap;">{{ $step['label'] }}</span>
+                        </div>
+                        @if(!$loop->last)
+                        <div style="flex:1;height:2px;margin:0 3px;background:{{ $done ? '#2563eb' : '#e2e8f0' }};min-width:8px;"></div>
+                        @endif
+                    </div>
+                    @endforeach
                 </div>
             </div>
         </div>

@@ -59,10 +59,15 @@ class Certificate extends Model
         'staff_notes',
         'payment_id',
         'notes',
+        'released_at',
+        'handled_by',
+        'requested_at',
     ];
 
     protected $casts = [
-        'issued_date' => 'date',
+        'issued_date'  => 'date',
+        'released_at'  => 'datetime',
+        'requested_at' => 'datetime',
     ];
 
     protected static function boot()
@@ -135,6 +140,21 @@ class Certificate extends Model
         return $this->morphOne(QrCode::class, 'qr_codeable');
     }
 
+    public function editRequests()
+    {
+        return $this->hasMany(CertificateEditRequest::class);
+    }
+
+    public function statusHistory()
+    {
+        return $this->hasMany(CertificateStatusHistory::class)->orderBy('changed_at');
+    }
+
+    public function handledBy()
+    {
+        return $this->belongsTo(User::class, 'handled_by');
+    }
+
     public function getTypeLabel(): string
     {
         return self::TYPES[$this->type] ?? ucfirst($this->type);
@@ -142,12 +162,13 @@ class Certificate extends Model
 
     /**
      * Returns true when a parishioner is allowed to download this certificate.
-     * For sacrament-type certificates: must be verified + issued/released.
-     * For membership/no_impediment: just issued/released is enough.
+     * Must be `released` (not just `issued`) AND verified.
+     * Staff can always download via the admin route regardless.
      */
     public function isDownloadable(): bool
     {
-        if (!in_array($this->status, ['issued', 'released'])) {
+        // Only released certificates are available to the parishioner
+        if ($this->status !== 'released') {
             return false;
         }
 

@@ -25,9 +25,7 @@ class CertificateController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('certificate_number', 'like', "%{$search}%")
                   ->orWhere('purpose', 'like', "%{$search}%")
-                  ->orWhere('officiating_priest', 'like', "%{$search}%")
-                  ->orWhere('sponsor_ninong', 'like', "%{$search}%")
-                  ->orWhere('sponsor_ninang', 'like', "%{$search}%");
+                  ->orWhere('notes', 'like', "%{$search}%");
             });
         }
 
@@ -97,6 +95,16 @@ class CertificateController extends Controller
             }
         }
 
+        // ── Rate limit: max 5 requests per parishioner per day ────────────
+        $todayCount = Certificate::where('parishioner_id', $parishioner->id)
+            ->whereDate('requested_at', today())
+            ->count();
+        if ($todayCount >= 5) {
+            return back()->withErrors([
+                'error' => 'You have reached the maximum of 5 certificate requests per day. Please try again tomorrow or contact the parish office.',
+            ]);
+        }
+
         // Check for duplicate pending/issued certificate of same type
         $existing = Certificate::where('parishioner_id', $parishioner->id)
             ->where('type', $validated['type'])
@@ -145,7 +153,7 @@ class CertificateController extends Controller
         }
 
         $certificate = \DB::transaction(function () use ($validated, $parishioner, $linkedRecordId, $verificationStatus, $staffNotes) {
-            return Certificate::create([
+            $cert = Certificate::create([
                 'parishioner_id'             => $parishioner->id,
                 'sacramental_record_id'      => $linkedRecordId,
                 'type'                       => $validated['type'],
@@ -155,12 +163,17 @@ class CertificateController extends Controller
                 'status'                     => 'draft',
                 'record_verification_status' => $verificationStatus,
                 'staff_notes'                => $staffNotes,
+                'requested_at'               => now(),
             ]);
+
+            // Log initial status
+            \App\Models\CertificateStatusHistory::log($cert, null, 'draft', 'Certificate request submitted by parishioner');
+
+            return $cert;
         });
 
         // Notify ALL admin users (shows in admin notification bell)
-        $adminUsers = \App\Models\User::role(['super_admin', 'parish_secretary'])->get();
-        foreach ($adminUsers as $admin) {
+        $adminUsers = \App\Models\User::role(['super_admin', 'parish_secretary'])->get();        foreach ($adminUsers as $admin) {
             try {
                 $admin->notify(new \App\Notifications\AdminCertificateNotification($certificate));
             } catch (\Exception $e) {
@@ -189,16 +202,38 @@ class CertificateController extends Controller
             );
     }
 
-    public function download(Certificate $certificate)
+    /**
+     * Cancel a certificate request — only allowed while status is draft.
+     */
+    public function cancelRequest(Certificate $certificate)
     {
-        // SECURITY: Ensure the certificate belongs to the authenticated parishioner
+        if ($certificate->parishioner_id !== auth()->user()->parishioner?->id) {
+            abort(403);
+        }
+        if ($certificate->status !== 'draft') {
+            return back()->with('error', 'This certificate request can no longer be cancelled — it has already been processed.');
+        }
+
+        \App\Models\CertificateStatusHistory::log($certificate, 'draft', 'cancelled', 'Cancelled by parishioner');
+
+        if ($certificate->file_path) {
+            \Storage::disk('public')->delete($certificate->file_path);
+        }
+        $certificate->delete();
+
+        return redirect()->route('parishioner.certificates.index')
+            ->with('success', 'Your certificate request has been cancelled.');
+    }
+
+    public function download(Certificate $certificate)
+    {        // SECURITY: Ensure the certificate belongs to the authenticated parishioner
         if ($certificate->parishioner_id !== auth()->user()->parishioner?->id) {
             abort(403, 'This certificate does not belong to your account.');
         }
 
-        // GATE: Status must be issued or released
-        if (!in_array($certificate->status, ['issued', 'released'])) {
-            return back()->withErrors(['error' => 'This certificate is not yet ready for download.']);
+        // GATE: Status must be released (not just issued — release is the public availability step)
+        if ($certificate->status !== 'released') {
+            return back()->withErrors(['error' => 'This certificate is not yet available for download. The parish office must release it first.']);
         }
 
         // GATE: For sacrament-type certificates, record must be verified

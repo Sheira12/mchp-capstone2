@@ -121,6 +121,11 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
     Route::get('/certificates/request', [\App\Http\Controllers\Parishioner\CertificateController::class, 'create'])->name('certificates.create');
     Route::post('/certificates/request', [\App\Http\Controllers\Parishioner\CertificateController::class, 'store'])->name('certificates.store');
     Route::get('/certificates/{certificate}/download', [\App\Http\Controllers\Parishioner\CertificateController::class, 'download'])->name('certificates.download');
+    Route::get('/certificates/{certificate}/cancel', [\App\Http\Controllers\Parishioner\CertificateController::class, 'cancelRequest'])->name('certificates.cancel');
+    // Edit requests (correction requests for verified certificates)
+    Route::get('/certificates/{certificate}/edit-request', [\App\Http\Controllers\Parishioner\CertificateEditRequestController::class, 'create'])->name('certificates.edit-request.create');
+    Route::post('/certificates/{certificate}/edit-request', [\App\Http\Controllers\Parishioner\CertificateEditRequestController::class, 'store'])->name('certificates.edit-request.store');
+    Route::delete('/certificate-edit-requests/{editRequest}/cancel', [\App\Http\Controllers\Parishioner\CertificateEditRequestController::class, 'cancel'])->name('certificates.edit-request.cancel');
 
     // Portal notifications
     Route::get('/notifications/unread', function () {
@@ -216,6 +221,10 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
     Route::post('/certificates/{certificate}/release', [CertificateController::class, 'release'])->name('certificates.release');
     Route::post('/certificates/{certificate}/verify-record', [CertificateController::class, 'verifyRecord'])->name('certificates.verify-record');
     Route::post('/certificates/batch-print', [CertificateController::class, 'batchPrint'])->name('certificates.batch-print');
+    // Edit requests (correction requests from parishioners)
+    Route::get('/certificate-edit-requests', [\App\Http\Controllers\Admin\CertificateEditRequestController::class, 'index'])->name('certificate-edit-requests.index');
+    Route::post('/certificate-edit-requests/{editRequest}/approve', [\App\Http\Controllers\Admin\CertificateEditRequestController::class, 'approve'])->name('certificate-edit-requests.approve');
+    Route::post('/certificate-edit-requests/{editRequest}/reject', [\App\Http\Controllers\Admin\CertificateEditRequestController::class, 'reject'])->name('certificate-edit-requests.reject');
     Route::resource('certificates', CertificateController::class);
 
     // Payments (Finance Officer + Admin)

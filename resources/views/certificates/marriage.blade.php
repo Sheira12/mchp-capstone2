@@ -32,19 +32,44 @@ $ornSm = '<svg width="130" height="7" viewBox="0 0 130 7" xmlns="http://www.w3.o
         @if($hasSpouse)<span class="couple-and">— and —</span><span class="recipient-name {{ $nameCls }}">{{ $hasSpouse->full_name }}</span>@endif
         <span class="recipient-role">United in Holy Matrimony</span>
     </div>
+    @php
+        // Sponsors: check sponsors[] first (set via admin edit), then fall back
+        // to godparents[] (some records store ninong/ninang under godparents).
+        // This ensures the PDF never shows "Not recorded" when data exists.
+        $rec      = $certificate->sacramentalRecord;
+        $sponsors = is_array($rec?->sponsors)  && count(array_filter($rec->sponsors))  ? $rec->sponsors  : [];
+        $gps      = is_array($rec?->godparents) && count(array_filter($rec->godparents)) ? $rec->godparents : [];
+        $witnesses = is_array($rec?->witnesses) ? $rec->witnesses : [];
+
+        // Ninong: sponsors[0] → godparents[0] → ''
+        $ninong = trim($sponsors[0] ?? $gps[0] ?? '');
+        // Ninang: sponsors[1] → godparents[1] → ''
+        $ninang = trim($sponsors[1] ?? $gps[1] ?? '');
+        // Additional ninong entries (sponsors[2..] or godparents[2..])
+        $extraSponsors = array_values(array_filter(array_merge(
+            array_slice($sponsors, 2),
+            count($sponsors) < 2 ? array_slice($gps, 2) : []
+        )));
+
+        $wit1 = trim($witnesses[0] ?? '');
+        $wit2 = trim($witnesses[1] ?? '');
+    @endphp
     <div class="details-wrap"><table class="details-tbl" cellpadding="0" cellspacing="0"><tr>
         <td class="det-left">
-            <div class="det-item"><span class="det-lbl">Date of Marriage</span><span class="det-val {{ $certificate->sacramentalRecord?->date_administered ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->date_administered?->format('F d, Y') ?? 'Not recorded' }}</span></div>
-            <div class="det-item"><span class="det-lbl">Officiating Priest</span><span class="det-val {{ $certificate->sacramentalRecord?->celebrant ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->celebrant ?? 'Not recorded' }}</span></div>
-            <div class="det-item"><span class="det-lbl">Venue</span><span class="det-val">{{ $certificate->sacramentalRecord?->venue ?? $parish['name'] }}</span></div>
-            <div class="det-item"><span class="det-lbl">Witness 1</span><span class="det-val {{ ($certificate->sacramentalRecord?->witnesses[0] ?? null) ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->witnesses[0] ?? 'Not recorded' }}</span></div>
+            <div class="det-item"><span class="det-lbl">Date of Marriage</span><span class="det-val {{ $rec?->date_administered ? '' : 'na' }}">{{ $rec?->date_administered?->format('F d, Y') ?? 'Not recorded' }}</span></div>
+            <div class="det-item"><span class="det-lbl">Officiating Priest</span><span class="det-val {{ $rec?->celebrant ? '' : 'na' }}">{{ $rec?->celebrant ?? 'Not recorded' }}</span></div>
+            <div class="det-item"><span class="det-lbl">Venue</span><span class="det-val">{{ $rec?->venue ?? $parish['name'] }}</span></div>
+            <div class="det-item"><span class="det-lbl">Witness 1</span><span class="det-val {{ $wit1 ? '' : 'na' }}">{{ $wit1 ?: 'Not recorded' }}</span></div>
         </td>
         <td class="det-gap"></td>
         <td class="det-right">
-            <div class="det-item"><span class="det-lbl">Principal Sponsor (Ninong)</span><span class="det-val {{ ($certificate->sacramentalRecord?->sponsors[0] ?? null) ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->sponsors[0] ?? 'Not recorded' }}</span></div>
-            <div class="det-item"><span class="det-lbl">Principal Sponsor (Ninang)</span><span class="det-val {{ ($certificate->sacramentalRecord?->sponsors[1] ?? null) ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->sponsors[1] ?? 'Not recorded' }}</span></div>
-            <div class="det-item"><span class="det-lbl">Witness 2</span><span class="det-val {{ ($certificate->sacramentalRecord?->witnesses[1] ?? null) ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->witnesses[1] ?? 'Not recorded' }}</span></div>
-            <div class="det-item"><span class="det-lbl">Register / Page / Line</span><span class="det-val">{{ $certificate->sacramentalRecord?->register_number ?? '—' }} / {{ $certificate->sacramentalRecord?->page_number ?? '—' }} / {{ $certificate->sacramentalRecord?->line_number ?? '—' }}</span></div>
+            <div class="det-item"><span class="det-lbl">Principal Sponsor (Ninong)</span><span class="det-val {{ $ninong ? '' : 'na' }}">{{ $ninong ?: 'Not recorded' }}</span></div>
+            <div class="det-item"><span class="det-lbl">Principal Sponsor (Ninang)</span><span class="det-val {{ $ninang ? '' : 'na' }}">{{ $ninang ?: 'Not recorded' }}</span></div>
+            @foreach($extraSponsors as $es)
+            <div class="det-item"><span class="det-lbl">Additional Sponsor</span><span class="det-val">{{ $es }}</span></div>
+            @endforeach
+            <div class="det-item"><span class="det-lbl">Witness 2</span><span class="det-val {{ $wit2 ? '' : 'na' }}">{{ $wit2 ?: 'Not recorded' }}</span></div>
+            <div class="det-item"><span class="det-lbl">Register / Page / Line</span><span class="det-val">{{ $rec?->register_number ?? '—' }} / {{ $rec?->page_number ?? '—' }} / {{ $rec?->line_number ?? '—' }}</span></div>
         </td>
     </tr></table></div>
     <div class="issuance-wrap">Issued this <b>{{ $certificate->issued_date->format('jS') }}</b> day of <b>{{ $certificate->issued_date->format('F Y') }}</b>, at <b>Mary Help of Christians Parish</b>, Cabuyao, Laguna, for the purpose of <b>{{ $certificate->purpose ?? 'official use' }}</b>.</div>
