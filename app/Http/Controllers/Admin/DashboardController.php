@@ -162,7 +162,8 @@ class DashboardController extends Controller
                 ->select(
                     DB::raw("$yearPaidExpr as year"),
                     DB::raw("$monthPaidExpr as month"),
-                    DB::raw('sum(amount) as total')
+                    DB::raw('sum(amount) as total'),
+                    DB::raw('count(*) as count')
                 )
                 ->where('paid_at', '>=', now()->subMonths(12))
                 ->groupBy('year', 'month')

@@ -62,28 +62,62 @@
     </div>
 
     {{-- Charts Row --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
         {{-- Sacraments Chart --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="font-semibold text-gray-800">Sacraments This Month</h3>
                 <span class="text-xs text-gray-400">{{ now()->format('F Y') }}</span>
             </div>
-            {{-- Fixed height wrapper — prevents Chart.js from expanding infinitely --}}
-            <div style="position:relative; height:260px;">
+            @php $totalSacChart = ($stats['sacramentCounts']['baptism'] ?? 0)
+                + ($stats['sacramentCounts']['first_communion'] ?? 0)
+                + ($stats['sacramentCounts']['confirmation'] ?? 0)
+                + ($stats['sacramentCounts']['marriage'] ?? 0)
+                + ($stats['sacramentCounts']['death_burial'] ?? 0); @endphp
+            @if($totalSacChart === 0)
+            <div class="flex-1 flex flex-col items-center justify-center py-10 text-gray-400">
+                <svg class="w-12 h-12 mb-3 opacity-30" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <p class="text-sm font-medium">No sacraments recorded this month</p>
+            </div>
+            @else
+            {{-- Fixed height container — Chart.js sizes to this, not vice-versa --}}
+            <div class="flex-1" style="position:relative; height:280px; min-height:280px;">
                 <canvas id="sacramentsChart"></canvas>
             </div>
+            @endif
         </div>
 
         {{-- Revenue Chart --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-semibold text-gray-800">Revenue Trend (12 Months)</h3>
-                <span class="text-xs font-bold text-green-600">₱{{ number_format($stats['revenueTrend']->sum('total'), 0) }} total</span>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col">
+            <div class="flex items-start justify-between mb-4 gap-3 flex-wrap">
+                <h3 class="font-semibold text-gray-800 flex-shrink-0">Revenue Trend (12 Months)</h3>
+                @php
+                    $revTotal = $stats['revenueTrend']->sum('total');
+                    $revTotalFmt = $revTotal >= 1000000
+                        ? '₱' . number_format($revTotal / 1000000, 2) . 'M'
+                        : ($revTotal >= 1000
+                            ? '₱' . number_format($revTotal / 1000, 1) . 'K'
+                            : '₱' . number_format($revTotal, 0));
+                @endphp
+                <span class="text-xs font-bold text-green-600 flex-shrink-0"
+                      title="₱{{ number_format($revTotal, 2) }} total (12 months)">
+                    {{ $revTotalFmt }} total
+                </span>
             </div>
-            <div style="position:relative; height:260px;">
+            @if($stats['revenueTrend']->isEmpty() || $revTotal == 0)
+            <div class="flex-1 flex flex-col items-center justify-center py-10 text-gray-400">
+                <svg class="w-12 h-12 mb-3 opacity-30" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 16l4-4 4 4 4-4"/>
+                </svg>
+                <p class="text-sm font-medium">No revenue recorded yet</p>
+            </div>
+            @else
+            <div class="flex-1" style="position:relative; height:280px; min-height:280px;">
                 <canvas id="revenueChart"></canvas>
             </div>
+            @endif
         </div>
     </div>
 
@@ -102,15 +136,16 @@
                     'marriage'        => ['label' => 'Marriage',         'color' => '#ec4899'],
                     'death_burial'    => ['label' => 'Death/Burial',     'color' => '#6b7280'],
                 ];
-                $maxCount = max(array_values($stats['sacramentCounts']) + [1]);
-                $totalSac = array_sum($stats['sacramentCounts']);
+                $rawCounts = $stats['sacramentCounts'] ?? [];
+                $maxCount  = max(array_merge(array_values($rawCounts), [1])); // never 0
+                $totalSac  = array_sum($rawCounts);
             @endphp
             @if($totalSac === 0)
             <p class="text-sm text-gray-400 text-center py-4">No sacramental records this month.</p>
             @else
             <div class="space-y-3">
                 @foreach($sacramentLabels as $key => $info)
-                @php $count = $stats['sacramentCounts'][$key] ?? 0; @endphp
+                @php $count = $rawCounts[$key] ?? 0; @endphp
                 <div>
                     <div class="flex items-center justify-between mb-1">
                         <div class="flex items-center gap-2">
@@ -345,103 +380,176 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-// Sacraments Doughnut Chart
-const sacramentsCtx = document.getElementById('sacramentsChart').getContext('2d');
+(function () {
+    // ── Sacraments Doughnut ────────────────────────────────────────────────
+    const sacCanvas = document.getElementById('sacramentsChart');
+    if (sacCanvas) {
+        const sacData = [
+            {{ $stats['sacramentCounts']['baptism']        ?? 0 }},
+            {{ $stats['sacramentCounts']['first_communion'] ?? 0 }},
+            {{ $stats['sacramentCounts']['confirmation']    ?? 0 }},
+            {{ $stats['sacramentCounts']['marriage']        ?? 0 }},
+            {{ $stats['sacramentCounts']['death_burial']    ?? 0 }}
+        ];
+        const sacTotal = sacData.reduce((a, b) => a + b, 0);
 
-@php
-$baptism       = $stats['sacramentCounts']['baptism']        ?? 0;
-$firstCom      = $stats['sacramentCounts']['first_communion'] ?? 0;
-$confirmation  = $stats['sacramentCounts']['confirmation']    ?? 0;
-$marriage      = $stats['sacramentCounts']['marriage']        ?? 0;
-$deathBurial   = $stats['sacramentCounts']['death_burial']    ?? 0;
-$totalSacraments = $baptism + $firstCom + $confirmation + $marriage + $deathBurial;
-@endphp
-
-const sacData = [{{ $baptism }}, {{ $firstCom }}, {{ $confirmation }}, {{ $marriage }}, {{ $deathBurial }}];
-const sacTotal = sacData.reduce((a, b) => a + b, 0);
-
-new Chart(sacramentsCtx, {
-    type: 'doughnut',
-    data: {
-        labels: ['Baptism', 'First Communion', 'Confirmation', 'Marriage', 'Death/Burial'],
-        datasets: [{
-            data: sacData,
-            backgroundColor: ['#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#6b7280'],
-            borderWidth: 2,
-            borderColor: '#fff',
-            hoverOffset: 6,
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '60%',
-        plugins: {
-            legend: {
-                position: 'bottom',
-                labels: {
-                    padding: 16,
-                    usePointStyle: true,
-                    pointStyleWidth: 10,
-                    font: { size: 12 },
-                }
+        new Chart(sacCanvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Baptism', 'First Communion', 'Confirmation', 'Marriage', 'Death/Burial'],
+                datasets: [{
+                    data: sacData,
+                    backgroundColor: ['#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#6b7280'],
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 8,
+                }]
             },
-            tooltip: {
-                callbacks: {
-                    label: function(ctx) {
-                        const val = ctx.parsed;
-                        const pct = sacTotal > 0 ? ((val / sacTotal) * 100).toFixed(1) : 0;
-                        return ' ' + ctx.label + ': ' + val + ' (' + pct + '%)';
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '62%',
+                layout: { padding: { top: 4, bottom: 4 } },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 14,
+                            usePointStyle: true,
+                            pointStyleWidth: 10,
+                            font: { size: 11 },
+                            boxHeight: 10,
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (ctx) {
+                                const val = ctx.parsed;
+                                const pct = sacTotal > 0
+                                    ? ((val / sacTotal) * 100).toFixed(1)
+                                    : '0.0';
+                                return '  ' + ctx.label + ': ' + val + ' (' + pct + '%)';
+                            }
+                        }
                     }
                 }
             }
-        }
+        });
     }
-});
 
-// Revenue Line Chart
-const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-const revenueTrend = @json($stats['revenueTrend']);
-const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-new Chart(revenueCtx, {
-    type: 'line',
-    data: {
-        labels: revenueTrend.map(r => months[r.month - 1] + ' ' + r.year),
-        datasets: [{
-            label: 'Revenue (₱)',
-            data: revenueTrend.map(r => r.total),
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59,130,246,0.08)',
-            fill: true,
-            tension: 0.4,
-            pointBackgroundColor: '#3b82f6',
-            pointRadius: 4,
-            pointHoverRadius: 6,
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { display: false },
-            tooltip: {
-                callbacks: {
-                    label: ctx => ' ₱' + ctx.parsed.y.toLocaleString('en-PH', { minimumFractionDigits: 2 })
+    // ── Revenue Line Chart ─────────────────────────────────────────────────
+    const revCanvas = document.getElementById('revenueChart');
+    if (revCanvas) {
+        const revenueTrend = @json($stats['revenueTrend']);
+
+        // Build a full 12-month array filling missing months with 0
+        // so the trend line never has gaps.
+        const today    = new Date();
+        const endYear  = today.getFullYear();
+        const endMonth = today.getMonth() + 1; // 1-12
+        const labels   = [];
+        const values   = [];
+        const txCounts = [];
+        const shortMon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+        for (let i = 11; i >= 0; i--) {
+            let m = endMonth - i;
+            let y = endYear;
+            while (m <= 0) { m += 12; y--; }
+            labels.push(shortMon[m - 1] + ' ' + y);
+            const row = revenueTrend.find(r => r.month == m && r.year == y);
+            values.push(row ? parseFloat(row.total) : 0);
+            txCounts.push(row ? (row.count || 0) : 0);
+        }
+
+        const revenueChart = new Chart(revCanvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Revenue',
+                    data: values,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59,130,246,0.07)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#3b82f6',
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: { right: 12, bottom: 8 }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: (items) => items[0].label,
+                            label: (ctx) => {
+                                const peso = '  Revenue: ₱' + ctx.parsed.y.toLocaleString('en-PH', {
+                                    minimumFractionDigits: 2, maximumFractionDigits: 2
+                                });
+                                return peso;
+                            },
+                            afterLabel: (ctx) => {
+                                const tx = txCounts[ctx.dataIndex];
+                                return '  Transactions: ' + tx;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0,0,0,0.04)' },
+                        border: { display: false },
+                        title: {
+                            display: true,
+                            text: 'Revenue',
+                            font: { size: 10 },
+                            color: '#94a3b8',
+                            padding: { bottom: 4 },
+                        },
+                        ticks: {
+                            font: { size: 11 },
+                            color: '#94a3b8',
+                            maxTicksLimit: 6,
+                            callback: function (v) {
+                                if (v >= 1000000) return '₱' + (v / 1000000).toFixed(1) + 'M';
+                                if (v >= 1000)    return '₱' + (v / 1000).toFixed(0) + 'K';
+                                return '₱' + v;
+                            }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        border: { display: false },
+                        ticks: {
+                            font: { size: 10 },
+                            color: '#94a3b8',
+                            maxRotation: 0,   // keep labels horizontal
+                            autoSkip: true,
+                            maxTicksLimit: 7, // show at most 7 labels on narrow screens
+                        }
+                    }
                 }
             }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                grid: { color: 'rgba(0,0,0,0.04)' },
-                ticks: { callback: v => '₱' + (v >= 1000 ? (v/1000).toFixed(0) + 'K' : v) }
-            },
-            x: {
-                grid: { display: false }
-            }
-        }
+        });
+
+        // Resize when the window changes (sidebar collapse also triggers resize)
+        window.addEventListener('resize', () => revenueChart.resize());
+
+        // Some sidebar implementations dispatch a custom event — handle both
+        document.addEventListener('sidebar:toggle', () => {
+            setTimeout(() => revenueChart.resize(), 320);
+        });
     }
-});
+})();
 
 function toggleCustomDates(val) {
     document.getElementById('custom-dates').classList.toggle('hidden', val !== 'custom');
