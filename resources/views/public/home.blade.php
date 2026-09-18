@@ -232,35 +232,59 @@
             </a>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.5rem;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:1.5rem;">
             @foreach($announcements->take(3) as $announcement)
-            <a href="{{ route('announcements.show', $announcement) }}" class="ann-card">
-                <div style="position:relative;height:200px;overflow:hidden;">
+            <a href="{{ route('announcements.show', $announcement) }}"
+               class="ann-card"
+               style="background:#fff;border-radius:1.25rem;border:1px solid #e8edf5;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 2px 10px rgba(0,0,0,0.04);text-decoration:none;transition:all 0.25s ease;"
+               onmouseover="this.style.boxShadow='0 16px 40px rgba(37,99,235,0.12)';this.style.transform='translateY(-4px)';this.style.borderColor='#93c5fd';"
+               onmouseout="this.style.boxShadow='0 2px 10px rgba(0,0,0,0.04)';this.style.transform='';this.style.borderColor='#e8edf5';">
+
+                {{-- Image area — fixed 16:9 aspect ratio so all cards align --}}
+                <div style="position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,#dbeafe,#e0e7ff);">
                     @if($announcement->image_path)
-                    <img src="{{ Storage::url($announcement->image_path) }}" alt="{{ $announcement->title }}"
-                         style="width:100%;height:100%;object-fit:cover;transition:transform 0.4s ease;"
+                    <img src="{{ Storage::url($announcement->image_path) }}"
+                         alt="{{ $announcement->title }}"
+                         loading="lazy"
+                         style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;transition:transform 0.4s ease;"
                          onmouseover="this.style.transform='scale(1.05)';"
                          onmouseout="this.style.transform='';"
-                         onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
-                    {{-- Fallback shown when image fails to load (e.g. ephemeral filesystem on Render) --}}
-                    <div style="display:none;width:100%;height:100%;background:linear-gradient(135deg,#dbeafe,#e0e7ff);align-items:center;justify-content:center;flex-direction:column;gap:8px;">
-                        <svg width="48" height="48" fill="none" stroke="#93c5fd" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
-                        <span style="font-size:0.7rem;color:#93c5fd;font-weight:600;">Parish Announcement</span>
+                         onerror="this.onerror=null;this.style.display='none';this.parentElement.querySelector('.ann-img-fallback').style.display='flex';">
                     @endif
-                    <div style="position:absolute;top:12px;left:12px;">
-                        <span style="background:#2563eb;color:#fff;font-size:0.65rem;font-weight:700;padding:3px 10px;border-radius:9999px;text-transform:uppercase;letter-spacing:0.08em;">{{ $announcement->category }}</span>
+                    {{-- Fallback: always in DOM; hidden when real image loads OK --}}
+                    <div class="ann-img-fallback"
+                         style="display:{{ $announcement->image_path ? 'none' : 'flex' }};position:absolute;inset:0;align-items:center;justify-content:center;flex-direction:column;gap:8px;">
+                        <svg width="40" height="40" fill="none" stroke="#93c5fd" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+                        </svg>
+                        <span style="font-size:0.7rem;color:#93c5fd;font-weight:600;">Parish Announcement</span>
                     </div>
+                    {{-- Category badge --}}
+                    @if($announcement->category)
+                    <div style="position:absolute;top:10px;left:10px;z-index:2;">
+                        <span style="background:#2563eb;color:#fff;font-size:0.65rem;font-weight:700;padding:3px 10px;border-radius:9999px;text-transform:uppercase;letter-spacing:0.08em;box-shadow:0 2px 8px rgba(37,99,235,0.4);">{{ $announcement->category }}</span>
+                    </div>
+                    @endif
                 </div>
-                <div style="padding:1.25rem;flex:1;display:flex;flex-direction:column;">
+
+                {{-- Card body — flex-1 so all cards in a row share equal height --}}
+                <div style="padding:1.25rem 1.375rem;flex:1;display:flex;flex-direction:column;">
                     <h3 style="font-weight:700;font-size:1rem;color:#0f172a;margin:0 0 0.5rem;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
                         {{ $announcement->title }}
                     </h3>
-                    <p style="font-size:0.85rem;color:#64748b;flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:0 0 1rem;">
+                    <p style="font-size:0.85rem;color:#64748b;flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;line-height:1.65;margin:0 0 1rem;">
                         {{ strip_tags($announcement->content) }}
                     </p>
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding-top:0.75rem;border-top:1px solid #f1f5f9;">
-                        <span style="font-size:0.75rem;color:#94a3b8;">{{ $announcement->published_at?->format('M d, Y') }}</span>
-                        <span style="font-size:0.75rem;font-weight:600;color:#2563eb;">Read more &rarr;</span>
+                    {{-- Footer row pinned to bottom --}}
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding-top:0.75rem;border-top:1px solid #f1f5f9;margin-top:auto;">
+                        <span style="font-size:0.75rem;color:#94a3b8;">
+                            <svg style="width:11px;height:11px;display:inline;margin-right:3px;vertical-align:middle;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            {{ $announcement->published_at?->format('M d, Y') }}
+                        </span>
+                        <span style="font-size:0.75rem;font-weight:700;color:#2563eb;display:flex;align-items:center;gap:3px;">
+                            Read more
+                            <svg style="width:11px;height:11px;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </span>
                     </div>
                 </div>
             </a>

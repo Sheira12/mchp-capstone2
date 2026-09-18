@@ -57,9 +57,31 @@
     transform:translateY(-4px);
     border-color:#93c5fd;
 }
-.ann-card-img { position:relative;height:210px;overflow:hidden;flex-shrink:0; }
-.ann-card-img img { width:100%;height:100%;object-fit:cover;transition:transform 0.4s ease; }
+.ann-card-img {
+    position:relative;
+    /* 16:9 aspect ratio — every card image is identical height regardless of upload dimensions */
+    aspect-ratio:16/9;
+    overflow:hidden;
+    flex-shrink:0;
+    background:linear-gradient(135deg,#dbeafe 0%,#e0e7ff 100%);
+}
+.ann-card-img img {
+    position:absolute;inset:0;
+    width:100%;height:100%;
+    object-fit:cover;object-position:center;
+    transition:transform 0.4s ease;
+}
 .ann-card:hover .ann-card-img img { transform:scale(1.06); }
+/* onerror fallback — always in DOM, hidden when real image loads */
+.ann-img-fallback {
+    display:none;
+    position:absolute;inset:0;
+    align-items:center;justify-content:center;
+    flex-direction:column;gap:8px;
+}
+.ann-img-fallback.show { display:flex; }
+/* featured card gets a taller image slot */
+.ann-card-featured .ann-card-img { aspect-ratio:16/7; }
 .ann-cat-badge {
     position:absolute;top:12px;left:12px;
     background:#2563eb;color:#fff;
@@ -174,14 +196,17 @@
                 <div class="ann-card-img">
                     @if($announcement->image_path)
                     <img src="{{ Storage::url($announcement->image_path) }}"
-                         alt="{{ $announcement->title }}" loading="{{ $i < 3 ? 'eager' : 'lazy' }}">
-                    @else
-                    <div style="width:100%;height:100%;background:linear-gradient(135deg,#dbeafe 0%,#e0e7ff 100%);display:flex;align-items:center;justify-content:center;">
+                         alt="{{ $announcement->title }}"
+                         loading="{{ $i < 3 ? 'eager' : 'lazy' }}"
+                         onerror="this.onerror=null;this.style.display='none';this.parentElement.querySelector('.ann-img-fallback').classList.add('show');">
+                    @endif
+                    {{-- Fallback: displayed when no image_path OR when image fails to load --}}
+                    <div class="ann-img-fallback{{ $announcement->image_path ? '' : ' show' }}">
                         <svg width="52" height="52" fill="none" stroke="#93c5fd" stroke-width="1.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
                         </svg>
+                        <span style="font-size:0.7rem;color:#93c5fd;font-weight:600;">Parish Announcement</span>
                     </div>
-                    @endif
                     @if($announcement->category)
                     <span class="ann-cat-badge">{{ $announcement->category }}</span>
                     @endif

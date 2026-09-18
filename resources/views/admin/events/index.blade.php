@@ -8,26 +8,41 @@
     {{-- Filters --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <form method="GET" class="flex flex-wrap gap-3 items-end">
-            <div class="flex-1 min-w-0" style="min-width:180px;">
+            <div class="flex-1" style="min-width:180px;">
+                <label class="block text-xs text-gray-500 mb-1">Search</label>
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Search events…"
                        class="form-input text-sm w-full">
             </div>
-            <select name="category" class="form-select text-sm">
-                <option value="">All Categories</option>
-                @foreach(\App\Models\Event::CATEGORIES as $key => $label)
-                <option value="{{ $key }}" {{ request('category') == $key ? 'selected' : '' }}>{{ $label }}</option>
-                @endforeach
-            </select>
-            <select name="status" class="form-select text-sm">
-                <option value="">All Status</option>
-                <option value="published" {{ request('status') == 'published' ? 'selected' : '' }}>Published</option>
-                <option value="draft"     {{ request('status') == 'draft'     ? 'selected' : '' }}>Draft</option>
-                <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-            </select>
-            <button type="submit" class="btn-primary text-sm">Filter</button>
-            <a href="{{ route('admin.events.index') }}" class="btn-secondary text-sm">Reset</a>
-            <div class="ml-auto">
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Category</label>
+                <div class="relative">
+                    <select name="category" class="form-select text-sm pr-8 appearance-none">
+                        <option value="">All Categories</option>
+                        @foreach(\App\Models\Event::CATEGORIES as $key => $label)
+                        <option value="{{ $key }}" {{ request('category') == $key ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <svg class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Status</label>
+                <div class="relative">
+                    <select name="status" class="form-select text-sm pr-8 appearance-none">
+                        <option value="">All Status</option>
+                        <option value="published" {{ request('status') == 'published' ? 'selected' : '' }}>Published</option>
+                        <option value="draft"     {{ request('status') == 'draft'     ? 'selected' : '' }}>Draft</option>
+                        <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                    </select>
+                    <svg class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary text-sm self-end">Filter</button>
+            @if(request()->hasAny(['search','category','status']))
+            <a href="{{ route('admin.events.index') }}" class="btn-secondary text-sm self-end">Reset</a>
+            @endif
+            <div class="ml-auto self-end">
                 <a href="{{ route('admin.events.create') }}" class="btn-primary text-sm">+ New Event</a>
             </div>
         </form>
@@ -100,10 +115,10 @@
         <table class="w-full text-sm" style="min-width:860px;">
             <thead class="bg-gray-50 border-b border-gray-100">
                 <tr class="text-left text-gray-500">
-                    <th class="px-4 py-3 font-medium">Event</th>
+                    <th class="px-4 py-3 font-medium w-full">Event</th>
                     <th class="px-4 py-3 font-medium whitespace-nowrap">Category</th>
                     <th class="px-4 py-3 font-medium whitespace-nowrap">Date &amp; Time</th>
-                    <th class="px-4 py-3 font-medium">Location</th>
+                    <th class="px-4 py-3 font-medium whitespace-nowrap">Location</th>
                     <th class="px-4 py-3 font-medium whitespace-nowrap">Status</th>
                     <th class="px-4 py-3 font-medium whitespace-nowrap">Actions</th>
                 </tr>
@@ -143,7 +158,7 @@
                         <div>{{ $event->event_start->format('M d, Y') }}</div>
                         <div class="text-xs text-gray-400">{{ $event->event_start->format('h:i A') }}@if($event->event_end) – {{ $event->event_end->format('h:i A') }}@endif</div>
                     </td>
-                    <td class="px-4 py-3 text-gray-600">{{ $event->location ?? '—' }}</td>
+                    <td class="px-4 py-3 text-gray-600 whitespace-nowrap max-w-[160px] truncate" title="{{ $event->location ?? '' }}">{{ $event->location ?? '—' }}</td>
                     <td class="px-4 py-3">
                         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap {{ $badge }}">
                             {{ ucfirst($event->status) }}

@@ -97,6 +97,71 @@ class SacramentalRecordController extends Controller
             ->with('success', 'Record deleted.');
     }
 
+    /**
+     * AJAX: return all fields of a single record for certificate form auto-population.
+     * Also supports fetching by parishioner_id + type (auto-match on type change).
+     */
+    public function fetchForCertificate(\Illuminate\Http\Request $request)
+    {
+        // Mode 1: fetch a known record by ID
+        if ($id = $request->get('id')) {
+            $r = SacramentalRecord::with('parishioner')->findOrFail($id);
+            return response()->json($this->recordToFormData($r));
+        }
+
+        // Mode 2: auto-match by parishioner_id + cert type
+        $parishionerId = $request->get('parishioner_id');
+        $certType      = $request->get('cert_type');
+
+        $typeMap = \App\Models\Certificate::TYPE_TO_SACRAMENT;
+        $sacType = $typeMap[$certType] ?? null;
+
+        if (!$parishionerId || !$sacType) {
+            return response()->json(['found' => false]);
+        }
+
+        $r = SacramentalRecord::with('parishioner')
+            ->where('parishioner_id', $parishionerId)
+            ->where('type', $sacType)
+            ->whereNull('deleted_at')
+            ->latest('date_administered')
+            ->first();
+
+        if (!$r) {
+            return response()->json(['found' => false]);
+        }
+
+        return response()->json($this->recordToFormData($r));
+    }
+
+    private function recordToFormData(SacramentalRecord $r): array
+    {
+        $godparents = is_array($r->godparents) ? $r->godparents : [];
+        $sponsors   = is_array($r->sponsors)   ? $r->sponsors   : [];
+        $witnesses  = is_array($r->witnesses)  ? $r->witnesses  : [];
+
+        return [
+            'found'              => true,
+            'id'                 => $r->id,
+            'type'               => $r->type,
+            'date_administered'  => $r->date_administered?->format('Y-m-d'),
+            'date_display'       => $r->date_administered?->format('F d, Y'),
+            'celebrant'          => $r->celebrant ?? '',
+            'venue'              => $r->venue ?? '',
+            'register_number'    => $r->register_number ?? '',
+            'page_number'        => $r->page_number ?? '',
+            'line_number'        => $r->line_number ?? '',
+            'godparents'         => $godparents,
+            'sponsors'           => $sponsors,
+            'witnesses'          => $witnesses,
+            'notes'              => $r->notes ?? '',
+            'parishioner_name'   => $r->parishioner?->full_name ?? '',
+            'reg_label'          => ($r->register_number ? 'Reg# '.$r->register_number : '')
+                                    .($r->page_number ? ' · Pg '.$r->page_number : '')
+                                    .($r->line_number ? ' · Ln '.$r->line_number : ''),
+        ];
+    }
+
     public function search(\Illuminate\Http\Request $request)
     {
         $term = $request->get('q', '');

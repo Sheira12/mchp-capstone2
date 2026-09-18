@@ -196,6 +196,8 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
         ->name('sacramental-records.verify');
     Route::get('/sacramental-records/search', [SacramentalRecordController::class, 'search'])
         ->name('sacramental-records.search');
+    Route::get('/sacramental-records/fetch-for-certificate', [SacramentalRecordController::class, 'fetchForCertificate'])
+        ->name('sacramental-records.fetch-for-certificate');
     Route::resource('sacramental-records', SacramentalRecordController::class);
 
     // Bookings
