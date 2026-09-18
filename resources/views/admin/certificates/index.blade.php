@@ -6,42 +6,82 @@
 <style>
 .cert-card { background:#fff; border:1px solid #e8edf5; border-radius:1rem; padding:1rem; transition:box-shadow 0.15s; }
 .cert-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.07); }
+#search-spinner { display:none; }
+#search-spinner.visible { display:inline-block; }
 </style>
 @endpush
 
 @section('content')
 <div class="py-6 space-y-4">
 
+    {{-- Unverified alert badge --}}
+    @if(($unverifiedCount ?? 0) > 0)
+    <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
+        <div class="w-8 h-8 bg-amber-400 rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+        </div>
+        <div class="flex-1">
+            <span class="font-bold text-amber-800 text-sm">
+                {{ $unverifiedCount }} certificate{{ $unverifiedCount !== 1 ? 's' : '' }} pending record verification
+            </span>
+            <span class="text-amber-700 text-sm"> — review and verify the sacramental records for these requests.</span>
+        </div>
+        <a href="{{ route('admin.certificates.index', ['ver_status' => 'pending']) }}"
+           class="text-xs font-bold text-amber-800 underline underline-offset-2 whitespace-nowrap">View pending →</a>
+    </div>
+    @endif
+
     {{-- Filters --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <form method="GET" data-live-search data-target="#certs-list" class="flex flex-wrap gap-3 items-end">
+        <form id="cert-filter-form" method="GET" action="{{ route('admin.certificates.index') }}" class="flex flex-wrap gap-3 items-end">
             <div>
-                <label class="block text-xs text-gray-500 mb-1">Search</label>
-                <input type="text" name="search" value="{{ request('search') }}"
-                       class="form-input text-sm w-48" placeholder="Name or cert #…" data-live-input>
+                <label class="block text-xs text-gray-500 mb-1">
+                    Search
+                    <svg id="search-spinner" class="inline w-3 h-3 ml-1 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                    </svg>
+                </label>
+                <input type="text" id="cert-search" name="search" value="{{ request('search') }}"
+                       class="form-input text-sm w-56" placeholder="Name, cert #, priest, sponsor…"
+                       autocomplete="off">
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Type</label>
-                <select name="type" class="form-select text-sm" onchange="this.form.submit()">
+                <select name="type" class="form-select text-sm" onchange="document.getElementById('cert-filter-form').submit()">
                     <option value="">All Types</option>
                     <option value="baptism"         @selected(request('type')==='baptism')>Baptism</option>
                     <option value="confirmation"    @selected(request('type')==='confirmation')>Confirmation</option>
                     <option value="marriage"        @selected(request('type')==='marriage')>Marriage</option>
                     <option value="first_communion" @selected(request('type')==='first_communion')>First Communion</option>
+                    <option value="death_burial"    @selected(request('type')==='death_burial')>Death/Burial</option>
+                    <option value="no_impediment"   @selected(request('type')==='no_impediment')>No Impediment</option>
+                    <option value="membership"      @selected(request('type')==='membership')>Membership</option>
                     <option value="other"           @selected(request('type')==='other')>Other</option>
                 </select>
             </div>
             <div>
                 <label class="block text-xs text-gray-500 mb-1">Status</label>
-                <select name="status" class="form-select text-sm" onchange="this.form.submit()">
+                <select name="status" class="form-select text-sm" onchange="document.getElementById('cert-filter-form').submit()">
                     <option value="">All Status</option>
                     <option value="draft"    @selected(request('status')==='draft')>Draft</option>
                     <option value="issued"   @selected(request('status')==='issued')>Issued</option>
                     <option value="released" @selected(request('status')==='released')>Released</option>
                 </select>
             </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Record</label>
+                <select name="ver_status" class="form-select text-sm" onchange="document.getElementById('cert-filter-form').submit()">
+                    <option value="">All</option>
+                    <option value="verified"   @selected(request('ver_status')==='verified')>✓ Verified</option>
+                    <option value="pending"    @selected(request('ver_status')==='pending')>⏳ Pending</option>
+                    <option value="unverified" @selected(request('ver_status')==='unverified')>⚠ No Record</option>
+                </select>
+            </div>
             <button type="submit" class="btn-secondary text-sm">Filter</button>
-            @if(request()->hasAny(['search','type','status']))
+            @if(request()->hasAny(['search','type','status','ver_status']))
             <a href="{{ route('admin.certificates.index') }}" class="btn-secondary text-sm">Clear</a>
             @endif
             <div class="ml-auto">
@@ -57,23 +97,33 @@
             $statusColors = ['draft'=>'gray','issued'=>'blue','released'=>'green'];
             $sc = $statusColors[$cert->status] ?? 'gray';
             $typeIcons = ['baptism'=>'💧','confirmation'=>'✝️','marriage'=>'💍','first_communion'=>'🕊️','death_burial'=>'🕯️'];
+            $vr = $cert->record_verification_status ?? 'pending';
+            $vrLabel = ['verified'=>'✓ Verified','unverified'=>'⚠ No Record','pending'=>'⏳ Pending'][$vr] ?? '';
+            $vrColor = ['verified'=>'text-green-700 bg-green-50','unverified'=>'text-red-700 bg-red-50','pending'=>'text-amber-700 bg-amber-50'][$vr] ?? '';
         @endphp
         <div class="cert-card">
             <div class="flex items-start gap-3 mb-2">
-                <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-lg flex-shrink-0">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-content-center text-lg flex-shrink-0 flex items-center justify-center">
                     {{ $typeIcons[$cert->type] ?? '📜' }}
                 </div>
                 <div class="flex-1 min-w-0">
-                    <div class="flex items-start justify-between gap-2">
+                    <div class="flex items-start justify-between gap-2 flex-wrap">
                         <div>
                             <a href="{{ route('admin.certificates.show', $cert) }}" class="font-semibold text-gray-900 hover:text-blue-700 text-sm capitalize">
                                 {{ str_replace('_', ' ', $cert->type) }} Certificate
                             </a>
                             <p class="text-xs font-mono text-gray-400 mt-0.5">{{ $cert->certificate_number }}</p>
                         </div>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-{{ $sc }}-100 text-{{ $sc }}-800 flex-shrink-0">
-                            {{ ucfirst($cert->status) }}
-                        </span>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-{{ $sc }}-100 text-{{ $sc }}-800">
+                                {{ ucfirst($cert->status) }}
+                            </span>
+                            @if(in_array($cert->type, \App\Models\Certificate::REQUIRES_RECORD) && $vrLabel)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold {{ $vrColor }}">
+                                {{ $vrLabel }}
+                            </span>
+                            @endif
+                        </div>
                     </div>
                     <p class="text-xs text-gray-500 mt-0.5">{{ $cert->parishioner->full_name }} · {{ $cert->issued_date->format('M d, Y') }}</p>
                 </div>
@@ -96,10 +146,24 @@
                     </button>
                 </form>
                 @endif
+                @if(in_array($cert->type, \App\Models\Certificate::REQUIRES_RECORD) && in_array($vr, ['pending','unverified']))
+                <form method="POST" action="{{ route('admin.certificates.verify-record', $cert) }}" class="inline">
+                    @csrf
+                    <button type="submit" class="action-btn" style="background:#f0fdf4;color:#166534;border-color:#bbf7d0;"
+                            onclick="return confirm('Verify record for this certificate?')">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg>
+                        Verify
+                    </button>
+                </form>
+                @endif
             </div>
         </div>
         @empty
-        <div class="bg-white rounded-xl border border-gray-100 p-10 text-center text-gray-400">No certificates found.</div>
+        <div class="bg-white rounded-xl border border-gray-100 p-10 text-center">
+            <div class="text-4xl mb-3">🔍</div>
+            <p class="text-gray-500 font-medium">No certificates found</p>
+            <p class="text-sm text-gray-400 mt-1">Try adjusting your search or filters</p>
+        </div>
         @endforelse
         @if($certificates->hasPages())
         <div class="bg-white rounded-xl border border-gray-100 px-4 py-3">{{ $certificates->links() }}</div>
@@ -117,12 +181,19 @@
                     <th class="px-4 py-3 font-medium">Type</th>
                     <th class="px-4 py-3 font-medium">Issued Date</th>
                     <th class="px-4 py-3 font-medium">Status</th>
+                    <th class="px-4 py-3 font-medium">Record</th>
                     <th class="px-4 py-3 font-medium">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
                 @forelse($certificates as $cert)
-                @php $statusColors=['draft'=>'gray','issued'=>'blue','released'=>'green']; $sc=$statusColors[$cert->status]??'gray'; @endphp
+                @php
+                    $statusColors = ['draft'=>'gray','issued'=>'blue','released'=>'green'];
+                    $sc = $statusColors[$cert->status] ?? 'gray';
+                    $vr = $cert->record_verification_status ?? 'pending';
+                    $vrLabel  = ['verified'=>'✓ Verified','unverified'=>'⚠ No Record','pending'=>'⏳ Pending'][$vr] ?? '—';
+                    $vrClass  = ['verified'=>'bg-green-100 text-green-800','unverified'=>'bg-red-100 text-red-800','pending'=>'bg-amber-100 text-amber-800'][$vr] ?? '';
+                @endphp
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ $cert->certificate_number }}</td>
                     <td class="px-4 py-3 font-medium text-gray-900">
@@ -132,6 +203,13 @@
                     <td class="px-4 py-3 text-gray-600">{{ $cert->issued_date->format('M d, Y') }}</td>
                     <td class="px-4 py-3">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-{{ $sc }}-100 text-{{ $sc }}-800">{{ ucfirst($cert->status) }}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        @if(in_array($cert->type, \App\Models\Certificate::REQUIRES_RECORD))
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $vrClass }}">{{ $vrLabel }}</span>
+                        @else
+                        <span class="text-gray-300 text-xs">—</span>
+                        @endif
                     </td>
                     <td class="px-4 py-3">
                         <div class="flex items-center gap-1.5 flex-wrap">
@@ -152,11 +230,27 @@
                                 </button>
                             </form>
                             @endif
+                            @if(in_array($cert->type, \App\Models\Certificate::REQUIRES_RECORD) && in_array($vr, ['pending','unverified']))
+                            <form method="POST" action="{{ route('admin.certificates.verify-record', $cert) }}" class="inline">
+                                @csrf
+                                <button type="submit" class="action-btn" style="background:#f0fdf4;color:#166534;border-color:#bbf7d0;"
+                                        onclick="return confirm('Verify record for this certificate?')">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg>
+                                    Verify
+                                </button>
+                            </form>
+                            @endif
                         </div>
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No certificates found.</td></tr>
+                <tr>
+                    <td colspan="7" class="px-4 py-12 text-center">
+                        <div class="text-4xl mb-2">🔍</div>
+                        <p class="text-gray-500 font-medium">No certificates found</p>
+                        <p class="text-sm text-gray-400 mt-1">Try a different search term or clear the filters</p>
+                    </td>
+                </tr>
                 @endforelse
             </tbody>
         </table>
@@ -167,3 +261,31 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    const input   = document.getElementById('cert-search');
+    const form    = document.getElementById('cert-filter-form');
+    const spinner = document.getElementById('search-spinner');
+    if (!input || !form) return;
+
+    let timer;
+    input.addEventListener('input', function () {
+        clearTimeout(timer);
+        spinner.classList.add('visible');
+        timer = setTimeout(function () {
+            // Update the URL with the current query string so pagination links
+            // stay consistent, then submit the form normally (full page reload
+            // is fine — no Livewire required for a standard Laravel app).
+            form.submit();
+        }, 300);
+    });
+
+    // Hide spinner once the page is fully loaded (handles back-navigation)
+    window.addEventListener('pageshow', function () {
+        spinner.classList.remove('visible');
+    });
+})();
+</script>
+@endpush

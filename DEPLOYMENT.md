@@ -170,6 +170,29 @@ danilo.mendoza@gmail.com     Password@123
 
 ---
 
+## IMPORTANT — Production Migration (run once after deploy)
+
+After deploying, run this in the Railway terminal to apply the
+`record_verification_status` + `staff_notes` columns on certificates:
+
+```bash
+php artisan migrate --force
+```
+
+Or to run only the specific migration:
+
+```bash
+php artisan migrate --path=database/migrations/2026_09_17_000001_add_verification_status_to_certificates_table.php --force
+```
+
+This migration adds:
+- `certificates.record_verification_status` (enum: pending/verified/unverified)
+- `certificates.staff_notes`
+
+Without it, certificate record-gate and verification badges will not work on production.
+
+---
+
 ## Free Tier Limits
 
 | Service | Limit |

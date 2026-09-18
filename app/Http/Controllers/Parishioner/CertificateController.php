@@ -11,15 +11,35 @@ use Illuminate\Support\Facades\Storage;
 
 class CertificateController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $parishioner  = auth()->user()->parishioner;
-        $certificates = $parishioner
-            ? $parishioner->certificates()
-                ->with(['sacramentalRecord', 'qrCode'])
-                ->orderByDesc('issued_date')
-                ->paginate(10)
-            : collect();
+        $parishioner = auth()->user()->parishioner;
+
+        if (!$parishioner) {
+            return view('parishioner.certificates.index', ['certificates' => collect()]);
+        }
+
+        $query = $parishioner->certificates()->with(['sacramentalRecord', 'qrCode']);
+
+        if ($search = $request->get('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('certificate_number', 'like', "%{$search}%")
+                  ->orWhere('purpose', 'like', "%{$search}%")
+                  ->orWhere('officiating_priest', 'like', "%{$search}%")
+                  ->orWhere('sponsor_ninong', 'like', "%{$search}%")
+                  ->orWhere('sponsor_ninang', 'like', "%{$search}%");
+            });
+        }
+
+        if ($type = $request->get('type')) {
+            $query->where('type', $type);
+        }
+
+        if ($status = $request->get('status')) {
+            $query->where('status', $status);
+        }
+
+        $certificates = $query->orderByDesc('issued_date')->paginate(10)->withQueryString();
 
         return view('parishioner.certificates.index', compact('certificates'));
     }

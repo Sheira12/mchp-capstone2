@@ -26,16 +26,42 @@ class CertificateController extends Controller
             $query->where('status', $status);
         }
 
-        if ($search = $request->get('search')) {
-            $query->whereHas('parishioner', fn($q) => $q->search($search))
-                  ->orWhere('certificate_number', 'like', "%{$search}%");
+        if ($verStatus = $request->get('ver_status')) {
+            $query->where('record_verification_status', $verStatus);
         }
+
+        if ($search = $request->get('search')) {
+            // Wrap all OR conditions in a grouped where so type/status filters
+            // are not bypassed by the orWhere on certificate_number.
+            $query->where(function ($q) use ($search) {
+                $q->where('certificate_number', 'like', "%{$search}%")
+                  ->orWhereHas('parishioner', function ($pq) use ($search) {
+                      $pq->where('first_name', 'like', "%{$search}%")
+                         ->orWhere('last_name', 'like', "%{$search}%")
+                         ->orWhere('middle_name', 'like', "%{$search}%")
+                         ->orWhere('contact_number', 'like', "%{$search}%")
+                         ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", ["%{$search}%"])
+                         ->orWhereRaw("CONCAT(first_name, ' ', middle_name, ' ', last_name) ILIKE ?", ["%{$search}%"]);
+                  })
+                  ->orWhere('purpose', 'like', "%{$search}%")
+                  ->orWhere('officiating_priest', 'like', "%{$search}%")
+                  ->orWhere('sponsor_ninong', 'like', "%{$search}%")
+                  ->orWhere('sponsor_ninang', 'like', "%{$search}%")
+                  ->orWhere('register_no', 'like', "%{$search}%")
+                  ->orWhere('page_no', 'like', "%{$search}%")
+                  ->orWhere('line_no', 'like', "%{$search}%");
+            });
+        }
+
+        $unverifiedCount = Certificate::whereIn('type', \App\Models\Certificate::REQUIRES_RECORD)
+            ->whereIn('record_verification_status', ['pending', 'unverified'])
+            ->count();
 
         $certificates = $query->orderByDesc('issued_date')
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.certificates.index', compact('certificates'));
+        return view('admin.certificates.index', compact('certificates', 'unverifiedCount'));
     }
 
     public function create(Request $request)

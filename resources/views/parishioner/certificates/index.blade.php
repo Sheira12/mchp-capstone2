@@ -22,7 +22,85 @@
         </a>
     </div>
 
+    {{-- Search & Filter bar --}}
+    <form id="cert-search-form" method="GET" action="{{ route('parishioner.certificates.index') }}"
+          style="background:#fff;border-radius:1rem;border:1px solid #e8edf5;box-shadow:0 2px 8px rgba(0,0,0,0.04);padding:1rem;display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+        {{-- Search --}}
+        <div style="flex:1;min-width:200px;">
+            <label style="font-size:0.72rem;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:4px;">
+                Search
+                <svg id="cert-spinner" style="display:none;width:11px;height:11px;margin-left:4px;vertical-align:middle;animation:spin 0.7s linear infinite;" fill="none" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke="#2563eb" stroke-width="4" style="opacity:0.25"/>
+                    <path fill="#2563eb" d="M4 12a8 8 0 018-8v8z" style="opacity:0.75"/>
+                </svg>
+            </label>
+            <div style="position:relative;">
+                <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#94a3b8;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7 7 0 105.65 5.65a7 7 0 0011.35 11.35z"/>
+                </svg>
+                <input type="text" id="cert-search-input" name="search" value="{{ request('search') }}"
+                       placeholder="Certificate #, purpose…"
+                       autocomplete="off"
+                       style="width:100%;padding:0.5rem 0.75rem 0.5rem 2rem;border:1.5px solid #e2e8f0;border-radius:0.625rem;font-size:0.875rem;color:#0f172a;outline:none;transition:border-color 0.15s;"
+                       onfocus="this.style.borderColor='#2563eb';" onblur="this.style.borderColor='#e2e8f0';">
+            </div>
+        </div>
+        {{-- Type filter --}}
+        <div>
+            <label style="font-size:0.72rem;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:4px;">Type</label>
+            <select name="type" onchange="document.getElementById('cert-search-form').submit()"
+                    style="padding:0.5rem 0.75rem;border:1.5px solid #e2e8f0;border-radius:0.625rem;font-size:0.875rem;color:#0f172a;background:#fff;cursor:pointer;">
+                <option value="">All Types</option>
+                <option value="baptism"         @selected(request('type')==='baptism')>Baptism</option>
+                <option value="confirmation"    @selected(request('type')==='confirmation')>Confirmation</option>
+                <option value="marriage"        @selected(request('type')==='marriage')>Marriage</option>
+                <option value="first_communion" @selected(request('type')==='first_communion')>First Communion</option>
+                <option value="death_burial"    @selected(request('type')==='death_burial')>Death/Burial</option>
+                <option value="no_impediment"   @selected(request('type')==='no_impediment')>No Impediment</option>
+                <option value="membership"      @selected(request('type')==='membership')>Membership</option>
+            </select>
+        </div>
+        {{-- Status filter --}}
+        <div>
+            <label style="font-size:0.72rem;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:4px;">Status</label>
+            <select name="status" onchange="document.getElementById('cert-search-form').submit()"
+                    style="padding:0.5rem 0.75rem;border:1.5px solid #e2e8f0;border-radius:0.625rem;font-size:0.875rem;color:#0f172a;background:#fff;cursor:pointer;">
+                <option value="">All Status</option>
+                <option value="draft"    @selected(request('status')==='draft')>Processing</option>
+                <option value="issued"   @selected(request('status')==='issued')>Issued</option>
+                <option value="released" @selected(request('status')==='released')>Released</option>
+            </select>
+        </div>
+        @if(request()->hasAny(['search','type','status']))
+        <a href="{{ route('parishioner.certificates.index') }}"
+           style="display:inline-flex;align-items:center;gap:5px;padding:0.5rem 1rem;background:#f1f5f9;color:#475569;font-size:0.8125rem;font-weight:600;border-radius:0.625rem;text-decoration:none;align-self:flex-end;transition:background 0.15s;"
+           onmouseover="this.style.background='#e2e8f0';" onmouseout="this.style.background='#f1f5f9';">
+            <svg style="width:12px;height:12px;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            Clear
+        </a>
+        @endif
+    </form>
+
     @if($certificates->isEmpty())
+    @if(request()->hasAny(['search','type','status']))
+    {{-- Empty search results --}}
+    <div style="background:#fff;border-radius:1.25rem;border:1px solid #f1f5f9;box-shadow:0 2px 8px rgba(0,0,0,0.04);padding:4rem 2rem;text-align:center;">
+        <div style="width:72px;height:72px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
+            <svg style="width:36px;height:36px;color:#2563eb;" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7 7 0 105.65 5.65a7 7 0 0011.35 11.35z"/>
+            </svg>
+        </div>
+        <h3 style="font-size:1.125rem;font-weight:700;color:#0f172a;margin:0 0 0.5rem;">No results found</h3>
+        <p style="font-size:0.875rem;color:#64748b;max-width:360px;margin:0 auto 1.5rem;line-height:1.6;">
+            No certificates matched your search. Try different keywords or clear the filters.
+        </p>
+        <a href="{{ route('parishioner.certificates.index') }}"
+           style="display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;font-weight:700;font-size:0.875rem;padding:0.75rem 1.75rem;border-radius:0.875rem;text-decoration:none;">
+            Clear Search
+        </a>
+    </div>
+    @else
+    {{-- No certificates at all --}}
     <div style="background:#fff;border-radius:1.25rem;border:1px solid #f1f5f9;box-shadow:0 2px 8px rgba(0,0,0,0.04);padding:4rem 2rem;text-align:center;">
         <div style="width:72px;height:72px;background:#fef3c7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
             <svg style="width:36px;height:36px;color:#d97706;" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -39,6 +117,7 @@
             Request a Certificate
         </a>
     </div>
+    @endif
 
     @else
 
@@ -224,3 +303,30 @@
 
 </div>
 @endsection
+
+@push('scripts')
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+<script>
+(function () {
+    const input   = document.getElementById('cert-search-input');
+    const form    = document.getElementById('cert-search-form');
+    const spinner = document.getElementById('cert-spinner');
+    if (!input || !form) return;
+
+    let timer;
+    input.addEventListener('input', function () {
+        clearTimeout(timer);
+        if (spinner) spinner.style.display = 'inline-block';
+        timer = setTimeout(function () {
+            form.submit();
+        }, 300);
+    });
+
+    window.addEventListener('pageshow', function () {
+        if (spinner) spinner.style.display = 'none';
+    });
+})();
+</script>
+@endpush
