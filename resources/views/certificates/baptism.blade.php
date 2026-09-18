@@ -62,8 +62,13 @@ $ornSm = '<svg width="130" height="7" viewBox="0 0 130 7" xmlns="http://www.w3.o
             <td class="det-gap"></td>
             <td class="det-right">
                 <div class="det-item"><span class="det-lbl">Officiating Priest</span><span class="det-val {{ $certificate->sacramentalRecord?->celebrant ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->celebrant ?? 'Not recorded' }}</span></div>
-                <div class="det-item"><span class="det-lbl">Godfather (Ninong)</span><span class="det-val {{ ($certificate->sacramentalRecord?->godparents[0] ?? null) ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->godparents[0] ?? 'Not recorded' }}</span></div>
-                <div class="det-item"><span class="det-lbl">Godmother (Ninang)</span><span class="det-val {{ ($certificate->sacramentalRecord?->godparents[1] ?? null) ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->godparents[1] ?? 'Not recorded' }}</span></div>
+                @php
+                    $gps   = $certificate->sacramentalRecord?->godparents ?? [];
+                    $ninong = $gps[0] ?? null;
+                    $ninang = $gps[1] ?? null;
+                @endphp
+                <div class="det-item"><span class="det-lbl">Godfather (Ninong)</span><span class="det-val {{ $ninong ? '' : 'na' }}">{{ $ninong ?? 'Not recorded' }}</span></div>
+                <div class="det-item"><span class="det-lbl">Godmother (Ninang)</span><span class="det-val {{ $ninang ? '' : 'na' }}">{{ $ninang ?? 'Not recorded' }}</span></div>
                 <div class="det-item"><span class="det-lbl">Register / Page / Line</span><span class="det-val">{{ $certificate->sacramentalRecord?->register_number ?? '—' }} / {{ $certificate->sacramentalRecord?->page_number ?? '—' }} / {{ $certificate->sacramentalRecord?->line_number ?? '—' }}</span></div>
             </td>
         </tr></table>

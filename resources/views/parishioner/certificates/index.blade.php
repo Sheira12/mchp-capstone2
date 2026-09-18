@@ -63,8 +63,9 @@
             ];
             $tm = $typeMap[$cert->type] ?? ['icon'=>'📜','bg'=>'#f8faff','color'=>'#2563eb'];
 
-            // Can download if status is issued or released (controller auto-regenerates PDF if missing)
-            $canDownload = in_array($cert->status, ['issued', 'released']);
+            // Use model method — gates on both status AND record_verification_status
+            $canDownload = $cert->isDownloadable();
+            $verStatus   = $cert->record_verification_status ?? 'pending';
         @endphp
 
         <div style="background:#fff;border-radius:1.25rem;border:1px solid #e8edf5;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;transition:all 0.25s ease;"
@@ -110,6 +111,41 @@
                 </div>
                 @endif
 
+                {{-- Record Verification Status badge --}}
+                @if(in_array($cert->type, \App\Models\Certificate::REQUIRES_RECORD))
+                @php
+                    $vBg    = match($verStatus) {
+                        'verified'   => '#d1fae5',
+                        'unverified' => '#fee2e2',
+                        default      => '#fef3c7',
+                    };
+                    $vColor = match($verStatus) {
+                        'verified'   => '#065f46',
+                        'unverified' => '#991b1b',
+                        default      => '#92400e',
+                    };
+                    $vLabel = match($verStatus) {
+                        'verified'   => '✓ Record Verified',
+                        'unverified' => '⚠ No Record Found',
+                        default      => '⏳ Pending Verification',
+                    };
+                    $vIcon = match($verStatus) {
+                        'verified'   => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+                        'unverified' => 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
+                        default      => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+                    };
+                @endphp
+                <div style="background:{{ $vBg }};border-radius:0.625rem;padding:0.625rem 0.875rem;margin-bottom:1rem;font-size:0.8rem;color:{{ $vColor }};display:flex;align-items:flex-start;gap:6px;">
+                    <svg style="width:14px;height:14px;flex-shrink:0;margin-top:1px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $vIcon }}"/></svg>
+                    <div>
+                        <span style="font-weight:700;">{{ $vLabel }}</span>
+                        @if($cert->staff_notes)
+                        <br><span style="font-size:0.75rem;opacity:0.8;">{{ $cert->staff_notes }}</span>
+                        @endif
+                    </div>
+                </div>
+                @endif
+
                 {{-- Actions --}}
                 <div style="display:flex;align-items:center;gap:0.75rem;padding-top:1rem;border-top:1px solid #f1f5f9;flex-wrap:wrap;">
 
@@ -122,7 +158,15 @@
                         <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                         Download PDF
                     </a>
+                    @elseif($verStatus === 'unverified')
+                    {{-- Blocked: no record found --}}
+                    <span style="display:inline-flex;align-items:center;gap:6px;background:#fee2e2;color:#991b1b;font-size:0.8125rem;font-weight:600;padding:0.5rem 1.125rem;border-radius:0.625rem;cursor:not-allowed;"
+                          title="Download unavailable — no matching parish record found. Contact the parish office.">
+                        <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                        Unavailable
+                    </span>
                     @else
+                    {{-- Processing / pending verification --}}
                     <span style="display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;color:#64748b;font-size:0.8125rem;font-weight:600;padding:0.5rem 1.125rem;border-radius:0.625rem;">
                         <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         Processing…

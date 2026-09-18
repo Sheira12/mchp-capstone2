@@ -240,11 +240,12 @@
                     <img src="{{ Storage::url($announcement->image_path) }}" alt="{{ $announcement->title }}"
                          style="width:100%;height:100%;object-fit:cover;transition:transform 0.4s ease;"
                          onmouseover="this.style.transform='scale(1.05)';"
-                         onmouseout="this.style.transform='';">
-                    @else
-                    <div style="width:100%;height:100%;background:linear-gradient(135deg,#dbeafe,#e0e7ff);display:flex;align-items:center;justify-content:center;">
+                         onmouseout="this.style.transform='';"
+                         onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    {{-- Fallback shown when image fails to load (e.g. ephemeral filesystem on Render) --}}
+                    <div style="display:none;width:100%;height:100%;background:linear-gradient(135deg,#dbeafe,#e0e7ff);align-items:center;justify-content:center;flex-direction:column;gap:8px;">
                         <svg width="48" height="48" fill="none" stroke="#93c5fd" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
-                    </div>
+                        <span style="font-size:0.7rem;color:#93c5fd;font-weight:600;">Parish Announcement</span>
                     @endif
                     <div style="position:absolute;top:12px;left:12px;">
                         <span style="background:#2563eb;color:#fff;font-size:0.65rem;font-weight:700;padding:3px 10px;border-radius:9999px;text-transform:uppercase;letter-spacing:0.08em;">{{ $announcement->category }}</span>

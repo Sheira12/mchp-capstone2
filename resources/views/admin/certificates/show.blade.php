@@ -22,6 +22,18 @@
                 <button type="submit" class="btn-primary text-sm">Mark Released</button>
             </form>
             @endif
+            {{-- Manual verification for unverified/pending records --}}
+            @if(in_array($certificate->type, \App\Models\Certificate::REQUIRES_RECORD)
+                && in_array($certificate->record_verification_status ?? 'pending', ['pending','unverified']))
+            <form method="POST" action="{{ route('admin.certificates.verify-record', $certificate) }}">
+                @csrf
+                <button type="submit"
+                        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg transition"
+                        onclick="return confirm('Mark this certificate as verified (record found)?')">
+                    ✓ Verify Record
+                </button>
+            </form>
+            @endif
         </div>
     </div>
 
@@ -52,6 +64,18 @@
             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-{{ $sc }}-100 text-{{ $sc }}-800">
                 {{ ucfirst($certificate->status) }}
             </span>
+            {{-- Record verification status badge --}}
+            @if(in_array($certificate->type, \App\Models\Certificate::REQUIRES_RECORD))
+            @php
+                $vColors = ['verified'=>'green','unverified'=>'red','pending'=>'amber'];
+                $vc = $vColors[$certificate->record_verification_status ?? 'pending'] ?? 'amber';
+                $vLabels = ['verified'=>'Record Verified','unverified'=>'No Record Found','pending'=>'Pending Verification'];
+                $vl = $vLabels[$certificate->record_verification_status ?? 'pending'] ?? 'Pending';
+            @endphp
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-{{ $vc }}-100 text-{{ $vc }}-800 ml-2">
+                {{ $vl }}
+            </span>
+            @endif
         </div>
 
         <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">

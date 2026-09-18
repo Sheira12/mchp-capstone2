@@ -19,6 +19,31 @@ class Certificate extends Model
         'membership'      => 'Certificate of Parish Membership',
     ];
 
+    /**
+     * Sacrament-type certificates that require a matching sacramental record
+     * before a parishioner can download the generated PDF.
+     */
+    const REQUIRES_RECORD = [
+        'baptism', 'confirmation', 'marriage', 'first_communion', 'death_burial',
+    ];
+
+    /**
+     * Maps certificate type → sacramental_record type
+     */
+    const TYPE_TO_SACRAMENT = [
+        'baptism'         => 'baptism',
+        'confirmation'    => 'confirmation',
+        'marriage'        => 'marriage',
+        'first_communion' => 'first_communion',
+        'death_burial'    => 'death_burial',
+    ];
+
+    const VERIFICATION_STATUSES = [
+        'pending'    => 'Pending Verification',
+        'verified'   => 'Verified',
+        'unverified' => 'Unverified / No Record Found',
+    ];
+
     protected $fillable = [
         'parishioner_id',
         'sacramental_record_id',
@@ -30,6 +55,8 @@ class Certificate extends Model
         'file_path',
         'qr_code_path',
         'status',
+        'record_verification_status',
+        'staff_notes',
         'payment_id',
         'notes',
     ];
@@ -111,5 +138,28 @@ class Certificate extends Model
     public function getTypeLabel(): string
     {
         return self::TYPES[$this->type] ?? ucfirst($this->type);
+    }
+
+    /**
+     * Returns true when a parishioner is allowed to download this certificate.
+     * For sacrament-type certificates: must be verified + issued/released.
+     * For membership/no_impediment: just issued/released is enough.
+     */
+    public function isDownloadable(): bool
+    {
+        if (!in_array($this->status, ['issued', 'released'])) {
+            return false;
+        }
+
+        if (in_array($this->type, self::REQUIRES_RECORD)) {
+            return $this->record_verification_status === 'verified';
+        }
+
+        return true; // membership, no_impediment don't need a record
+    }
+
+    public function getVerificationStatusLabel(): string
+    {
+        return self::VERIFICATION_STATUSES[$this->record_verification_status] ?? 'Pending';
     }
 }

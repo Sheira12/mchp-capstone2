@@ -39,7 +39,22 @@ $ornSm = '<svg width="130" height="7" viewBox="0 0 130 7" xmlns="http://www.w3.o
         </td>
         <td class="det-gap"></td>
         <td class="det-right">
-            <div class="det-item"><span class="det-lbl">Sponsor (Ninong / Ninang)</span><span class="det-val {{ ($certificate->sacramentalRecord?->sponsors[0] ?? $certificate->sacramentalRecord?->godparents[0] ?? null) ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->sponsors[0] ?? ($certificate->sacramentalRecord?->godparents[0] ?? 'Not recorded') }}</span></div>
+            {{-- Sponsor: check sponsors[] first (set via admin edit), then godparents[], then 'Not recorded' --}}
+            @php
+                $sponsorName = null;
+                if (!empty($certificate->sacramentalRecord?->sponsors)) {
+                    $sponsorName = is_array($certificate->sacramentalRecord->sponsors)
+                        ? implode(', ', array_filter($certificate->sacramentalRecord->sponsors))
+                        : $certificate->sacramentalRecord->sponsors;
+                }
+                if (!$sponsorName && !empty($certificate->sacramentalRecord?->godparents)) {
+                    $gp = $certificate->sacramentalRecord->godparents;
+                    $sponsorName = is_array($gp)
+                        ? implode(', ', array_filter($gp))
+                        : $gp;
+                }
+            @endphp
+            <div class="det-item"><span class="det-lbl">Sponsor (Ninong / Ninang)</span><span class="det-val {{ $sponsorName ? '' : 'na' }}">{{ $sponsorName ?? 'Not recorded' }}</span></div>
             <div class="det-item"><span class="det-lbl">Confirmation Name</span><span class="det-val na">Not recorded</span></div>
             <div class="det-item"><span class="det-lbl">Register No.</span><span class="det-val">{{ $certificate->sacramentalRecord?->register_number ?? '—' }}</span></div>
             <div class="det-item"><span class="det-lbl">Page / Line</span><span class="det-val">{{ $certificate->sacramentalRecord?->page_number ?? '—' }} / {{ $certificate->sacramentalRecord?->line_number ?? '—' }}</span></div>

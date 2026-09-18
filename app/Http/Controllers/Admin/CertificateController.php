@@ -122,9 +122,39 @@ class CertificateController extends Controller
         }
     }
 
-    public function release(Certificate $certificate)
+    /**
+     * Manually mark a certificate's sacramental record as verified by staff.
+     * Used when the auto-match fails but staff have manually confirmed the record.
+     */
+    public function verifyRecord(Certificate $certificate)
     {
-        $certificate->update(['status' => 'released']);
+        $certificate->update([
+            'record_verification_status' => 'verified',
+            'staff_notes'                => 'Manually verified by ' . auth()->user()->name . ' on ' . now()->format('M d, Y'),
+        ]);
+
+        AuditLog::record('verify_record', $certificate, ['record_verification_status' => 'pending'], ['record_verification_status' => 'verified'], 'Record manually verified by admin');
+
+        // Notify the parishioner
+        $linkedUser = \App\Models\User::where('parishioner_id', $certificate->parishioner_id)->first();
+        if ($linkedUser) {
+            try {
+                $linkedUser->notify(new \App\Notifications\ParishionerStatusNotification(
+                    'Certificate Record Verified ✓',
+                    'Your ' . $certificate->getTypeLabel() . ' record has been verified by the parish office. Once the certificate is generated, you can download it.',
+                    route('parishioner.certificates.index'),
+                    'document'
+                ));
+            } catch (\Exception $e) {
+                \Log::warning('Certificate verify notification failed: ' . $e->getMessage());
+            }
+        }
+
+        return back()->with('success', 'Certificate record marked as verified. Parishioner has been notified.');
+    }
+
+    public function release(Certificate $certificate)
+    {        $certificate->update(['status' => 'released']);
         AuditLog::record('release', $certificate, ['status' => 'issued'], ['status' => 'released'], 'Certificate released');
 
         // Notify the parishioner their certificate is ready

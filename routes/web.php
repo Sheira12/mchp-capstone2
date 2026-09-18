@@ -212,6 +212,7 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
     Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])->name('certificates.download');
     Route::post('/certificates/{certificate}/regenerate', [CertificateController::class, 'regenerate'])->name('certificates.regenerate');
     Route::post('/certificates/{certificate}/release', [CertificateController::class, 'release'])->name('certificates.release');
+    Route::post('/certificates/{certificate}/verify-record', [CertificateController::class, 'verifyRecord'])->name('certificates.verify-record');
     Route::post('/certificates/batch-print', [CertificateController::class, 'batchPrint'])->name('certificates.batch-print');
     Route::resource('certificates', CertificateController::class);
 
