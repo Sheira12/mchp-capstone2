@@ -410,9 +410,10 @@
 
     // ── Notification Bell System ────────────────────────────────────
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-    let lastCount = 0;
-    let seenIds   = new Set();
-    let panelOpen = false;
+    let lastCount      = 0;
+    let seenIds        = new Set();
+    let panelOpen      = false;
+    let firstFetchDone = false; // prevents toasts on initial page load
 
     function toggleNotifPanel() {
         panelOpen = !panelOpen;
@@ -531,19 +532,19 @@
             updateBadge(data.count);
             renderNotifList(data.notifications);
 
-            // Show toast for any NEW notifications since last poll
+            // Show toast only for genuinely new notifications (not on first page load)
             if (data.count > 0) {
                 data.notifications.forEach(n => {
                     if (!seenIds.has(n.id)) {
                         seenIds.add(n.id);
-                        // Only show toast if this is truly new (not on first load)
-                        if (lastCount !== null) {
+                        if (firstFetchDone) {
                             showToast(n);
                         }
                     }
                 });
             }
-            lastCount = data.count;
+            lastCount      = data.count;
+            firstFetchDone = true;
 
         } catch (e) {
             // Silent fail — don't break the admin if notification API is down
@@ -579,9 +580,7 @@
     }
 
     // Initial load then poll every 15 seconds
-    // Set lastCount to null on first load so no toast is shown for existing notifications
-    lastCount = null;
-    fetchNotifications().then(() => { lastCount = 0; });
+    fetchNotifications();
     setInterval(fetchNotifications, 15000);
 </script>
 

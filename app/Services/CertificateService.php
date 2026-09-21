@@ -33,11 +33,21 @@ class CertificateService
         // Convert SVG to base64 data URI — DomPDF embeds this without HTTP or imagick
         $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
 
-        // Generate PDF — landscape letter for better layout
+        // ── Build the merged record data object ─────────────────────────────
+        // cert_overrides (approved parishioner corrections) take precedence
+        // over the linked sacramental_record values.  This ensures:
+        //   • approved corrections always appear in the PDF
+        //   • PDFs regenerated after a Render redeploy (ephemeral FS wipes the
+        //     file but the DB survives) still include all corrections
+        //   • certificates without a linked sacramental record still work
+        $recData = $this->buildRecordData($certificate);
+
+        // Generate PDF
         $view = $this->getTemplateView($certificate->type);
 
         $pdf = Pdf::loadView($view, [
             'certificate' => $certificate,
+            'recData'     => $recData,   // merged record data — use this in templates
             'qrCode'      => $qrCode,
             'qrBase64'    => $qrBase64,
             'qrImageUrl'  => Storage::disk('public')->url($qrImagePath),
@@ -64,6 +74,59 @@ class CertificateService
         ]);
 
         return $certificate->fresh();
+    }
+
+    /**
+     * Build a plain-PHP object that templates use instead of reaching directly
+     * into $certificate->sacramentalRecord.
+     *
+     * Priority: cert_overrides → sacramentalRecord → null/empty defaults.
+     *
+     * Keys returned (all nullable strings unless noted):
+     *   date_administered (Carbon|null), celebrant, venue,
+     *   godparents (array), sponsors (array), witnesses (array),
+     *   register_number, page_number, line_number, notes,
+     *   spouse_name, parents_names,
+     *   has_overrides (bool)
+     */
+    public function buildRecordData(Certificate $certificate): array
+    {
+        $rec = $certificate->sacramentalRecord;
+        $ov  = is_array($certificate->cert_overrides) ? $certificate->cert_overrides : [];
+
+        // Helper: prefer override, fall back to sacramental record, then null
+        $str  = fn(string $k) => ($ov[$k] ?? null) ?: ($rec?->{$k} ?? null);
+        $arr  = fn(string $k) => (isset($ov[$k]) && is_array($ov[$k]) && count(array_filter($ov[$k])))
+                                    ? array_values(array_filter($ov[$k]))
+                                    : (is_array($rec?->{$k}) ? array_values(array_filter($rec->{$k})) : []);
+
+        // date_administered — could be a Carbon instance from the model or a raw string from overrides
+        $dateRaw = $ov['date_administered'] ?? null;
+        if ($dateRaw) {
+            try {
+                $date = \Carbon\Carbon::parse($dateRaw);
+            } catch (\Exception) {
+                $date = null;
+            }
+        } else {
+            $date = $rec?->date_administered; // already cast to Carbon by SacramentalRecord model
+        }
+
+        return [
+            'date_administered' => $date,
+            'celebrant'         => $str('celebrant'),
+            'venue'             => $str('venue'),
+            'godparents'        => $arr('godparents'),
+            'sponsors'          => $arr('sponsors'),
+            'witnesses'         => $arr('witnesses'),
+            'register_number'   => $str('register_number'),
+            'page_number'       => $str('page_number'),
+            'line_number'       => $str('line_number'),
+            'notes'             => $str('notes'),
+            'spouse_name'       => $str('spouse_name'),
+            'parents_names'     => $str('parents_names'),
+            'has_overrides'     => !empty($ov),
+        ];
     }
 
     public function autoGenerate(SacramentalRecord $record): ?Certificate

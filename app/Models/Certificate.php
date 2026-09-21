@@ -57,6 +57,7 @@ class Certificate extends Model
         'status',
         'record_verification_status',
         'staff_notes',
+        'cert_overrides',
         'payment_id',
         'notes',
         'released_at',
@@ -65,9 +66,10 @@ class Certificate extends Model
     ];
 
     protected $casts = [
-        'issued_date'  => 'date',
-        'released_at'  => 'datetime',
-        'requested_at' => 'datetime',
+        'issued_date'    => 'date',
+        'released_at'    => 'datetime',
+        'requested_at'   => 'datetime',
+        'cert_overrides' => 'array',
     ];
 
     protected static function boot()

@@ -54,22 +54,28 @@ $ornSm = '<svg width="130" height="7" viewBox="0 0 130 7" xmlns="http://www.w3.o
     <div class="details-wrap">
         <table class="details-tbl" cellpadding="0" cellspacing="0"><tr>
             <td class="det-left">
-                <div class="det-item"><span class="det-lbl">Date of Baptism</span><span class="det-val {{ $certificate->sacramentalRecord?->date_administered ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->date_administered?->format('F d, Y') ?? 'Not recorded' }}</span></div>
+                <div class="det-item"><span class="det-lbl">Date of Baptism</span><span class="det-val {{ $recData['date_administered'] ? '' : 'na' }}">{{ $recData['date_administered']?->format('F d, Y') ?? 'Not recorded' }}</span></div>
                 <div class="det-item"><span class="det-lbl">Date of Birth</span><span class="det-val {{ $certificate->parishioner->birthdate ? '' : 'na' }}">{{ $certificate->parishioner->birthdate?->format('F d, Y') ?? 'Not recorded' }}</span></div>
-                <div class="det-item"><span class="det-lbl">Parents</span><span class="det-val {{ $certificate->sacramentalRecord?->notes ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->notes ?? 'Not recorded' }}</span></div>
-                <div class="det-item"><span class="det-lbl">Baptism Location</span><span class="det-val">{{ $certificate->sacramentalRecord?->venue ?? $parish['name'] }}</span></div>
+                <div class="det-item"><span class="det-lbl">Parents</span><span class="det-val {{ ($recData['parents_names'] ?? $recData['notes']) ? '' : 'na' }}">{{ $recData['parents_names'] ?? $recData['notes'] ?? 'Not recorded' }}</span></div>
+                <div class="det-item"><span class="det-lbl">Baptism Location</span><span class="det-val">{{ $recData['venue'] ?? $parish['name'] }}</span></div>
             </td>
             <td class="det-gap"></td>
             <td class="det-right">
-                <div class="det-item"><span class="det-lbl">Officiating Priest</span><span class="det-val {{ $certificate->sacramentalRecord?->celebrant ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->celebrant ?? 'Not recorded' }}</span></div>
+                <div class="det-item"><span class="det-lbl">Officiating Priest</span><span class="det-val {{ $recData['celebrant'] ? '' : 'na' }}">{{ $recData['celebrant'] ?? 'Not recorded' }}</span></div>
                 @php
-                    $gps   = $certificate->sacramentalRecord?->godparents ?? [];
-                    $ninong = $gps[0] ?? null;
-                    $ninang = $gps[1] ?? null;
+                    $gps    = $recData['godparents'];
+                    // Strip NINONG:/NINANG: tags if present
+                    $ninong = null; $ninang = null;
+                    foreach ($gps as $g) {
+                        if (str_starts_with($g, 'NINONG:') && !$ninong) { $ninong = substr($g, 7); }
+                        elseif (str_starts_with($g, 'NINANG:') && !$ninang) { $ninang = substr($g, 7); }
+                        elseif (!$ninong) { $ninong = $g; }
+                        elseif (!$ninang) { $ninang = $g; }
+                    }
                 @endphp
                 <div class="det-item"><span class="det-lbl">Godfather (Ninong)</span><span class="det-val {{ $ninong ? '' : 'na' }}">{{ $ninong ?? 'Not recorded' }}</span></div>
                 <div class="det-item"><span class="det-lbl">Godmother (Ninang)</span><span class="det-val {{ $ninang ? '' : 'na' }}">{{ $ninang ?? 'Not recorded' }}</span></div>
-                <div class="det-item"><span class="det-lbl">Register / Page / Line</span><span class="det-val">{{ $certificate->sacramentalRecord?->register_number ?? '—' }} / {{ $certificate->sacramentalRecord?->page_number ?? '—' }} / {{ $certificate->sacramentalRecord?->line_number ?? '—' }}</span></div>
+                <div class="det-item"><span class="det-lbl">Register / Page / Line</span><span class="det-val">{{ $recData['register_number'] ?? '—' }} / {{ $recData['page_number'] ?? '—' }} / {{ $recData['line_number'] ?? '—' }}</span></div>
             </td>
         </tr></table>
     </div>

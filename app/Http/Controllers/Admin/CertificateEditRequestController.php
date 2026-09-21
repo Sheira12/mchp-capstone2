@@ -36,7 +36,11 @@ class CertificateEditRequestController extends Controller
     }
 
     /**
-     * Approve a correction request — applies changes to sacramental_record, regenerates PDF.
+     * Approve a correction request.
+     * Writes approved changes BOTH to sacramental_record (if linked) AND to
+     * cert_overrides on the certificate itself.  cert_overrides is the
+     * authoritative source for PDF generation — it survives Render redeployments
+     * (ephemeral FS) and works even when no sacramental record is linked.
      */
     public function approve(Request $request, CertificateEditRequest $editRequest)
     {
@@ -53,62 +57,89 @@ class CertificateEditRequestController extends Controller
             $record      = $certificate->sacramentalRecord;
             $changes     = $editRequest->requested_changes;
 
-            // Apply changes to sacramental record if one is linked
-            if ($record) {
-                $update = [];
+            // ── 1. Build the cert_overrides array (merges with any existing overrides)
+            $overrides = $certificate->cert_overrides ?? [];
 
-                if (isset($changes['date_administered'])) $update['date_administered'] = $changes['date_administered'];
-                if (isset($changes['celebrant']))         $update['celebrant']         = $changes['celebrant'];
-                if (isset($changes['venue']))             $update['venue']             = $changes['venue'];
-                if (isset($changes['register_number']))   $update['register_number']   = $changes['register_number'];
-                if (isset($changes['page_number']))       $update['page_number']       = $changes['page_number'];
-                if (isset($changes['line_number']))       $update['line_number']        = $changes['line_number'];
-                if (isset($changes['notes']))             $update['notes']             = $changes['notes'];
+            $simpleMap = [
+                'date_administered' => 'date_administered',
+                'celebrant'         => 'celebrant',
+                'venue'             => 'venue',
+                'register_number'   => 'register_number',
+                'page_number'       => 'page_number',
+                'line_number'       => 'line_number',
+                'notes'             => 'notes',
+                'spouse_name'       => 'spouse_name',
+                'parents_names'     => 'parents_names',
+            ];
 
-                // Handle sponsor/godparent arrays
-                if (isset($changes['ninong']) || isset($changes['ninang'])) {
-                    $ninong = $changes['ninong'] ?? [];
-                    $ninang = $changes['ninang'] ?? [];
-                    // Store as a flat array: first come ninong, then ninang
-                    // Tag each so the template can split them properly
-                    $godparents = array_merge(
-                        array_map(fn($n) => 'NINONG:' . $n, $ninong),
-                        array_map(fn($n) => 'NINANG:' . $n, $ninang)
-                    );
-                    if (!empty($godparents)) $update['godparents'] = $godparents;
-                }
-
-                if (isset($changes['sponsors'])) {
-                    $sponsors = array_values(array_filter($changes['sponsors']));
-                    if (!empty($sponsors)) $update['sponsors'] = $sponsors;
-                }
-
-                if (isset($changes['witnesses'])) {
-                    $witnesses = array_values(array_filter($changes['witnesses']));
-                    if (!empty($witnesses)) $update['witnesses'] = $witnesses;
-                }
-
-                if (!empty($update)) {
-                    $record->update($update);
+            foreach ($simpleMap as $changesKey => $overrideKey) {
+                if (isset($changes[$changesKey]) && trim($changes[$changesKey]) !== '') {
+                    $overrides[$overrideKey] = $changes[$changesKey];
                 }
             }
 
-            // Mark the edit request as approved
+            // Handle ninong/ninang → stored as tagged godparents array
+            if (isset($changes['ninong']) || isset($changes['ninang'])) {
+                $ninong = array_values(array_filter($changes['ninong'] ?? []));
+                $ninang = array_values(array_filter($changes['ninang'] ?? []));
+                $tagged = array_merge(
+                    array_map(fn($n) => 'NINONG:' . $n, $ninong),
+                    array_map(fn($n) => 'NINANG:' . $n, $ninang)
+                );
+                if (!empty($tagged)) {
+                    $overrides['godparents'] = $tagged;
+                }
+            }
+
+            if (isset($changes['sponsors'])) {
+                $sponsors = array_values(array_filter($changes['sponsors']));
+                if (!empty($sponsors)) $overrides['sponsors'] = $sponsors;
+            }
+
+            if (isset($changes['witnesses'])) {
+                $witnesses = array_values(array_filter($changes['witnesses']));
+                if (!empty($witnesses)) $overrides['witnesses'] = $witnesses;
+            }
+
+            // ── 2. Persist overrides on the certificate row
+            $certificate->update(['cert_overrides' => $overrides]);
+
+            // ── 3. Also mirror to sacramental_record if one is linked
+            //       (keeps the registry in sync for other purposes)
+            if ($record) {
+                $recUpdate = [];
+                foreach ($simpleMap as $changesKey => $col) {
+                    if (isset($changes[$changesKey]) && trim($changes[$changesKey]) !== '') {
+                        $recUpdate[$col] = $changes[$changesKey];
+                    }
+                }
+                if (isset($overrides['godparents'])) {
+                    $recUpdate['godparents'] = $overrides['godparents'];
+                }
+                if (isset($overrides['sponsors']))  $recUpdate['sponsors']  = $overrides['sponsors'];
+                if (isset($overrides['witnesses'])) $recUpdate['witnesses'] = $overrides['witnesses'];
+                if (!empty($recUpdate)) {
+                    $record->update($recUpdate);
+                }
+            }
+
+            // ── 4. Mark the edit request as approved
             $editRequest->update([
-                'status'          => 'approved',
-                'reviewed_by'     => auth()->id(),
-                'reviewed_at'     => now(),
-                'staff_response'  => $validated['staff_response'] ?? 'Approved by ' . auth()->user()->name,
+                'status'         => 'approved',
+                'reviewed_by'    => auth()->id(),
+                'reviewed_at'    => now(),
+                'staff_response' => $validated['staff_response'] ?? 'Approved by ' . auth()->user()->name,
             ]);
 
-            AuditLog::record('approve_edit_request', $certificate,
+            AuditLog::record(
+                'approve_edit_request', $certificate,
                 ['edit_request_id' => $editRequest->id],
                 $changes,
                 'Edit request approved by ' . auth()->user()->name
             );
         });
 
-        // Re-generate PDF with updated data
+        // ── 5. Re-generate PDF — now reads from cert_overrides first
         set_time_limit(120);
         $certificate = $editRequest->certificate->fresh(['parishioner', 'sacramentalRecord', 'issuedBy', 'qrCode']);
         try {
@@ -117,7 +148,7 @@ class CertificateEditRequestController extends Controller
             \Log::error('PDF re-generation after edit approval failed: ' . $e->getMessage());
         }
 
-        // Notify the parishioner
+        // ── 6. Notify the parishioner
         $linkedUser = \App\Models\User::where('parishioner_id', $certificate->parishioner_id)->first();
         if ($linkedUser) {
             try {

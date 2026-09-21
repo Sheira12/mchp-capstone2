@@ -5,9 +5,12 @@
 </head>
 <body>
 @php
-$nameLen  = max(strlen($certificate->parishioner->full_name ?? ''), strlen($certificate->sacramentalRecord?->spouseParishioner?->full_name ?? ''));
+$spouseNameOv = $recData['spouse_name'] ?? null;
+$spouseParishioner = $certificate->sacramentalRecord?->spouseParishioner;
+$spouseDisplayName = $spouseNameOv ?? $spouseParishioner?->full_name;
+$nameLen  = max(strlen($certificate->parishioner->full_name ?? ''), strlen($spouseDisplayName ?? ''));
 $nameCls  = $nameLen > 36 ? 'xl' : ($nameLen > 26 ? 'lg' : '');
-$hasSpouse = $certificate->sacramentalRecord?->spouseParishioner;
+$hasSpouse = $spouseParishioner || $spouseNameOv;
 $orn   = '<svg width="370" height="10" viewBox="0 0 370 10" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="gl"><stop offset="0%" stop-color="#D4AF37" stop-opacity="0"/><stop offset="100%" stop-color="#D4AF37"/></linearGradient><linearGradient id="gr" x1="1" x2="0" y1="0" y2="0"><stop offset="0%" stop-color="#D4AF37" stop-opacity="0"/><stop offset="100%" stop-color="#D4AF37"/></linearGradient></defs><line x1="0" y1="5" x2="153" y2="5" stroke="url(#gl)" stroke-width="0.8"/><polygon points="161,5 165,2 169,5 165,8" fill="#D4AF37"/><polygon points="179,5 183,3 187,5 183,7" fill="#D4AF37"/><polygon points="197,5 201,2 205,5 201,8" fill="#D4AF37"/><line x1="213" y1="5" x2="370" y2="5" stroke="url(#gr)" stroke-width="0.8"/></svg>';
 $ornSm = '<svg width="130" height="7" viewBox="0 0 130 7" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="3.5" x2="55" y2="3.5" stroke="#D4AF37" stroke-width="0.6" opacity="0.5"/><circle cx="65" cy="3.5" r="2" fill="#D4AF37"/><line x1="75" y1="3.5" x2="130" y2="3.5" stroke="#D4AF37" stroke-width="0.6" opacity="0.5"/></svg>';
 @endphp
@@ -29,36 +32,44 @@ $ornSm = '<svg width="130" height="7" viewBox="0 0 130 7" xmlns="http://www.w3.o
     </div>
     <div class="recipient-wrap">
         <span class="recipient-name {{ $nameCls }}">{{ $certificate->parishioner->full_name }}</span>
-        @if($hasSpouse)<span class="couple-and">— and —</span><span class="recipient-name {{ $nameCls }}">{{ $hasSpouse->full_name }}</span>@endif
+        @if($hasSpouse)<span class="couple-and">— and —</span><span class="recipient-name {{ $nameCls }}">{{ $spouseParishioner?->full_name ?? $spouseNameOv }}</span>@endif
         <span class="recipient-role">United in Holy Matrimony</span>
     </div>
     @php
-        // Sponsors: check sponsors[] first (set via admin edit), then fall back
-        // to godparents[] (some records store ninong/ninang under godparents).
-        // This ensures the PDF never shows "Not recorded" when data exists.
-        $rec      = $certificate->sacramentalRecord;
-        $sponsors = is_array($rec?->sponsors)  && count(array_filter($rec->sponsors))  ? $rec->sponsors  : [];
-        $gps      = is_array($rec?->godparents) && count(array_filter($rec->godparents)) ? $rec->godparents : [];
-        $witnesses = is_array($rec?->witnesses) ? $rec->witnesses : [];
+        // Use pre-merged recData (cert_overrides > sacramental_record > null)
+        $sponsors  = $recData['sponsors'];
+        $gps       = $recData['godparents'];
+        $witnesses = $recData['witnesses'];
 
-        // Ninong: sponsors[0] → godparents[0] → ''
-        $ninong = trim($sponsors[0] ?? $gps[0] ?? '');
-        // Ninang: sponsors[1] → godparents[1] → ''
-        $ninang = trim($sponsors[1] ?? $gps[1] ?? '');
-        // Additional ninong entries (sponsors[2..] or godparents[2..])
-        $extraSponsors = array_values(array_filter(array_merge(
-            array_slice($sponsors, 2),
-            count($sponsors) < 2 ? array_slice($gps, 2) : []
-        )));
+        // Ninong: sponsors[0] → godparents without NINONG: tag → ''
+        $taggedNinong = array_values(array_filter($gps, fn($g) => str_starts_with($g, 'NINONG:')));
+        $taggedNinang = array_values(array_filter($gps, fn($g) => str_starts_with($g, 'NINANG:')));
+        $rawGps = array_values(array_filter($gps, fn($g) => !str_starts_with($g, 'NINONG:') && !str_starts_with($g, 'NINANG:')));
 
+        $ninong = trim(
+            $sponsors[0] ??
+            (count($taggedNinong) ? str_replace('NINONG:', '', $taggedNinong[0]) : '') ??
+            ($rawGps[0] ?? '')
+        );
+        $ninang = trim(
+            $sponsors[1] ??
+            (count($taggedNinang) ? str_replace('NINANG:', '', $taggedNinang[0]) : '') ??
+            ($rawGps[1] ?? '')
+        );
+        $extraSponsors = array_values(array_filter(array_slice($sponsors, 2)));
         $wit1 = trim($witnesses[0] ?? '');
         $wit2 = trim($witnesses[1] ?? '');
+
+        // Spouse name from overrides or linked record
+        $spouseName = $recData['spouse_name']
+            ?? $certificate->sacramentalRecord?->spouseParishioner?->full_name;
+        $hasSpouse  = $certificate->sacramentalRecord?->spouseParishioner;
     @endphp
     <div class="details-wrap"><table class="details-tbl" cellpadding="0" cellspacing="0"><tr>
         <td class="det-left">
-            <div class="det-item"><span class="det-lbl">Date of Marriage</span><span class="det-val {{ $rec?->date_administered ? '' : 'na' }}">{{ $rec?->date_administered?->format('F d, Y') ?? 'Not recorded' }}</span></div>
-            <div class="det-item"><span class="det-lbl">Officiating Priest</span><span class="det-val {{ $rec?->celebrant ? '' : 'na' }}">{{ $rec?->celebrant ?? 'Not recorded' }}</span></div>
-            <div class="det-item"><span class="det-lbl">Venue</span><span class="det-val">{{ $rec?->venue ?? $parish['name'] }}</span></div>
+            <div class="det-item"><span class="det-lbl">Date of Marriage</span><span class="det-val {{ $recData['date_administered'] ? '' : 'na' }}">{{ $recData['date_administered']?->format('F d, Y') ?? 'Not recorded' }}</span></div>
+            <div class="det-item"><span class="det-lbl">Officiating Priest</span><span class="det-val {{ $recData['celebrant'] ? '' : 'na' }}">{{ $recData['celebrant'] ?? 'Not recorded' }}</span></div>
+            <div class="det-item"><span class="det-lbl">Venue</span><span class="det-val">{{ $recData['venue'] ?? $parish['name'] }}</span></div>
             <div class="det-item"><span class="det-lbl">Witness 1</span><span class="det-val {{ $wit1 ? '' : 'na' }}">{{ $wit1 ?: 'Not recorded' }}</span></div>
         </td>
         <td class="det-gap"></td>
@@ -69,7 +80,7 @@ $ornSm = '<svg width="130" height="7" viewBox="0 0 130 7" xmlns="http://www.w3.o
             <div class="det-item"><span class="det-lbl">Additional Sponsor</span><span class="det-val">{{ $es }}</span></div>
             @endforeach
             <div class="det-item"><span class="det-lbl">Witness 2</span><span class="det-val {{ $wit2 ? '' : 'na' }}">{{ $wit2 ?: 'Not recorded' }}</span></div>
-            <div class="det-item"><span class="det-lbl">Register / Page / Line</span><span class="det-val">{{ $rec?->register_number ?? '—' }} / {{ $rec?->page_number ?? '—' }} / {{ $rec?->line_number ?? '—' }}</span></div>
+            <div class="det-item"><span class="det-lbl">Register / Page / Line</span><span class="det-val">{{ $recData['register_number'] ?? '—' }} / {{ $recData['page_number'] ?? '—' }} / {{ $recData['line_number'] ?? '—' }}</span></div>
         </td>
     </tr></table></div>
     <div class="issuance-wrap">Issued this <b>{{ $certificate->issued_date->format('jS') }}</b> day of <b>{{ $certificate->issued_date->format('F Y') }}</b>, at <b>Mary Help of Christians Parish</b>, Cabuyao, Laguna, for the purpose of <b>{{ $certificate->purpose ?? 'official use' }}</b>.</div>

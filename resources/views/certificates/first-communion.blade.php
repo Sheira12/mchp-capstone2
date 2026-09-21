@@ -32,17 +32,22 @@ $ornSm = '<svg width="130" height="7" viewBox="0 0 130 7" xmlns="http://www.w3.o
     </div>
     <div class="details-wrap"><table class="details-tbl" cellpadding="0" cellspacing="0"><tr>
         <td class="det-left">
-            <div class="det-item"><span class="det-lbl">Date of First Communion</span><span class="det-val {{ $certificate->sacramentalRecord?->date_administered ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->date_administered?->format('F d, Y') ?? 'Not recorded' }}</span></div>
+            <div class="det-item"><span class="det-lbl">Date of First Communion</span><span class="det-val {{ $recData['date_administered'] ? '' : 'na' }}">{{ $recData['date_administered']?->format('F d, Y') ?? 'Not recorded' }}</span></div>
             <div class="det-item"><span class="det-lbl">Date of Birth</span><span class="det-val {{ $certificate->parishioner->birthdate ? '' : 'na' }}">{{ $certificate->parishioner->birthdate?->format('F d, Y') ?? 'Not recorded' }}</span></div>
-            <div class="det-item"><span class="det-lbl">Officiating Priest</span><span class="det-val {{ $certificate->sacramentalRecord?->celebrant ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->celebrant ?? 'Not recorded' }}</span></div>
-            <div class="det-item"><span class="det-lbl">Venue</span><span class="det-val">{{ $certificate->sacramentalRecord?->venue ?? $parish['name'] }}</span></div>
+            <div class="det-item"><span class="det-lbl">Officiating Priest</span><span class="det-val {{ $recData['celebrant'] ? '' : 'na' }}">{{ $recData['celebrant'] ?? 'Not recorded' }}</span></div>
+            <div class="det-item"><span class="det-lbl">Venue</span><span class="det-val">{{ $recData['venue'] ?? $parish['name'] }}</span></div>
         </td>
         <td class="det-gap"></td>
         <td class="det-right">
-            <div class="det-item"><span class="det-lbl">Sponsor</span><span class="det-val {{ ($certificate->sacramentalRecord?->godparents[0] ?? null) ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->godparents[0] ?? 'Not recorded' }}</span></div>
-            <div class="det-item"><span class="det-lbl">Parents</span><span class="det-val {{ $certificate->sacramentalRecord?->notes ? '' : 'na' }}">{{ $certificate->sacramentalRecord?->notes ?? 'Not recorded' }}</span></div>
-            <div class="det-item"><span class="det-lbl">Register No.</span><span class="det-val">{{ $certificate->sacramentalRecord?->register_number ?? '—' }}</span></div>
-            <div class="det-item"><span class="det-lbl">Page / Line</span><span class="det-val">{{ $certificate->sacramentalRecord?->page_number ?? '—' }} / {{ $certificate->sacramentalRecord?->line_number ?? '—' }}</span></div>
+            @php
+                $fcGps = $recData['godparents'];
+                $fcSponsor = count($recData['sponsors']) ? $recData['sponsors'][0]
+                    : (count($fcGps) ? preg_replace('/^(NINONG:|NINANG:)/', '', $fcGps[0]) : null);
+            @endphp
+            <div class="det-item"><span class="det-lbl">Sponsor</span><span class="det-val {{ $fcSponsor ? '' : 'na' }}">{{ $fcSponsor ?? 'Not recorded' }}</span></div>
+            <div class="det-item"><span class="det-lbl">Parents</span><span class="det-val {{ ($recData['parents_names'] ?? $recData['notes']) ? '' : 'na' }}">{{ $recData['parents_names'] ?? $recData['notes'] ?? 'Not recorded' }}</span></div>
+            <div class="det-item"><span class="det-lbl">Register No.</span><span class="det-val">{{ $recData['register_number'] ?? '—' }}</span></div>
+            <div class="det-item"><span class="det-lbl">Page / Line</span><span class="det-val">{{ $recData['page_number'] ?? '—' }} / {{ $recData['line_number'] ?? '—' }}</span></div>
         </td>
     </tr></table></div>
     <div class="issuance-wrap">Issued this <b>{{ $certificate->issued_date->format('jS') }}</b> day of <b>{{ $certificate->issued_date->format('F Y') }}</b>, at <b>Mary Help of Christians Parish</b>, Cabuyao, Laguna, for the purpose of <b>{{ $certificate->purpose ?? 'official use' }}</b>.</div>
