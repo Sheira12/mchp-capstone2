@@ -8,6 +8,10 @@ class CertificateStatusHistory extends Model
 {
     public $timestamps = false; // uses changed_at instead
 
+    // Override default Laravel pluralization: table is certificate_status_history
+    // not certificate_status_histories
+    protected $table = 'certificate_status_history';
+
     protected $fillable = [
         'certificate_id',
         'from_status',
