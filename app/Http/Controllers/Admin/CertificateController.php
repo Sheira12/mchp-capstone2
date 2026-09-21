@@ -41,8 +41,8 @@ class CertificateController extends Controller
                          ->orWhere('last_name', 'like', "%{$search}%")
                          ->orWhere('middle_name', 'like', "%{$search}%")
                          ->orWhere('contact_number', 'like', "%{$search}%")
-                         ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", ["%{$search}%"])
-                         ->orWhereRaw("CONCAT(first_name, ' ', middle_name, ' ', last_name) ILIKE ?", ["%{$search}%"]);
+                         ->orWhereRaw("LOWER(CONCAT(first_name, ' ', last_name)) LIKE LOWER(?)", ["%{$search}%"])
+                         ->orWhereRaw("LOWER(CONCAT(first_name, ' ', middle_name, ' ', last_name)) LIKE LOWER(?)", ["%{$search}%"]);
                   })
                   ->orWhere('purpose', 'like', "%{$search}%")
                   ->orWhere('notes', 'like', "%{$search}%")
