@@ -793,4 +793,151 @@ class PaymentController extends Controller
         $ref = $request->get('ref');
         return view('parishioner.payments.failed', compact('ref'));
     }
+
+    // ── CERTIFICATE PAYMENT METHODS ─────────────────────────────────────────
+    // Mirror the booking payment flow for the ₱100 certificate fee.
+    // Uses the same Payment model with certificate_id instead of booking_id.
+
+    /**
+     * Show the payment page for a certificate fee.
+     */
+    public function payCertificate(\App\Models\Certificate $certificate)
+    {
+        $parishioner = auth()->user()->parishioner;
+
+        if ($certificate->parishioner_id !== $parishioner?->id) {
+            abort(403);
+        }
+
+        // If already paid, redirect to the certificate index with a message
+        $existingPayment = $certificate->payment;
+
+        if ($existingPayment?->status === 'paid') {
+            return redirect()->route('parishioner.certificates.index')
+                ->with('info', 'The fee for this certificate has already been paid.');
+        }
+
+        // Pending admin verification — don't allow a new payment submission
+        if ($existingPayment?->status === 'pending') {
+            return redirect()->route('parishioner.certificates.index')
+                ->with('info', 'Your certificate payment is pending admin verification. You will be notified once approved.');
+        }
+
+        // Certificate fee is fixed at ₱100
+        $fee = 100.00;
+
+        return view('parishioner.payments.pay-certificate', [
+            'certificate'     => $certificate,
+            'fee'             => $fee,
+            'existingPayment' => $existingPayment,
+        ]);
+    }
+
+    /**
+     * Record a cash payment intent for a certificate fee.
+     * Admin will collect and confirm at the office.
+     */
+    public function payCertificateCash(\App\Models\Certificate $certificate)
+    {
+        $parishioner = auth()->user()->parishioner;
+
+        if ($certificate->parishioner_id !== $parishioner?->id) {
+            abort(403);
+        }
+
+        if ($certificate->payment?->status === 'paid') {
+            return back()->with('error', 'This certificate fee has already been paid.');
+        }
+
+        if ($certificate->payment?->status === 'pending') {
+            return back()->with('info', 'Your payment is already pending admin verification.');
+        }
+
+        $payment = Payment::create([
+            'parishioner_id'   => $parishioner->id,
+            'certificate_id'   => $certificate->id,
+            'amount'           => 100.00,
+            'payment_method'   => 'cash',
+            'transaction_type' => 'debit',
+            'status'           => 'pending',
+            'payer_contact'    => $parishioner->contact_number,
+            'notes'            => 'Cash payment for ' . $certificate->getTypeLabel() . ' certificate fee — to be collected at parish office.',
+        ]);
+
+        // Link the payment to the certificate
+        $certificate->update(['payment_id' => $payment->id]);
+
+        // Notify admin users
+        try {
+            $admins = \App\Models\User::role(['super_admin', 'parish_secretary', 'finance_officer'])->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new \App\Notifications\AdminPaymentNotification($payment));
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Certificate payment admin notification failed: ' . $e->getMessage());
+        }
+
+        return redirect()->route('parishioner.certificates.index')
+            ->with('success', 'Cash payment request recorded. Please bring ₱100.00 to the parish office to complete your certificate fee payment. Reference: ' . $payment->reference_number);
+    }
+
+    /**
+     * Submit proof of payment (GCash/Maya reference + optional screenshot) for a certificate fee.
+     */
+    public function submitCertificateProof(Request $request, \App\Models\Certificate $certificate)
+    {
+        $parishioner = auth()->user()->parishioner;
+
+        if ($certificate->parishioner_id !== $parishioner?->id) {
+            abort(403);
+        }
+
+        if ($certificate->payment?->status === 'paid') {
+            return back()->withErrors(['error' => 'This certificate fee has already been paid.']);
+        }
+
+        if ($certificate->payment?->status === 'pending') {
+            return back()->with('info', 'Your payment proof has already been submitted and is pending admin verification.');
+        }
+
+        $validated = $request->validate([
+            'payment_method'      => ['required', 'in:gcash,maya'],
+            'submitted_reference' => ['required', 'string', 'max:100'],
+            'proof'               => ['nullable', 'image', 'max:5120'],
+        ]);
+
+        $proofPath = null;
+        if ($request->hasFile('proof')) {
+            $proofPath = $request->file('proof')->store('payments/proofs', 'public');
+        }
+
+        $payment = Payment::create([
+            'parishioner_id'      => $parishioner->id,
+            'certificate_id'      => $certificate->id,
+            'amount'              => 100.00,
+            'payment_method'      => $validated['payment_method'],
+            'transaction_type'    => 'debit',
+            'status'              => 'pending',
+            'submitted_reference' => $validated['submitted_reference'],
+            'proof_path'          => $proofPath,
+            'payer_contact'       => $parishioner->contact_number,
+            'notes'               => 'Online payment proof for ' . $certificate->getTypeLabel() . ' certificate fee. Awaiting admin verification.',
+        ]);
+
+        // Link the payment to the certificate
+        $certificate->update(['payment_id' => $payment->id]);
+
+        // Notify admin users
+        try {
+            $admins = \App\Models\User::role(['super_admin', 'parish_secretary', 'finance_officer'])->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new \App\Notifications\AdminPaymentNotification($payment));
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Certificate payment admin notification failed: ' . $e->getMessage());
+        }
+
+        return redirect()->route('parishioner.certificates.index')
+            ->with('success', 'Certificate fee payment submitted! Our team will verify it within 24 hours. Reference: ' . $payment->reference_number);
+    }
 }

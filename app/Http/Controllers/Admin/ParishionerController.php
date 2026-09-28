@@ -59,8 +59,9 @@ class ParishionerController extends Controller
 
     public function create()
     {
-        $families = Family::orderBy('family_name')->get(['id', 'family_name']);
-        return view('admin.parishioners.create', compact('families'));
+        $families        = Family::orderBy('family_name')->get(['id', 'family_name']);
+        $preselectedFamily = request()->integer('family_id') ?: null;
+        return view('admin.parishioners.create', compact('families', 'preselectedFamily'));
     }
 
     public function store(Request $request)
@@ -84,6 +85,12 @@ class ParishionerController extends Controller
         $parishioner = Parishioner::create($validated);
 
         AuditLog::record('create', $parishioner, [], $parishioner->toArray(), 'Parishioner profile created');
+
+        // If created from a family page, redirect back there
+        if ($parishioner->family_id) {
+            return redirect()->route('admin.families.show', $parishioner->family_id)
+                ->with('success', $parishioner->full_name . ' added to the family successfully.');
+        }
 
         return redirect()->route('admin.parishioners.show', $parishioner)
             ->with('success', 'Parishioner profile created successfully.');

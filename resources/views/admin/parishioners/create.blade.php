@@ -6,6 +6,22 @@
 @section('content')
 <div class="py-6 max-w-4xl">
 
+    {{-- Banner shown when arriving from a family page --}}
+    @if($preselectedFamily)
+    @php $preFamily = $families->firstWhere('id', $preselectedFamily); @endphp
+    @if($preFamily)
+    <div class="mb-5 flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+        <svg class="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        <span class="text-sm text-blue-800">
+            Adding member to <strong>{{ $preFamily->family_name }}</strong> family — pre-selected below.
+        </span>
+        <a href="{{ route('admin.families.show', $preselectedFamily) }}" class="ml-auto text-xs font-semibold text-blue-600 hover:underline">← Back to Family</a>
+    </div>
+    @endif
+    @endif
+
     <form action="{{ route('admin.parishioners.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
         @csrf
 
@@ -96,7 +112,10 @@
                     <select name="family_id" class="form-select">
                         <option value="">No family / Create new</option>
                         @foreach($families as $family)
-                        <option value="{{ $family->id }}" {{ old('family_id') == $family->id ? 'selected' : '' }}>{{ $family->family_name }}</option>
+                        <option value="{{ $family->id }}"
+                            {{ (old('family_id') ?? $preselectedFamily) == $family->id ? 'selected' : '' }}>
+                            {{ $family->family_name }}
+                        </option>
                         @endforeach
                     </select>
                 </div>

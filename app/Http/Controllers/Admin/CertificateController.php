@@ -145,7 +145,9 @@ class CertificateController extends Controller
     {
         set_time_limit(120);
         try {
-            $this->certificateService->generate($certificate);
+            // Always load fresh data from DB so the PDF reflects the latest saved record.
+            $fresh = $certificate->fresh(['parishioner', 'sacramentalRecord', 'issuedBy', 'qrCode']);
+            $this->certificateService->generate($fresh);
             return back()->with('success', 'Certificate regenerated successfully.');
         } catch (\Exception $e) {
             \Log::error('Certificate regeneration failed: ' . $e->getMessage());
@@ -296,10 +298,21 @@ class CertificateController extends Controller
 
         AuditLog::record('update', $certificate, $oldValues, $certificate->fresh()->toArray(), 'Certificate updated by ' . auth()->user()->name);
 
-        // ── Re-generate the PDF so it reflects updated sacramental data ────
+        // ── Clear any stale parishioner overrides and re-generate the PDF ──
+        // cert_overrides stores approved parishioner corrections.  When an admin
+        // explicitly edits the certificate here, their changes to the linked
+        // sacramental record are authoritative — the overrides must not mask them.
+        // We clear cert_overrides so CertificateService::buildRecordData() reads
+        // directly from the (now-updated) sacramental record.
+        $certificate->update(['cert_overrides' => null]);
+
+        // Reload all relationships so generate() sees the freshest DB state,
+        // not the stale in-memory values from before the update calls above.
+        $freshCertificate = $certificate->fresh(['parishioner', 'sacramentalRecord', 'issuedBy', 'qrCode']);
+
         set_time_limit(120);
         try {
-            $this->certificateService->generate($certificate);
+            $this->certificateService->generate($freshCertificate);
             $message = 'Certificate updated and PDF regenerated.';
         } catch (\Exception $e) {
             \Log::error('Certificate re-generation after edit failed: ' . $e->getMessage());

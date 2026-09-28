@@ -112,6 +112,11 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
     Route::post('/payments/pay/{booking}/demo/card/complete', [ParishionerPaymentController::class, 'demoCardComplete'])->name('payments.demo-card-complete');
     Route::post('/payments/pay/{booking}/demo/{method}/complete', [ParishionerPaymentController::class, 'demoComplete'])->name('payments.demo-complete');
 
+    // Certificate-scoped payment routes
+    Route::get('/payments/certificate/{certificate}', [ParishionerPaymentController::class, 'payCertificate'])->name('payments.certificate');
+    Route::post('/payments/certificate/{certificate}/cash', [ParishionerPaymentController::class, 'payCertificateCash'])->name('payments.certificate-cash');
+    Route::post('/payments/certificate/{certificate}/proof', [ParishionerPaymentController::class, 'submitCertificateProof'])->name('payments.certificate-proof');
+
     // Wildcard {payment} routes — constrained to numeric IDs only
     Route::get('/payments/receipt/{payment}', [ParishionerPaymentController::class, 'receipt'])->name('payments.receipt')->whereNumber('payment');
     Route::get('/payments/receipt/{payment}/pdf', [ParishionerPaymentController::class, 'receiptPdf'])->name('payments.receipt-pdf')->whereNumber('payment');

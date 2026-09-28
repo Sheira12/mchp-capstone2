@@ -195,10 +195,10 @@ class CertificateController extends Controller
             'document'
         ));
 
-        return redirect()->route('parishioner.certificates.index')
+        return redirect()->route('parishioner.payments.certificate', $certificate)
             ->with('success', $verificationStatus === 'unverified'
-                ? 'Your certificate request has been submitted. No matching record was found automatically — the parish office will verify your records manually within 1–3 working days.'
-                : 'Certificate request submitted successfully. The parish office will process it within 1–3 working days.'
+                ? 'Your certificate request has been submitted. No matching record was found automatically — the parish office will verify your records manually within 1–3 working days. Please pay the ₱100.00 certificate fee below.'
+                : 'Certificate request submitted. Please complete the ₱100.00 certificate fee payment below.'
             );
     }
 
