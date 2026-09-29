@@ -26,30 +26,24 @@ html, body {
     line-height: 1.35;
 }
 
-/* ── Outer gold border ── */
+/* ── Outer gold border — wraps content, not fixed to page ── */
 .border-outer {
-    position: fixed;
-    top: 3mm; left: 3mm; right: 3mm; bottom: 3mm;
     border: 2.5pt solid #D4AF37;
-    z-index: 0;
-    pointer-events: none;
+    padding: 3pt;
 }
 /* ── Inner navy border ── */
 .border-inner {
-    position: fixed;
-    top: 5mm; left: 5mm; right: 5mm; bottom: 5mm;
     border: 0.75pt solid #1F3A5F;
-    z-index: 0;
-    pointer-events: none;
+    padding: 6pt;
 }
 
-/* ── Subtle watermark ── */
+/* ── Watermark: fixed so it stays centred on the rendered content area ── */
 .watermark {
     position: fixed;
-    top: 50%; left: 50%;
+    top: 45%; left: 50%;
     transform: translate(-50%, -50%) rotate(-35deg);
     font-size: 52pt;
-    color: rgba(31,58,95,0.04);
+    color: rgba(31,58,95,0.05);
     font-weight: 900;
     white-space: nowrap;
     pointer-events: none;
@@ -59,7 +53,7 @@ html, body {
     text-transform: uppercase;
 }
 
-/* ── All real content sits above borders ── */
+/* ── All real content sits above watermark ── */
 .page { position: relative; z-index: 1; }
 
 /* ════════════════════════════════
@@ -298,13 +292,13 @@ html, body {
 }
 
 /* ════════════════════════════════
-   FIXED FOOTER
+   INLINE FOOTER (not fixed — hugs content)
    ════════════════════════════════ */
 .foot {
-    position: fixed; bottom: 2mm; left: 0; right: 0;
     border-top: 0.75pt solid rgba(212,175,55,0.5);
-    padding-top: 2pt;
-    display: table; width: 100%; z-index: 1;
+    padding-top: 3pt;
+    margin-top: 5pt;
+    display: table; width: 100%;
 }
 .foot-l { display: table-cell; width: 60%; vertical-align: middle; }
 .foot-r { display: table-cell; width: 40%; vertical-align: middle; text-align: right; }
@@ -355,21 +349,12 @@ if (!function_exists('amountInWords')) {
 }
 @endphp
 
-{{-- Decorative borders --}}
-<div class="border-outer"></div>
-<div class="border-inner"></div>
-<div class="watermark">Official Receipt</div>
+{{-- Borders wrap the content so they hug it, not the full A4 page --}}
+<div class="border-outer">
+<div class="border-inner">
 
-{{-- Fixed footer --}}
-<div class="foot">
-    <div class="foot-l">
-        <span class="foot-txt">{{ $parish['name'] }} &nbsp;·&nbsp; {{ $parish['address'] }} &nbsp;·&nbsp; Tel: {{ $parish['phone'] }} &nbsp;·&nbsp; {{ $parish['email'] }}</span>
-    </div>
-    <div class="foot-r">
-        <span class="foot-rno">{{ $payment->receipt_number }}</span><br>
-        <span class="foot-txt">Issued: {{ $paidDate->format('F d, Y  g:i A') }}</span>
-    </div>
-</div>
+{{-- Watermark sits behind everything (fixed, centered on rendered area) --}}
+<div class="watermark">Official Receipt</div>
 
 {{-- ─────────────────────── PAGE CONTENT ─────────────────────── --}}
 <div class="page">
@@ -429,7 +414,7 @@ if (!function_exists('amountInWords')) {
         </div>
         <div class="info-right">
             <span class="band-label">Payment Status</span>
-            <div><span class="chip chip-paid">✓ PAID</span></div>
+            <div><span class="chip chip-paid"><svg width="8" height="8" viewBox="0 0 12 12" fill="none" style="vertical-align:middle;margin-right:2pt;"><path d="M2 6l3 3 5-5" stroke="#065f46" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>PAID</span></div>
 
             <span class="band-label chip-spacing">Transaction Type</span>
             <div><span class="chip {{ $txClass }}">{{ strtoupper($txType) }}</span></div>
@@ -568,6 +553,19 @@ if (!function_exists('amountInWords')) {
 
     </div>
 
+    {{-- ══ INLINE FOOTER (hugs content, no forced page-height) ══ --}}
+    <div class="foot">
+        <div class="foot-l">
+            <span class="foot-txt">{{ $parish['name'] }} &nbsp;·&nbsp; {{ $parish['address'] }} &nbsp;·&nbsp; Tel: {{ $parish['phone'] }} &nbsp;·&nbsp; {{ $parish['email'] }}</span>
+        </div>
+        <div class="foot-r">
+            <span class="foot-rno">{{ $payment->receipt_number }}</span><br>
+            <span class="foot-txt">Issued: {{ $paidDate->format('F d, Y  g:i A') }}</span>
+        </div>
+    </div>
+
 </div>{{-- /page --}}
+</div>{{-- /border-inner --}}
+</div>{{-- /border-outer --}}
 </body>
 </html>
