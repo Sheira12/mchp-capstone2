@@ -128,7 +128,12 @@ class InquiryController extends Controller
             abort(403);
         }
 
-        if (!Storage::disk('supabase')->exists($realPath)) {
+        try {
+            if (!Storage::disk('supabase')->exists($realPath)) {
+                abort(404);
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Supabase exists() check failed for inquiry file: ' . $e->getMessage());
             abort(404);
         }
 

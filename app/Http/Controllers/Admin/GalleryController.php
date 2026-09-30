@@ -106,7 +106,10 @@ class GalleryController extends Controller
             $files = $request->file('photos');
             if (isset($files[$idx]['replace'])) {
                 Storage::disk('supabase')->delete($item->image_path);
-                $data['image_path'] = $files[$idx]['replace']->store('gallery', 'supabase');
+                $replacedPath = $files[$idx]['replace']->store('gallery', 'supabase');
+                if ($replacedPath !== false) {
+                    $data['image_path'] = $replacedPath;
+                }
             }
 
             $item->update($data);
@@ -227,7 +230,10 @@ class GalleryController extends Controller
 
         if ($request->hasFile('image')) {
             Storage::disk('supabase')->delete($gallery->image_path);
-            $data['image_path'] = $request->file('image')->store('gallery', 'supabase');
+            $path = $request->file('image')->store('gallery', 'supabase');
+            if ($path !== false) {
+                $data['image_path'] = $path;
+            }
         }
 
         $gallery->update($data);

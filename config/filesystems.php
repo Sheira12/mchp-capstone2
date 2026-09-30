@@ -62,8 +62,8 @@ return [
         */
         'supabase' => [
             'driver'                  => 's3',
-            'key'                     => env('SUPABASE_STORAGE_KEY'),
-            'secret'                  => env('SUPABASE_STORAGE_KEY'), // Supabase uses the same JWT as both key+secret
+            'key'                     => env('SUPABASE_ACCESS_KEY_ID', env('SUPABASE_STORAGE_KEY')),
+            'secret'                  => env('SUPABASE_SECRET_ACCESS_KEY', env('SUPABASE_STORAGE_KEY')),
             'region'                  => env('SUPABASE_REGION', 'ap-southeast-1'),
             'bucket'                  => env('SUPABASE_BUCKET', 'mhcp-media'),
             'endpoint'                => env('SUPABASE_URL') . '/storage/v1/s3',

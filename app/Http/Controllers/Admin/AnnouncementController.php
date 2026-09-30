@@ -32,7 +32,10 @@ class AnnouncementController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image_path'] = $request->file('image')->store('announcements', 'supabase');
+            $path = $request->file('image')->store('announcements', 'supabase');
+            if ($path !== false) {
+                $validated['image_path'] = $path;
+            }
         }
 
         $validated['created_by']   = auth()->id();
@@ -61,7 +64,10 @@ class AnnouncementController extends Controller
 
         if ($request->hasFile('image')) {
             if ($announcement->image_path) Storage::disk('supabase')->delete($announcement->image_path);
-            $validated['image_path'] = $request->file('image')->store('announcements', 'supabase');
+            $path = $request->file('image')->store('announcements', 'supabase');
+            if ($path !== false) {
+                $validated['image_path'] = $path;
+            }
         }
 
         if ($request->boolean('is_published') && !$announcement->published_at) {

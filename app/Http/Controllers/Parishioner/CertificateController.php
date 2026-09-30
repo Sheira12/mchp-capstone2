@@ -248,7 +248,16 @@ class CertificateController extends Controller
         }
 
         set_time_limit(60);
-        if (!$certificate->file_path || !Storage::disk('supabase')->exists($certificate->file_path)) {
+        $fileExists = false;
+        if ($certificate->file_path) {
+            try {
+                $fileExists = Storage::disk('supabase')->exists($certificate->file_path);
+            } catch (\Exception $e) {
+                \Log::warning('Supabase exists() check failed: ' . $e->getMessage());
+                $fileExists = false;
+            }
+        }
+        if (!$fileExists) {
             app(\App\Services\CertificateService::class)->generate($certificate);
             $certificate->refresh();
         }

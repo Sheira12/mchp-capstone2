@@ -20,6 +20,11 @@ if (!function_exists('media_url')) {
             return '';
         }
 
+        // Guard against PHP false/0 stored as the string "0" when an upload silently fails
+        if ($path === '0' || $path === 'false') {
+            return '';
+        }
+
         // Legacy profile photos stored as base64 data URIs — serve directly
         if (str_starts_with($path, 'data:')) {
             return $path;

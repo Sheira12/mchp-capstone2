@@ -131,7 +131,16 @@ class CertificateController extends Controller
     public function download(Certificate $certificate)
     {
         set_time_limit(120);
-        if (!$certificate->file_path || !\Storage::disk('supabase')->exists($certificate->file_path)) {
+        $fileExists = false;
+        if ($certificate->file_path) {
+            try {
+                $fileExists = \Storage::disk('supabase')->exists($certificate->file_path);
+            } catch (\Exception $e) {
+                \Log::warning('Supabase exists() check failed for certificate ' . $certificate->id . ': ' . $e->getMessage());
+                $fileExists = false;
+            }
+        }
+        if (!$fileExists) {
             $this->certificateService->generate($certificate);
             $certificate->refresh();
         }
