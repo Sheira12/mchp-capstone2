@@ -1,4 +1,4 @@
-@extends('layouts.public')
+ï»¿@extends('layouts.public')
 @section('title', 'Welcome')
 
 @push('styles')
@@ -240,7 +240,7 @@
                onmouseover="this.style.boxShadow='0 16px 40px rgba(37,99,235,0.12)';this.style.transform='translateY(-4px)';this.style.borderColor='#93c5fd';"
                onmouseout="this.style.boxShadow='0 2px 10px rgba(0,0,0,0.04)';this.style.transform='';this.style.borderColor='#e8edf5';">
 
-                {{-- Image area — fixed 16:9 aspect ratio so all cards align --}}
+                {{-- Image area ï¿½ fixed 16:9 aspect ratio so all cards align --}}
                 <div style="position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,#dbeafe,#e0e7ff);">
                     @if($announcement->image_path)
                     <img src="{{ media_url($announcement->image_path) }}"
@@ -267,7 +267,7 @@
                     @endif
                 </div>
 
-                {{-- Card body — flex-1 so all cards in a row share equal height --}}
+                {{-- Card body ï¿½ flex-1 so all cards in a row share equal height --}}
                 <div style="padding:1.25rem 1.375rem;flex:1;display:flex;flex-direction:column;">
                     <h3 style="font-weight:700;font-size:1rem;color:#0f172a;margin:0 0 0.5rem;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
                         {{ $announcement->title }}
@@ -387,7 +387,7 @@
                 Manage Your Parish Services Online
             </h2>
             <p style="color:#93c5fd;font-size:0.95rem;line-height:1.7;margin:0 auto;max-width:540px;">
-                Register as a parishioner to book services, request certificates, pay fees via GCash or Maya, and track your sacramental records — all from home.
+                Register as a parishioner to book services, request certificates, pay fees via GCash or Maya, and track your sacramental records ï¿½ all from home.
             </p>
         </div>
 
@@ -401,7 +401,7 @@
                     'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>',
                     'color' => '#60a5fa',
                     'title' => 'Book Services',
-                    'desc'  => 'Schedule baptisms, blessings, weddings, and more — online.',
+                    'desc'  => 'Schedule baptisms, blessings, weddings, and more ï¿½ online.',
                     'href'  => '#',
                 ],
                 [
@@ -474,7 +474,7 @@
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2rem;text-align:center;">
             @foreach([
                 ['#eff6ff','#2563eb','M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z','Location','Southville 1, Niugan<br>Cabuyao, Laguna'],
-                ['#eff6ff','#2563eb','M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z','Office Hours','Tue–Sun: 9AM–12NN<br>2PM–5PM'],
+                ['#eff6ff','#2563eb','M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z','Office Hours','Tue&ndash;Sun: 9AM&ndash;12NN<br>2PM&ndash;5PM'],
                 ['#eff6ff','#2563eb','M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z','Contact Us','<a href="'.route('contact').'" style="color:#2563eb;font-weight:600;text-decoration:none;">Send us a message &rarr;</a>']
             ] as $c)
             <div style="display:flex;flex-direction:column;align-items:center;gap:0.75rem;">

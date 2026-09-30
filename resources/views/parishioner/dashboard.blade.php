@@ -1,4 +1,4 @@
-@extends('layouts.portal')
+ï»¿@extends('layouts.portal')
 @section('title', 'My Dashboard')
 
 @push('styles')
@@ -140,7 +140,7 @@
 }
 .upcoming-row:last-child { border-bottom: none; }
 .upcoming-row:hover { background: #f8faff; }
-/* Status pills — prevent text wrapping */
+/* Status pills ï¿½ prevent text wrapping */
 .status-pill {
   display: inline-flex; align-items: center; justify-content: center;
   padding: 3px 10px; border-radius: 9999px;
@@ -405,7 +405,7 @@
                     <span class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($booking->scheduled_time)->format('g:i A') }}</span>
                     @endif
                     @if($booking->service_fee > 0)
-                    <span class="text-xs text-gray-400">· ?{{ number_format($booking->service_fee, 0) }}</span>
+                    <span class="text-xs text-gray-400">ï¿½ ?{{ number_format($booking->service_fee, 0) }}</span>
                     @endif
                 </div>
                 <p class="text-xs text-gray-400 font-mono mt-0.5">{{ $booking->reference_number }}</p>
@@ -462,7 +462,7 @@
                             {{ $txBadge['label'] === 'Debit' ? '?' : '?' }} {{ $txBadge['label'] }}
                         </span>
                     </div>
-                    <p class="text-xs text-gray-400 capitalize mt-0.5">{{ \App\Models\Payment::METHODS[$payment->payment_method] ?? $payment->payment_method }} · {{ $payment->created_at->format('M d') }}</p>
+                    <p class="text-xs text-gray-400 capitalize mt-0.5">{{ \App\Models\Payment::METHODS[$payment->payment_method] ?? $payment->payment_method }} ï¿½ {{ $payment->created_at->format('M d') }}</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="status-pill {{ $ps }}">{{ ucfirst($payment->status) }}</span>
@@ -662,12 +662,12 @@
             </h3>
             <div class="space-y-2 text-sm">
                 <div class="flex justify-between">
-                    <span class="text-gray-500">Tue – Sun</span>
-                    <span class="font-semibold text-gray-800">9AM – 12NN</span>
+                    <span class="text-gray-500">Tue&ndash;Sun</span>
+                    <span class="font-semibold text-gray-800">9AM&ndash;12NN</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-500">Afternoon</span>
-                    <span class="font-semibold text-gray-800">2PM – 5PM</span>
+                    <span class="font-semibold text-gray-800">2PM&ndash;5PM</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-500">Monday</span>
