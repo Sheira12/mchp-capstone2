@@ -19,8 +19,8 @@
         @if($event->image_path)
         {{-- object-contain so poster text is never cropped --}}
         <div style="position:relative;width:100%;background:#0f172a;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:200px;max-height:400px;">
-            <div style="position:absolute;inset:0;background-image:url('{{ Storage::url($event->image_path) }}');background-size:cover;background-position:center;filter:blur(18px) brightness(0.4);transform:scale(1.08);"></div>
-            <img src="{{ Storage::url($event->image_path) }}"
+            <div style="position:absolute;inset:0;background-image:url('{{ media_url($event->image_path) }}');background-size:cover;background-position:center;filter:blur(18px) brightness(0.4);transform:scale(1.08);"></div>
+            <img src="{{ media_url($event->image_path) }}"
                  alt="{{ $event->title }}"
                  style="position:relative;z-index:1;max-height:400px;width:auto;max-width:100%;object-fit:contain;display:block;">
         </div>

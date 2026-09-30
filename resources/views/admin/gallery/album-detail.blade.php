@@ -179,7 +179,7 @@
                     {{-- Thumbnail --}}
                     <div class="w-12 h-12 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0 cursor-pointer"
                          onclick="toggleEdit({{ $item->id }})">
-                        <img src="{{ Storage::url($item->image_path) }}" alt=""
+                        <img src="{{ media_url($item->image_path) }}" alt=""
                              class="w-full h-full object-cover">
                     </div>
 
@@ -278,7 +278,7 @@
                     <div class="mt-3">
                         <label class="form-label text-xs">Replace Photo <span class="text-gray-400">(optional)</span></label>
                         <div class="flex items-center gap-3">
-                            <img src="{{ Storage::url($item->image_path) }}" alt=""
+                            <img src="{{ media_url($item->image_path) }}" alt=""
                                  class="w-16 h-16 object-cover rounded-lg border border-gray-200 flex-shrink-0">
                             <div class="flex-1">
                                 <input type="file" name="photos[{{ $idx }}][replace]"

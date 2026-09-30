@@ -174,7 +174,7 @@ $sc = $statusConfig[$booking->status] ?? $statusConfig['pending'];
         @if($booking->parishioner)
         <div class="flex items-center gap-3 mb-4">
             @if($booking->parishioner->photo_path)
-            <img src="{{ str_starts_with($booking->parishioner->photo_path, 'data:') ? $booking->parishioner->photo_path : Storage::url($booking->parishioner->photo_path) }}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-100" onerror="this.style.display='none'">
+            <img src="{{ str_starts_with($booking->parishioner->photo_path, 'data:') ? $booking->parishioner->photo_path : media_url($booking->parishioner->photo_path) }}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-100" onerror="this.style.display='none'">
             @else
             <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
                 {{ substr($booking->parishioner->first_name, 0, 1) }}
@@ -365,10 +365,10 @@ $sc = $statusConfig[$booking->status] ?? $statusConfig['pending'];
         <h3 class="font-semibold text-gray-800 mb-3 text-sm">Booking QR Code</h3>
         @php
             $bqrPath   = $booking->qrCode->qr_image_path;
-            $bqrExists = $bqrPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($bqrPath);
+            $bqrExists = $bqrPath && media_exists($bqrPath);
         @endphp
         @if($bqrExists)
-            <img src="{{ Storage::url($bqrPath) }}" alt="QR Code" class="w-28 h-28 mx-auto border border-gray-100 rounded-xl p-1">
+            <img src="{{ media_url($bqrPath) }}" alt="QR Code" class="w-28 h-28 mx-auto border border-gray-100 rounded-xl p-1">
         @else
             <div class="w-28 h-28 mx-auto border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center text-gray-400 text-xs">No QR</div>
         @endif

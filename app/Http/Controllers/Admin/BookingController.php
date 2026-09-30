@@ -249,7 +249,7 @@ class BookingController extends Controller
         // Build base64 QR for the stub
         $qrBase64 = null;
         if ($booking->qrCode?->qr_image_path) {
-            $svg = \Illuminate\Support\Facades\Storage::disk('public')
+            $svg = \Illuminate\Support\Facades\Storage::disk('supabase')
                 ->get($booking->qrCode->qr_image_path);
             if ($svg) {
                 $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($svg);

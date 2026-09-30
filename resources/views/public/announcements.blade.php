@@ -195,7 +195,7 @@
                class="ann-card {{ $i === 0 ? 'ann-card-featured' : '' }}">
                 <div class="ann-card-img">
                     @if($announcement->image_path)
-                    <img src="{{ Storage::url($announcement->image_path) }}"
+                    <img src="{{ media_url($announcement->image_path) }}"
                          alt="{{ $announcement->title }}"
                          loading="{{ $i < 3 ? 'eager' : 'lazy' }}"
                          onerror="this.onerror=null;this.style.display='none';this.parentElement.querySelector('.ann-img-fallback').classList.add('show');">

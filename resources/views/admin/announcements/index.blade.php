@@ -22,7 +22,7 @@
         <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
             <div class="flex items-start gap-3 mb-2">
                 @if($ann->image_path)
-                <img src="{{ Storage::url($ann->image_path) }}" class="w-12 h-12 rounded-lg object-cover flex-shrink-0">
+                <img src="{{ media_url($ann->image_path) }}" class="w-12 h-12 rounded-lg object-cover flex-shrink-0">
                 @else
                 <div class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0 text-lg">📢</div>
                 @endif
@@ -97,7 +97,7 @@
                     <td class="px-4 py-3">
                         <div class="flex items-center gap-3">
                             @if($ann->image_path)
-                            <img src="{{ Storage::url($ann->image_path) }}" class="w-10 h-10 rounded object-cover flex-shrink-0">
+                            <img src="{{ media_url($ann->image_path) }}" class="w-10 h-10 rounded object-cover flex-shrink-0">
                             @endif
                             <div>
                                 <p class="font-medium text-gray-900">{{ $ann->title }}</p>

@@ -20,7 +20,7 @@
 <section class="max-w-5xl mx-auto px-4 py-10">
     <div class="rounded-2xl overflow-hidden shadow-lg border border-gray-100 flex flex-col md:flex-row gap-0">
         @if($featuredEvent->image_path)
-            <img src="{{ Storage::url($featuredEvent->image_path) }}" class="md:w-64 h-48 md:h-auto object-cover flex-shrink-0">
+            <img src="{{ media_url($featuredEvent->image_path) }}" class="md:w-64 h-48 md:h-auto object-cover flex-shrink-0">
         @else
             <div class="md:w-64 h-48 md:h-auto bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-center flex-shrink-0">
                 <span class="text-white text-5xl">⛪</span>
@@ -52,7 +52,7 @@
         @foreach($upcomingEvents as $event)
         <article class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group">
             @if($event->image_path)
-                <img src="{{ Storage::url($event->image_path) }}" class="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300">
+                <img src="{{ media_url($event->image_path) }}" class="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300">
             @else
                 <div class="w-full h-44 bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center">
                     <span class="text-4xl">📅</span>
@@ -106,7 +106,7 @@
         <article class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group opacity-80 hover:opacity-100">
             @if($event->image_path)
                 <div class="relative">
-                    <img src="{{ Storage::url($event->image_path) }}" class="w-full h-40 object-cover grayscale group-hover:grayscale-0 transition duration-300">
+                    <img src="{{ media_url($event->image_path) }}" class="w-full h-40 object-cover grayscale group-hover:grayscale-0 transition duration-300">
                     <div class="absolute top-2 left-2">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-800/70 text-white">Past</span>
                     </div>

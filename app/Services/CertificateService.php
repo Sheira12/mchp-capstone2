@@ -27,7 +27,7 @@ class CertificateService
             ->errorCorrection('H')
             ->generate($qrCode->verification_url);
 
-        Storage::disk('public')->put($qrImagePath, $qrSvg);
+        Storage::disk('supabase')->put($qrImagePath, $qrSvg);
         $qrCode->update(['qr_image_path' => $qrImagePath]);
 
         // Convert SVG to base64 data URI — DomPDF embeds this without HTTP or imagick
@@ -50,7 +50,7 @@ class CertificateService
             'recData'     => $recData,   // merged record data — use this in templates
             'qrCode'      => $qrCode,
             'qrBase64'    => $qrBase64,
-            'qrImageUrl'  => Storage::disk('public')->url($qrImagePath),
+            'qrImageUrl'  => Storage::disk('supabase')->url($qrImagePath),
             'logoPath'    => public_path('images/parish-logo.png'),
             'parish'      => [
                 'name'           => config('parish.name'),
@@ -65,7 +65,7 @@ class CertificateService
         ->setOption(['defaultFont' => 'serif', 'isHtml5ParserEnabled' => true, 'isPhpEnabled' => false, 'isFontSubsettingEnabled' => true]);
 
         $pdfPath = "certificates/pdf/{$certificate->certificate_number}.pdf";
-        Storage::disk('public')->put($pdfPath, $pdf->output());
+        Storage::disk('supabase')->put($pdfPath, $pdf->output());
 
         $certificate->update([
             'file_path'    => $pdfPath,
@@ -159,7 +159,7 @@ class CertificateService
         $certData = $certificates->map(function ($cert) {
             $qrBase64 = null;
             if ($cert->qrCode?->qr_image_path) {
-                $svgContent = Storage::disk('public')->get($cert->qrCode->qr_image_path);
+                $svgContent = Storage::disk('supabase')->get($cert->qrCode->qr_image_path);
                 if ($svgContent) {
                     $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($svgContent);
                 }

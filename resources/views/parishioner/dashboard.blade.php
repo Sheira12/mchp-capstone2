@@ -1,4 +1,4 @@
-﻿@extends('layouts.portal')
+@extends('layouts.portal')
 @section('title', 'My Dashboard')
 
 @push('styles')
@@ -140,7 +140,7 @@
 }
 .upcoming-row:last-child { border-bottom: none; }
 .upcoming-row:hover { background: #f8faff; }
-/* Status pills — prevent text wrapping */
+/* Status pills � prevent text wrapping */
 .status-pill {
   display: inline-flex; align-items: center; justify-content: center;
   padding: 3px 10px; border-radius: 9999px;
@@ -174,7 +174,7 @@
 <div class="space-y-6 pb-8">
 
 
-{{-- ═══ HERO BANNER ═══ --}}
+{{-- --- HERO BANNER --- --}}
 <div class="hero-banner">
     <div class="relative z-10" style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
 
@@ -183,7 +183,7 @@
             {{-- Avatar --}}
             <div style="position:relative;flex-shrink:0;">
                 @if($p?->photo_path)
-                    <img src="{{ str_starts_with($p->photo_path, 'data:') ? $p->photo_path : Storage::url($p->photo_path) }}"
+                    <img src="{{ str_starts_with($p->photo_path, 'data:') ? $p->photo_path : media_url($p->photo_path) }}"
                          style="width:72px;height:72px;border-radius:1rem;object-fit:cover;border:2px solid rgba(255,255,255,0.5);box-shadow:0 4px 16px rgba(0,0,0,0.25);"
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                     <div style="display:none;width:72px;height:72px;border-radius:1rem;background:rgba(255,255,255,0.18);align-items:center;justify-content:center;font-size:1.75rem;font-weight:800;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,0.2);border:2px solid rgba(255,255,255,0.3);">
@@ -213,7 +213,7 @@
                     </span>
                     @else
                     <span style="display:inline-flex;align-items:center;gap:4px;background:rgba(251,191,36,0.2);border:1px solid rgba(251,191,36,0.4);color:#fde68a;font-size:0.7rem;font-weight:700;padding:2px 10px;border-radius:9999px;">
-                        ⚠ PROFILE INCOMPLETE
+                        ? PROFILE INCOMPLETE
                     </span>
                     @endif
                     <span style="color:rgba(191,219,254,0.7);font-size:0.75rem;">{{ now()->format('l, F j, Y') }}</span>
@@ -241,7 +241,7 @@
     </div>
 </div>
 
-{{-- ═══ PROFILE ALERT ═══ --}}
+{{-- --- PROFILE ALERT --- --}}
 @if(!$p)
 <div class="bg-amber-50 border-l-4 border-amber-500 rounded-2xl p-5 flex items-start gap-4 shadow-sm">
     <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -259,7 +259,7 @@
 </div>
 @endif
 
-{{-- ═══ STAT CARDS ═══ --}}
+{{-- --- STAT CARDS --- --}}
 @if($p)
 <div id="stat-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.75rem;">
     {{-- Total Bookings --}}
@@ -306,14 +306,14 @@
                 <svg style="width:20px;height:20px;" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
             </div>
             <p style="color:rgba(209,250,229,0.85);font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Total Paid</p>
-            <p style="font-size:2rem;font-weight:800;color:#fff;line-height:1.1;margin:4px 0;">₱{{ number_format($stats['total_paid_amount'], 0) }}</p>
+            <p style="font-size:2rem;font-weight:800;color:#fff;line-height:1.1;margin:4px 0;">?{{ number_format($stats['total_paid_amount'], 0) }}</p>
             <p style="color:rgba(209,250,229,0.7);font-size:0.75rem;">{{ $stats['paid_payments'] }} transactions</p>
         </div>
     </div>
 </div>
 @endif
 
-{{-- ═══ QUICK ACTIONS ═══ --}}
+{{-- --- QUICK ACTIONS --- --}}
 <div>
     <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-extrabold text-gray-900">Quick Actions</h2>
@@ -367,7 +367,7 @@
     </div>
 </div>
 
-{{-- ═══ UPCOMING BOOKINGS + RECENT ACTIVITY ═══ --}}
+{{-- --- UPCOMING BOOKINGS + RECENT ACTIVITY --- --}}
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
     {{-- Upcoming Bookings --}}
@@ -405,7 +405,7 @@
                     <span class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($booking->scheduled_time)->format('g:i A') }}</span>
                     @endif
                     @if($booking->service_fee > 0)
-                    <span class="text-xs text-gray-400">· ₱{{ number_format($booking->service_fee, 0) }}</span>
+                    <span class="text-xs text-gray-400">� ?{{ number_format($booking->service_fee, 0) }}</span>
                     @endif
                 </div>
                 <p class="text-xs text-gray-400 font-mono mt-0.5">{{ $booking->reference_number }}</p>
@@ -414,7 +414,7 @@
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0" style="min-width:80px;">
                 <span class="status-pill {{ $sc }}">{{ $booking->getStatusLabel() }}</span>
                 <a href="{{ route('parishioner.bookings.show', $booking) }}"
-                   class="text-xs text-blue-600 hover:underline font-semibold whitespace-nowrap">Details →</a>
+                   class="text-xs text-blue-600 hover:underline font-semibold whitespace-nowrap">Details ?</a>
             </div>
         </div>
         @empty
@@ -445,7 +445,7 @@
                     </div>
                     <h2 class="font-extrabold text-gray-900 text-sm">Payments</h2>
                 </div>
-                <a href="{{ route('parishioner.payments.index') }}" class="text-xs font-bold text-green-600 hover:underline">View all →</a>
+                <a href="{{ route('parishioner.payments.index') }}" class="text-xs font-bold text-green-600 hover:underline">View all ?</a>
             </div>
             @forelse($recentPayments as $payment)
             @php
@@ -455,14 +455,14 @@
             <div class="flex items-center justify-between px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition">
                 <div>
                     <div class="flex items-center gap-1.5">
-                        <p class="font-bold text-sm text-gray-900">₱{{ number_format($payment->amount, 2) }}</p>
+                        <p class="font-bold text-sm text-gray-900">?{{ number_format($payment->amount, 2) }}</p>
                         <span style="display:inline-flex;align-items:center;padding:1px 6px;border-radius:9999px;font-size:0.65rem;font-weight:700;
                             background:{{ $txBadge['color'] === 'green' ? '#dcfce7' : '#fee2e2' }};
                             color:{{ $txBadge['color'] === 'green' ? '#166534' : '#991b1b' }};">
-                            {{ $txBadge['label'] === 'Debit' ? '▼' : '▲' }} {{ $txBadge['label'] }}
+                            {{ $txBadge['label'] === 'Debit' ? '?' : '?' }} {{ $txBadge['label'] }}
                         </span>
                     </div>
-                    <p class="text-xs text-gray-400 capitalize mt-0.5">{{ \App\Models\Payment::METHODS[$payment->payment_method] ?? $payment->payment_method }} · {{ $payment->created_at->format('M d') }}</p>
+                    <p class="text-xs text-gray-400 capitalize mt-0.5">{{ \App\Models\Payment::METHODS[$payment->payment_method] ?? $payment->payment_method }} � {{ $payment->created_at->format('M d') }}</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="status-pill {{ $ps }}">{{ ucfirst($payment->status) }}</span>
@@ -490,7 +490,7 @@
                     </div>
                     <h2 class="font-extrabold text-gray-900 text-sm">Certificates</h2>
                 </div>
-                <a href="{{ route('parishioner.certificates.index') }}" class="text-xs font-bold text-purple-600 hover:underline">View all →</a>
+                <a href="{{ route('parishioner.certificates.index') }}" class="text-xs font-bold text-purple-600 hover:underline">View all ?</a>
             </div>
             @forelse($certificates as $cert)
             @php $cs = ['draft'=>'status-pending','issued'=>'status-confirmed','released'=>'status-paid'][$cert->status] ?? 'status-pending'; @endphp
@@ -518,7 +518,7 @@
     </div>
 </div>
 
-{{-- ═══ UPCOMING APPOINTMENTS + MASS SCHEDULE ═══ --}}
+{{-- --- UPCOMING APPOINTMENTS + MASS SCHEDULE --- --}}
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
     {{-- Upcoming Appointments --}}
@@ -574,7 +574,7 @@
                 </div>
                 <h2 class="font-extrabold text-gray-900 text-sm">Mass Schedule</h2>
             </div>
-            <a href="{{ route('services') }}" class="text-xs font-bold text-green-600 hover:underline">Full schedule →</a>
+            <a href="{{ route('services') }}" class="text-xs font-bold text-green-600 hover:underline">Full schedule ?</a>
         </div>
         <div class="p-4">
             @php
@@ -600,7 +600,7 @@
     </div>
 </div>
 
-{{-- ═══ ANNOUNCEMENTS + HELP ═══ --}}
+{{-- --- ANNOUNCEMENTS + HELP --- --}}
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
     {{-- Announcements --}}
@@ -612,13 +612,13 @@
                 </div>
                 <h2 class="font-extrabold text-gray-900 text-sm">Parish Announcements</h2>
             </div>
-            <a href="{{ route('announcements') }}" class="text-xs font-bold text-indigo-600 hover:underline">View all →</a>
+            <a href="{{ route('announcements') }}" class="text-xs font-bold text-indigo-600 hover:underline">View all ?</a>
         </div>
         @forelse($announcements as $ann)
         <a href="{{ route('announcements.show', $ann) }}" class="ann-item group">
             <div class="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden">
                 @if($ann->image_path)
-                    <img src="{{ Storage::url($ann->image_path) }}" class="w-full h-full object-cover">
+                    <img src="{{ media_url($ann->image_path) }}" class="w-full h-full object-cover">
                 @else
                     <div class="w-full h-full bg-indigo-100 flex items-center justify-center">
                         <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
@@ -662,12 +662,12 @@
             </h3>
             <div class="space-y-2 text-sm">
                 <div class="flex justify-between">
-                    <span class="text-gray-500">Tue – Sun</span>
-                    <span class="font-semibold text-gray-800">9AM – 12NN</span>
+                    <span class="text-gray-500">Tue � Sun</span>
+                    <span class="font-semibold text-gray-800">9AM � 12NN</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-500">Afternoon</span>
-                    <span class="font-semibold text-gray-800">2PM – 5PM</span>
+                    <span class="font-semibold text-gray-800">2PM � 5PM</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-500">Monday</span>
@@ -675,8 +675,8 @@
                 </div>
             </div>
             <div class="mt-3 pt-3 border-t border-gray-100">
-                <p class="text-xs text-gray-500">📞 {{ config('parish.phone') }}</p>
-                <p class="text-xs text-gray-500 mt-1">✉ {{ config('parish.email') }}</p>
+                <p class="text-xs text-gray-500">?? {{ config('parish.phone') }}</p>
+                <p class="text-xs text-gray-500 mt-1">? {{ config('parish.email') }}</p>
             </div>
         </div>
     </div>

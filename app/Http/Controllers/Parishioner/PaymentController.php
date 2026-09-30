@@ -263,7 +263,7 @@ class PaymentController extends Controller
         // Handle proof upload
         $proofPath = null;
         if ($request->hasFile('proof')) {
-            $proofPath = $request->file('proof')->store('payments/proofs', 'public');
+            $proofPath = $request->file('proof')->store('payments/proofs', 'supabase');
         }
 
         // Create or update payment record
@@ -908,7 +908,7 @@ class PaymentController extends Controller
 
         $proofPath = null;
         if ($request->hasFile('proof')) {
-            $proofPath = $request->file('proof')->store('payments/proofs', 'public');
+            $proofPath = $request->file('proof')->store('payments/proofs', 'supabase');
         }
 
         $payment = Payment::create([

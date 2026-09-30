@@ -68,13 +68,13 @@
         @foreach($items as $item)
         <div class="break-inside-avoid group relative rounded-xl overflow-hidden bg-gray-100 cursor-pointer"
              onclick="openLightbox(
-                 '{{ Storage::url($item->image_path) }}',
+                 '{{ media_url($item->image_path) }}',
                  '{{ addslashes($item->title ?? '') }}',
                  '{{ addslashes($item->caption ?? '') }}',
                  '{{ addslashes($item->album ?? '') }}',
                  '{{ addslashes($item->category_label) }}'
              )">
-            <img src="{{ Storage::url($item->image_path) }}" alt="{{ $item->title }}"
+            <img src="{{ media_url($item->image_path) }}" alt="{{ $item->title }}"
                  class="w-full block transition group-hover:scale-105 duration-300"
                  loading="lazy">
 
@@ -168,7 +168,7 @@
 const lbPhotos = [
     @foreach($items as $item)
     {
-        src:     '{{ Storage::url($item->image_path) }}',
+        src:     '{{ media_url($item->image_path) }}',
         title:   '{{ addslashes($item->title ?? '') }}',
         caption: '{{ addslashes($item->caption ?? '') }}',
         album:   '{{ addslashes($item->album ?? '') }}',

@@ -32,7 +32,7 @@ class AnnouncementController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image_path'] = $request->file('image')->store('announcements', 'public');
+            $validated['image_path'] = $request->file('image')->store('announcements', 'supabase');
         }
 
         $validated['created_by']   = auth()->id();
@@ -60,8 +60,8 @@ class AnnouncementController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            if ($announcement->image_path) Storage::disk('public')->delete($announcement->image_path);
-            $validated['image_path'] = $request->file('image')->store('announcements', 'public');
+            if ($announcement->image_path) Storage::disk('supabase')->delete($announcement->image_path);
+            $validated['image_path'] = $request->file('image')->store('announcements', 'supabase');
         }
 
         if ($request->boolean('is_published') && !$announcement->published_at) {
@@ -75,7 +75,7 @@ class AnnouncementController extends Controller
 
     public function destroy(Announcement $announcement)
     {
-        if ($announcement->image_path) Storage::disk('public')->delete($announcement->image_path);
+        if ($announcement->image_path) Storage::disk('supabase')->delete($announcement->image_path);
         $announcement->delete();
         return redirect()->route('admin.announcements.index')->with('success', 'Announcement deleted.');
     }

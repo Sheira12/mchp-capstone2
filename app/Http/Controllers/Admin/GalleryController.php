@@ -51,7 +51,7 @@ class GalleryController extends Controller
         $count = 0;
 
         foreach ($request->file('images') as $i => $file) {
-            $path = $file->store('gallery', 'public');
+            $path = $file->store('gallery', 'supabase');
             GalleryItem::create([
                 'title'       => null,
                 'caption'     => null,
@@ -105,8 +105,8 @@ class GalleryController extends Controller
             // Replace image if new file uploaded
             $files = $request->file('photos');
             if (isset($files[$idx]['replace'])) {
-                Storage::disk('public')->delete($item->image_path);
-                $data['image_path'] = $files[$idx]['replace']->store('gallery', 'public');
+                Storage::disk('supabase')->delete($item->image_path);
+                $data['image_path'] = $files[$idx]['replace']->store('gallery', 'supabase');
             }
 
             $item->update($data);
@@ -133,7 +133,7 @@ class GalleryController extends Controller
         $items = GalleryItem::whereIn('id', $request->input('ids'))->get();
         foreach ($items as $item) {
             $album = $album ?? $item->album;
-            Storage::disk('public')->delete($item->image_path);
+            Storage::disk('supabase')->delete($item->image_path);
             $item->delete();
         }
 
@@ -172,7 +172,7 @@ class GalleryController extends Controller
 
         $count = 0;
         foreach ($request->file('images') as $i => $file) {
-            $path = $file->store('gallery', 'public');
+            $path = $file->store('gallery', 'supabase');
             GalleryItem::create([
                 'title'       => $v['title'] ?? null,
                 'caption'     => $v['caption'] ?? null,
@@ -226,8 +226,8 @@ class GalleryController extends Controller
         ];
 
         if ($request->hasFile('image')) {
-            Storage::disk('public')->delete($gallery->image_path);
-            $data['image_path'] = $request->file('image')->store('gallery', 'public');
+            Storage::disk('supabase')->delete($gallery->image_path);
+            $data['image_path'] = $request->file('image')->store('gallery', 'supabase');
         }
 
         $gallery->update($data);
@@ -255,7 +255,7 @@ class GalleryController extends Controller
 
         $items = GalleryItem::where('album', $album)->get();
         foreach ($items as $item) {
-            Storage::disk('public')->delete($item->image_path);
+            Storage::disk('supabase')->delete($item->image_path);
             $item->delete();
         }
 
@@ -266,7 +266,7 @@ class GalleryController extends Controller
     // ── Destroy single photo ──────────────────────────────────
     public function destroy(GalleryItem $gallery)
     {
-        Storage::disk('public')->delete($gallery->image_path);
+        Storage::disk('supabase')->delete($gallery->image_path);
         $gallery->delete();
         return redirect()->route('admin.gallery.index')->with('success', 'Photo deleted.');
     }

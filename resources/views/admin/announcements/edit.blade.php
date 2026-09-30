@@ -35,7 +35,7 @@
             @if($announcement->image_path)
             <div>
                 <label class="form-label">Current Image</label>
-                <img src="{{ Storage::url($announcement->image_path) }}" class="w-32 h-20 object-cover rounded mb-2">
+                <img src="{{ media_url($announcement->image_path) }}" class="w-32 h-20 object-cover rounded mb-2">
             </div>
             @endif
 

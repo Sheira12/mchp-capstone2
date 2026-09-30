@@ -131,14 +131,14 @@ class CertificateController extends Controller
     public function download(Certificate $certificate)
     {
         set_time_limit(120);
-        if (!$certificate->file_path || !\Storage::disk('public')->exists($certificate->file_path)) {
+        if (!$certificate->file_path || !\Storage::disk('supabase')->exists($certificate->file_path)) {
             $this->certificateService->generate($certificate);
             $certificate->refresh();
         }
 
         AuditLog::record('download', $certificate, [], [], 'Certificate downloaded');
 
-        return \Storage::disk('public')->download($certificate->file_path, $certificate->certificate_number . '.pdf');
+        return \Storage::disk('supabase')->download($certificate->file_path, $certificate->certificate_number . '.pdf');
     }
 
     public function regenerate(Certificate $certificate)
@@ -325,7 +325,7 @@ class CertificateController extends Controller
     public function destroy(Certificate $certificate)
     {
         if ($certificate->file_path) {
-            \Storage::disk('public')->delete($certificate->file_path);
+            \Storage::disk('supabase')->delete($certificate->file_path);
         }
         AuditLog::record('delete', $certificate, $certificate->toArray(), [], 'Certificate deleted');
         $certificate->delete();

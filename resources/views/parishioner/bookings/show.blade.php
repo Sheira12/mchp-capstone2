@@ -240,11 +240,11 @@
         <h2 class="font-bold text-gray-900 mb-4">Booking QR Code</h2>
         @php
             $qPath = $booking->qrCode->qr_image_path;
-            $qExists = $qPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($qPath);
+            $qExists = $qPath && media_exists($qPath);
         @endphp
         @if($qExists)
         <div class="inline-block p-4 bg-white border-2 border-gray-100 rounded-2xl shadow-sm">
-            <img src="{{ Storage::url($qPath) }}" alt="QR Code" class="w-36 h-36">
+            <img src="{{ media_url($qPath) }}" alt="QR Code" class="w-36 h-36">
         </div>
         @else
         <div class="inline-flex flex-col items-center justify-center w-36 h-36 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 text-xs">

@@ -16,7 +16,7 @@ class QrCodeService
         $existing = $booking->qrCode;
         if ($existing) {
             if ($existing->qr_image_path) {
-                Storage::disk('public')->delete($existing->qr_image_path);
+                Storage::disk('supabase')->delete($existing->qr_image_path);
             }
             $existing->delete();
         }
@@ -36,7 +36,7 @@ class QrCodeService
         $existing = $certificate->qrCode;
         if ($existing) {
             if ($existing->qr_image_path) {
-                Storage::disk('public')->delete($existing->qr_image_path);
+                Storage::disk('supabase')->delete($existing->qr_image_path);
             }
             $existing->delete();
         }
@@ -67,7 +67,7 @@ class QrCodeService
             ->errorCorrection('H')
             ->generate($qrCode->verification_url);
 
-        Storage::disk('public')->put($path, $svg);
+        Storage::disk('supabase')->put($path, $svg);
         $qrCode->update(['qr_image_path' => $path]);
     }
 

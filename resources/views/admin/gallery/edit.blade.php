@@ -8,7 +8,7 @@
 
         {{-- Current photo --}}
         <div class="mb-6 flex gap-4 items-start">
-            <img src="{{ Storage::url($gallery->image_path) }}" alt="{{ $gallery->title }}"
+            <img src="{{ media_url($gallery->image_path) }}" alt="{{ $gallery->title }}"
                  class="w-32 h-32 object-cover rounded-xl border border-gray-200">
             <div>
                 <p class="font-medium text-gray-800">{{ $gallery->title ?: 'Untitled Photo' }}</p>

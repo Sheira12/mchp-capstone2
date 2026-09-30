@@ -11,9 +11,9 @@
              Blurred copy of the same image fills the neutral background. --}}
         <div style="position:relative;width:100%;background:#0f172a;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:280px;max-height:480px;">
             {{-- Blurred background fill --}}
-            <div style="position:absolute;inset:0;background-image:url('{{ Storage::url($event->image_path) }}');background-size:cover;background-position:center;filter:blur(18px) brightness(0.45);transform:scale(1.08);"></div>
+            <div style="position:absolute;inset:0;background-image:url('{{ media_url($event->image_path) }}');background-size:cover;background-position:center;filter:blur(18px) brightness(0.45);transform:scale(1.08);"></div>
             {{-- Full poster, never cropped --}}
-            <img src="{{ Storage::url($event->image_path) }}"
+            <img src="{{ media_url($event->image_path) }}"
                  alt="{{ $event->title }}"
                  style="position:relative;z-index:1;max-height:480px;width:auto;max-width:100%;object-fit:contain;display:block;"
                  loading="eager">

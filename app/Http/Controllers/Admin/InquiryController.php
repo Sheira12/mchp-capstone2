@@ -72,7 +72,7 @@ class InquiryController extends Controller
         $storedAttachments = [];
         if ($request->hasFile('admin_attachments')) {
             foreach ($request->file('admin_attachments') as $file) {
-                $path = $file->store('inquiries/admin', 'public');
+                $path = $file->store('inquiries/admin', 'supabase');
                 $storedAttachments[] = [
                     'original_name' => $file->getClientOriginalName(),
                     'path'          => $path,
@@ -128,10 +128,10 @@ class InquiryController extends Controller
             abort(403);
         }
 
-        if (!Storage::disk('public')->exists($realPath)) {
+        if (!Storage::disk('supabase')->exists($realPath)) {
             abort(404);
         }
 
-        return Storage::disk('public')->response($realPath);
+        return Storage::disk('supabase')->response($realPath);
     }
 }

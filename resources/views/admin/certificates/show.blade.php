@@ -118,8 +118,8 @@
         <div class="flex items-start gap-6">
             @php
                 $qrPath   = $certificate->qrCode->qr_image_path;
-                $qrExists = $qrPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($qrPath);
-                $qrUrl    = $qrExists ? Storage::url($qrPath) : null;
+                $qrExists = $qrPath && media_exists($qrPath);
+                $qrUrl    = $qrExists ? media_url($qrPath) : null;
             @endphp
             @if($qrUrl)
                 <img src="{{ $qrUrl }}" alt="QR Code"

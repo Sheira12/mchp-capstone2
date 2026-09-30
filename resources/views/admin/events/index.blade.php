@@ -62,7 +62,7 @@
         <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
             <div class="flex items-start gap-3 mb-2">
                 @if($event->image_path)
-                <img src="{{ Storage::url($event->image_path) }}" class="w-14 h-14 rounded-lg object-cover flex-shrink-0">
+                <img src="{{ media_url($event->image_path) }}" class="w-14 h-14 rounded-lg object-cover flex-shrink-0">
                 @else
                 <div class="w-14 h-14 rounded-lg bg-indigo-50 flex items-center justify-center text-2xl flex-shrink-0">📅</div>
                 @endif
@@ -137,7 +137,7 @@
                     <td class="px-4 py-3">
                         <div class="flex items-center gap-3">
                             @if($event->image_path)
-                            <img src="{{ Storage::url($event->image_path) }}" class="w-10 h-10 rounded object-cover flex-shrink-0">
+                            <img src="{{ media_url($event->image_path) }}" class="w-10 h-10 rounded object-cover flex-shrink-0">
                             @else
                             <div class="w-10 h-10 rounded bg-indigo-50 flex items-center justify-center flex-shrink-0"><span class="text-lg">📅</span></div>
                             @endif

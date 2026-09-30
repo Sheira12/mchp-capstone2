@@ -61,7 +61,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Event Image</label>
                 @if($event->image_path)
-                    <img src="{{ Storage::url($event->image_path) }}" class="w-32 h-20 object-cover rounded mb-2">
+                    <img src="{{ media_url($event->image_path) }}" class="w-32 h-20 object-cover rounded mb-2">
                 @endif
                 <input type="file" name="image" accept="image/*"
                        class="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:border file:border-gray-200 file:rounded-lg file:text-sm file:bg-gray-50 hover:file:bg-gray-100">

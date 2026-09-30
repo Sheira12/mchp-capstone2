@@ -42,7 +42,7 @@
         {{-- Featured Image --}}
         @if($announcement->image_path)
         <div class="mb-8 rounded-xl overflow-hidden shadow-lg">
-            <img src="{{ Storage::url($announcement->image_path) }}" alt="{{ $announcement->title }}" class="w-full h-auto">
+            <img src="{{ media_url($announcement->image_path) }}" alt="{{ $announcement->title }}" class="w-full h-auto">
         </div>
         @endif
 
@@ -88,7 +88,7 @@
             @foreach($related as $rel)
             <a href="{{ route('announcements.show', $rel) }}" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group">
                 @if($rel->image_path)
-                <img src="{{ Storage::url($rel->image_path) }}" alt="{{ $rel->title }}" class="w-full h-32 object-cover">
+                <img src="{{ media_url($rel->image_path) }}" alt="{{ $rel->title }}" class="w-full h-32 object-cover">
                 @else
                 <div class="w-full h-32 bg-gradient-to-br from-blue-100 to-indigo-100"></div>
                 @endif

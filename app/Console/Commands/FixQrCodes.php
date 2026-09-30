@@ -40,7 +40,7 @@ class FixQrCodes extends Command
                     ->errorCorrection('H')
                     ->generate($correctUrl);
 
-                Storage::disk('public')->put($path, $svg);
+                Storage::disk('supabase')->put($path, $svg);
 
                 $qr->update([
                     'verification_url' => $correctUrl,

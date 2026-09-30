@@ -19,8 +19,8 @@ class EventController extends Controller
         }
 
         if ($category = $request->get('category')) {
-            $query->where('category', $category);
-        }
+            $query->where('category', $category);d
+        }d
 
         if ($status = $request->get('status')) {
             $query->where('status', $status);
@@ -53,7 +53,7 @@ class EventController extends Controller
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('events', 'public');
+            $imagePath = $request->file('image')->store('events', 'supabase');
         }
 
         $event = Event::create([
@@ -97,9 +97,9 @@ class EventController extends Controller
 
         if ($request->hasFile('image')) {
             if ($event->image_path) {
-                \Storage::disk('public')->delete($event->image_path);
+                \Storage::disk('supabase')->delete($event->image_path);
             }
-            $validated['image_path'] = $request->file('image')->store('events', 'public');
+            $validated['image_path'] = $request->file('image')->store('events', 'supabase');
         }
 
         $event->update([...$validated, 'is_featured' => $request->boolean('is_featured')]);
@@ -112,7 +112,7 @@ class EventController extends Controller
     public function destroy(Event $event)
     {
         if ($event->image_path) {
-            \Storage::disk('public')->delete($event->image_path);
+            \Storage::disk('supabase')->delete($event->image_path);
         }
         AuditLog::record('delete', $event, $event->toArray(), [], 'Event deleted');
         $event->delete();

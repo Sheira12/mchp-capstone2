@@ -361,7 +361,7 @@
         <div class="sb-user">
             @if(auth()->user()->parishioner?->photo_path)
                 @php $sbPhoto = auth()->user()->parishioner->photo_path; @endphp
-                <img src="{{ str_starts_with($sbPhoto, 'data:') ? $sbPhoto : Storage::url($sbPhoto) }}"
+                <img src="{{ str_starts_with($sbPhoto, 'data:') ? $sbPhoto : media_url($sbPhoto) }}"
                      class="sb-avatar" alt="Photo"
                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                 <div class="sb-avatar-placeholder" style="display:none;">{{ substr(auth()->user()->name, 0, 1) }}</div>
@@ -538,7 +538,7 @@
                    onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='transparent';">
                     @if(auth()->user()->parishioner?->photo_path)
                         @php $topPhoto = auth()->user()->parishioner->photo_path; @endphp
-                        <img src="{{ str_starts_with($topPhoto, 'data:') ? $topPhoto : Storage::url($topPhoto) }}"
+                        <img src="{{ str_starts_with($topPhoto, 'data:') ? $topPhoto : media_url($topPhoto) }}"
                              style="width:30px;height:30px;border-radius:50%;object-fit:cover;"
                              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                         <div style="display:none;width:30px;height:30px;border-radius:50%;background:#dbeafe;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#1e3a8a;">

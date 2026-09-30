@@ -134,7 +134,7 @@ class WalkInBookingController extends Controller
         // Generate QR base64
         $qrBase64 = null;
         if ($booking->qrCode?->qr_image_path) {
-            $svg = Storage::disk('public')->get($booking->qrCode->qr_image_path);
+            $svg = Storage::disk('supabase')->get($booking->qrCode->qr_image_path);
             if ($svg) {
                 $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($svg);
             }
@@ -152,7 +152,7 @@ class WalkInBookingController extends Controller
 
         $qrBase64 = null;
         if ($booking->qrCode?->qr_image_path) {
-            $svg = Storage::disk('public')->get($booking->qrCode->qr_image_path);
+            $svg = Storage::disk('supabase')->get($booking->qrCode->qr_image_path);
             if ($svg) {
                 $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($svg);
             }

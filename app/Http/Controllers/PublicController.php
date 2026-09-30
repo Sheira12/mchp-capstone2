@@ -61,7 +61,7 @@ class PublicController extends Controller
         $storedAttachments = [];
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('inquiries/user', 'public');
+                $path = $file->store('inquiries/user', 'supabase');
                 $storedAttachments[] = [
                     'original_name' => $file->getClientOriginalName(),
                     'path'          => $path,

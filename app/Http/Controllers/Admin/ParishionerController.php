@@ -69,7 +69,7 @@ class ParishionerController extends Controller
         $validated = $this->validateParishioner($request);
 
         if ($request->hasFile('photo')) {
-            $validated['photo_path'] = $request->file('photo')->store('parishioners/photos', 'public');
+            $validated['photo_path'] = $request->file('photo')->store('parishioners/photos', 'supabase');
         }
 
         // Duplicate detection
@@ -122,9 +122,9 @@ class ParishionerController extends Controller
 
         if ($request->hasFile('photo')) {
             if ($parishioner->photo_path) {
-                Storage::disk('public')->delete($parishioner->photo_path);
+                Storage::disk('supabase')->delete($parishioner->photo_path);
             }
-            $validated['photo_path'] = $request->file('photo')->store('parishioners/photos', 'public');
+            $validated['photo_path'] = $request->file('photo')->store('parishioners/photos', 'supabase');
         }
 
         // Log changes

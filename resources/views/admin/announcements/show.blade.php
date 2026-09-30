@@ -23,7 +23,7 @@
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         @if($announcement->image_path)
-        <img src="{{ Storage::url($announcement->image_path) }}" alt="{{ $announcement->title }}"
+        <img src="{{ media_url($announcement->image_path) }}" alt="{{ $announcement->title }}"
              class="w-full h-56 object-cover">
         @endif
         <div class="p-6">

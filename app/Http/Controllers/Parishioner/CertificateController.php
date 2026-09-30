@@ -217,7 +217,7 @@ class CertificateController extends Controller
         \App\Models\CertificateStatusHistory::log($certificate, 'draft', 'cancelled', 'Cancelled by parishioner');
 
         if ($certificate->file_path) {
-            \Storage::disk('public')->delete($certificate->file_path);
+            \Storage::disk('supabase')->delete($certificate->file_path);
         }
         $certificate->delete();
 
@@ -248,12 +248,12 @@ class CertificateController extends Controller
         }
 
         set_time_limit(60);
-        if (!$certificate->file_path || !Storage::disk('public')->exists($certificate->file_path)) {
+        if (!$certificate->file_path || !Storage::disk('supabase')->exists($certificate->file_path)) {
             app(\App\Services\CertificateService::class)->generate($certificate);
             $certificate->refresh();
         }
 
-        return Storage::disk('public')->download(
+        return Storage::disk('supabase')->download(
             $certificate->file_path,
             $certificate->certificate_number . '.pdf'
         );

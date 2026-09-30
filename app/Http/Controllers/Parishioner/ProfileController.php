@@ -23,7 +23,7 @@ class ProfileController extends Controller
         $parishioner = $user->parishioner;
 
         if ($parishioner?->photo_path) {
-            Storage::disk('public')->delete($parishioner->photo_path);
+            Storage::disk('supabase')->delete($parishioner->photo_path);
             $parishioner->update(['photo_path' => null]);
         }
 

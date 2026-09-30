@@ -39,11 +39,16 @@ class AdminInquiryReplyMail extends Mailable
     {
         $attached = [];
         foreach ($this->adminAttachments as $file) {
-            $fullPath = Storage::disk('public')->path($file['path']);
-            if (file_exists($fullPath)) {
-                $attached[] = Attachment::fromPath($fullPath)
-                    ->as($file['original_name'])
-                    ->withMime($file['mime']);
+            try {
+                // Use fromData() instead of fromPath() so this works with
+                // any remote disk (Supabase/S3) — no local filesystem needed.
+                $content = Storage::disk('supabase')->get($file['path']);
+                if ($content) {
+                    $attached[] = Attachment::fromData(fn () => $content, $file['original_name'])
+                        ->withMime($file['mime']);
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Inquiry reply attachment missing from storage: ' . $file['path']);
             }
         }
         return $attached;

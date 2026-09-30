@@ -144,7 +144,7 @@ $sc = $statusConfig[$payment->status] ?? $statusConfig['pending'];
                     </h2>
                 </div>
                 <div class="p-6">
-                    <img src="{{ Storage::url($payment->proof_path) }}" alt="Payment Proof"
+                    <img src="{{ media_url($payment->proof_path) }}" alt="Payment Proof"
                          class="max-w-full rounded-xl border border-gray-200 shadow-sm cursor-pointer"
                          onclick="window.open(this.src,'_blank')"
                          style="max-height:400px;object-fit:contain;">

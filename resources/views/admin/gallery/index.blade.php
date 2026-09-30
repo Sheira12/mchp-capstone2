@@ -71,7 +71,7 @@
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1 p-2">
             @foreach($items as $item)
             <div class="group relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                <img src="{{ Storage::url($item->image_path) }}" alt="{{ $item->title }}"
+                <img src="{{ media_url($item->image_path) }}" alt="{{ $item->title }}"
                      class="w-full h-full object-cover transition group-hover:scale-105 duration-200">
 
                 {{-- Hover overlay --}}
