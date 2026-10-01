@@ -309,11 +309,15 @@ class AuthController extends Controller
         // ── Brevo HTTP API ────────────────────────────────────────────────────
         if ($mailer === 'brevo' || env('BREVO_API_KEY')) {
             $apiKey = env('BREVO_API_KEY');
+
+            // Brevo requires the sender to be a verified address in your Brevo account.
+            // Use BREVO_FROM_ADDRESS if set, otherwise fall back to MAIL_FROM_ADDRESS.
+            $brevoFrom = env('BREVO_FROM_ADDRESS', $fromAddress);
+
             Log::info('2FA sendOtpEmail: Brevo check', [
                 'user_id'          => $user->id,
                 'has_key'          => !empty($apiKey),
-                'key_length'       => strlen($apiKey ?? ''),
-                'sender'           => $fromAddress,
+                'sender'           => $brevoFrom,
                 'recipient_domain' => substr(strrchr($user->email, '@'), 1),
             ]);
             if ($apiKey) {
@@ -322,7 +326,7 @@ class AuthController extends Controller
                         'api-key'      => $apiKey,
                         'Content-Type' => 'application/json',
                     ])->timeout(15)->post('https://api.brevo.com/v3/smtp/email', [
-                        'sender'     => ['name' => $fromName, 'email' => $fromAddress],
+                        'sender'     => ['name' => $fromName, 'email' => $brevoFrom],
                         'to'         => [['email' => $user->email, 'name' => $user->name]],
                         'subject'    => $subject,
                         'htmlContent'=> $html,
@@ -342,7 +346,7 @@ class AuthController extends Controller
                         'brevo_code'     => $response->json('code') ?? 'n/a',
                         'brevo_message'  => $response->json('message') ?? 'n/a',
                         'recipient_domain' => substr(strrchr($user->email, '@'), 1),
-                        'sender'         => $fromAddress,
+                        'sender'         => $brevoFrom,
                     ]);
                     return false;
                 } catch (\Exception $e) {
