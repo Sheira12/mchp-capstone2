@@ -306,7 +306,7 @@
                 <svg style="width:20px;height:20px;" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
             </div>
             <p style="color:rgba(209,250,229,0.85);font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Total Paid</p>
-            <p style="font-size:2rem;font-weight:800;color:#fff;line-height:1.1;margin:4px 0;">?{{ number_format($stats['total_paid_amount'], 0) }}</p>
+            <p style="font-size:2rem;font-weight:800;color:#fff;line-height:1.1;margin:4px 0;">&#8369;{{ number_format($stats['total_paid_amount'], 0) }}</p>
             <p style="color:rgba(209,250,229,0.7);font-size:0.75rem;">{{ $stats['paid_payments'] }} transactions</p>
         </div>
     </div>
@@ -405,7 +405,7 @@
                     <span class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($booking->scheduled_time)->format('g:i A') }}</span>
                     @endif
                     @if($booking->service_fee > 0)
-                    <span class="text-xs text-gray-400">� ?{{ number_format($booking->service_fee, 0) }}</span>
+                    <span class="text-xs text-gray-400">&#9830; &#8369;{{ number_format($booking->service_fee, 0) }}</span>
                     @endif
                 </div>
                 <p class="text-xs text-gray-400 font-mono mt-0.5">{{ $booking->reference_number }}</p>
@@ -455,7 +455,7 @@
             <div class="flex items-center justify-between px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition">
                 <div>
                     <div class="flex items-center gap-1.5">
-                        <p class="font-bold text-sm text-gray-900">?{{ number_format($payment->amount, 2) }}</p>
+                        <p class="font-bold text-sm text-gray-900">&#8369;{{ number_format($payment->amount, 2) }}</p>
                         <span style="display:inline-flex;align-items:center;padding:1px 6px;border-radius:9999px;font-size:0.65rem;font-weight:700;
                             background:{{ $txBadge['color'] === 'green' ? '#dcfce7' : '#fee2e2' }};
                             color:{{ $txBadge['color'] === 'green' ? '#166534' : '#991b1b' }};">
