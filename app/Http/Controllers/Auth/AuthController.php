@@ -358,11 +358,17 @@ class AuthController extends Controller
         // ── Resend HTTP API ───────────────────────────────────────────────────
         $resendKey = env('RESEND_API_KEY');
         if ($resendKey && $resendKey !== 'RENDER_VAR_OVERRIDE') {
+            // Use onboarding@resend.dev as fallback from-address if configured
+            // domain isn't verified yet — this is always pre-verified by Resend
+            $resendFrom = $fromAddress;
+            if (!str_ends_with($fromAddress, '@resend.dev') && env('APP_ENV') === 'production') {
+                // Try with configured address first; if it fails we catch and retry below
+            }
             try {
                 $response = Http::withToken($resendKey)
                     ->timeout(15)
                     ->post('https://api.resend.com/emails', [
-                        'from'    => "$fromName <$fromAddress>",
+                        'from'    => "$fromName <$resendFrom>",
                         'to'      => [$user->email],
                         'subject' => $subject,
                         'html'    => $html,
@@ -372,8 +378,30 @@ class AuthController extends Controller
                     Log::info('2FA OTP sent via Resend', [
                         'user_id' => $user->id,
                         'id'      => $response->json('id') ?? 'n/a',
+                        'from'    => $resendFrom,
                     ]);
                     return true;
+                }
+
+                // If domain not verified, retry with onboarding@resend.dev
+                $errMsg = $response->json('message') ?? '';
+                if (str_contains($errMsg, 'not verified') || str_contains($errMsg, 'domain')) {
+                    Log::warning('2FA Resend domain not verified, retrying with onboarding@resend.dev', [
+                        'user_id'      => $user->id,
+                        'original_from'=> $resendFrom,
+                    ]);
+                    $fallbackResponse = Http::withToken($resendKey)
+                        ->timeout(15)
+                        ->post('https://api.resend.com/emails', [
+                            'from'    => "$fromName <onboarding@resend.dev>",
+                            'to'      => [$user->email],
+                            'subject' => $subject,
+                            'html'    => $html,
+                        ]);
+                    if ($fallbackResponse->successful()) {
+                        Log::info('2FA OTP sent via Resend (onboarding fallback)', ['user_id' => $user->id]);
+                        return true;
+                    }
                 }
 
                 Log::error('2FA Resend API error', [
@@ -397,6 +425,20 @@ class AuthController extends Controller
             Log::info('2FA OTP sent via Laravel Mail', ['user_id' => $user->id]);
             return true;
         } catch (\Exception $e) {
+            // If domain not verified, try forcing onboarding@resend.dev via config override
+            if (str_contains($e->getMessage(), 'not verified') || str_contains($e->getMessage(), 'domain')) {
+                try {
+                    config(['mail.from.address' => 'onboarding@resend.dev']);
+                    Mail::to($user->email)->send(new TwoFactorCodeMail($user, $plainCode));
+                    Log::info('2FA OTP sent via Laravel Mail (onboarding fallback)', ['user_id' => $user->id]);
+                    return true;
+                } catch (\Exception $e2) {
+                    Log::error('2FA Laravel Mail fallback also failed', [
+                        'user_id' => $user->id,
+                        'error'   => $e2->getMessage(),
+                    ]);
+                }
+            }
             Log::error('2FA Laravel Mail failed', [
                 'user_id' => $user->id,
                 'error'   => $e->getMessage(),
