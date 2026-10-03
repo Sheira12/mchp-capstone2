@@ -127,13 +127,16 @@
     font-size:0.8375rem; color:#374151; line-height:1.5;
 }
 
-/* ── Category icon/color mapping ── */
 .cat-icon-wrap {
     width:52px; height:52px; border-radius:14px;
     display:flex; align-items:center; justify-content:center;
-    font-size:1.625rem; flex-shrink:0;
+    flex-shrink:0;
     margin-bottom:0.25rem;
 }
+.cat-icon-wrap svg,
+.cat-icon-wrap span svg { width:26px; height:26px; }
+/* SVG icons inside service cards */
+.svc-card .svc-icon-wrap span svg { width:26px; height:26px; }
 </style>
 @endpush
 
@@ -171,7 +174,8 @@
                 <a href="{{ route('walkin.index') }}"
                    style="display:inline-flex;align-items:center;gap:8px;background:rgba(212,175,55,0.85);color:#fff;font-weight:700;font-size:0.875rem;padding:0.75rem 1.5rem;border-radius:9999px;text-decoration:none;border:1.5px solid rgba(212,175,55,0.5);transition:all 0.2s;"
                    onmouseover="this.style.background='rgba(212,175,55,1)';" onmouseout="this.style.background='rgba(212,175,55,0.85)';">
-                    ✍️ Walk-in Booking
+                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                    Walk-in Booking
                 </a>
                 <a href="{{ route('contact') }}"
                    style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.12);color:#fff;font-weight:600;font-size:0.875rem;padding:0.75rem 1.5rem;border-radius:9999px;text-decoration:none;border:1.5px solid rgba(255,255,255,0.25);transition:all 0.2s;"
@@ -204,17 +208,17 @@
         <nav class="cat-nav-inner" id="cat-nav">
             @php
             $catMeta = [
-                'Sacraments'   => ['✝️','#3b82f6'],
-                'Sacramentals' => ['🙏','#8b5cf6'],
-                'Seminars'     => ['📚','#f59e0b'],
-                'Mass'         => ['⛪','#ef4444'],
-                'Certificates' => ['📜','#10b981'],
+                'Sacraments'   => ['<svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>','#3b82f6'],
+                'Sacramentals' => ['<svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>','#8b5cf6'],
+                'Seminars'     => ['<svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>','#f59e0b'],
+                'Mass'         => ['<svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>','#ef4444'],
+                'Certificates' => ['<svg style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>','#10b981'],
             ];
             @endphp
             @foreach($services as $category => $categoryServices)
             @php $meta = $catMeta[$category] ?? ['📋','#2563eb']; @endphp
             <a href="#{{ Str::slug($category) }}" class="cat-btn" data-cat="{{ Str::slug($category) }}">
-                <span>{{ $meta[0] }}</span>
+                {!! $meta[0] !!}
                 {{ $category }}
                 <span class="cat-count">{{ $categoryServices->count() }}</span>
             </a>
@@ -244,7 +248,7 @@
         {{-- Category header --}}
         <div style="display:flex;align-items:flex-start;gap:1.25rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #e8edf5;">
             <div class="cat-icon-wrap" style="background:{{ $meta[1] }}18;color:{{ $meta[1] }};">
-                {{ $meta[0] }}
+                {!! $meta[0] !!}
             </div>
             <div style="flex:1;">
                 <div style="display:flex;align-items:center;gap:0.875rem;flex-wrap:wrap;margin-bottom:0.375rem;">
@@ -264,13 +268,21 @@
             @foreach($categoryServices as $service)
             @php
                 $svcIcons = [
-                    'baptism'=>'💧','wedding'=>'💍','funeral_mass'=>'🕯️',
-                    'house_blessing'=>'🏠','car_blessing'=>'🚗','business_blessing'=>'🏪',
-                    'sick_call'=>'🙏','pre_baptismal'=>'📚','pre_marriage'=>'💑',
-                    'confirmation_catechesis'=>'✝️','mass_intention'=>'⛪',
-                    'certificate'=>'📜',
+                    'baptism'                 => '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1M4.22 4.22l.707.707M18.364 18.364l.707.707M1 12h1m20 0h1M4.22 19.778l.707-.707M18.364 5.636l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>',
+                    'wedding'                 => '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>',
+                    'funeral_mass'            => '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/></svg>',
+                    'house_blessing'          => '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>',
+                    'car_blessing'            => '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l3 1h6zM7 16H3m14 0h1a1 1 0 001-1v-5l-2-5H9l-1 3"/></svg>',
+                    'business_blessing'       => '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>',
+                    'sick_call'               => '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>',
+                    'pre_baptismal'           => '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>',
+                    'pre_marriage'            => '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
+                    'confirmation_catechesis' => '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>',
+                    'mass_intention'          => '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>',
+                    'certificate'             => '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>',
                 ];
-                $icon = $svcIcons[$service->slug] ?? '📋';
+                $defaultIcon = '<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>';
+                $icon = $svcIcons[$service->slug] ?? $defaultIcon;
                 $accent = $meta[1];
             @endphp
 
@@ -279,8 +291,8 @@
                 {{-- Card top: icon + name + fee --}}
                 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;">
                     <div style="display:flex;align-items:center;gap:0.875rem;">
-                        <div style="width:48px;height:48px;border-radius:12px;background:{{ $accent }}15;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;">
-                            {{ $icon }}
+                        <div style="width:48px;height:48px;border-radius:12px;background:{{ $accent }}15;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:{{ $accent }};">
+                            <span style="display:flex;width:26px;height:26px;">{!! $icon !!}</span>
                         </div>
                         <h3 style="font-size:1rem;font-weight:700;color:#0f172a;line-height:1.3;margin:0;">
                             {{ $service->name }}
@@ -349,7 +361,7 @@
                        class="svc-book-btn secondary"
                        style="flex:0 0 auto;padding:0.75rem;"
                        title="Walk-in Booking">
-                        ✍️
+                        <svg style="width:15px;height:15px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                     </a>
                 </div>
                 @else
@@ -381,17 +393,20 @@
                 <a href="{{ route('contact') }}"
                    style="display:inline-flex;align-items:center;gap:8px;background:#fff;color:#1e3a8a;font-weight:700;font-size:0.9rem;padding:0.875rem 2rem;border-radius:9999px;text-decoration:none;transition:all 0.2s;box-shadow:0 4px 16px rgba(0,0,0,0.25);"
                    onmouseover="this.style.background='#eff6ff';" onmouseout="this.style.background='#fff';">
-                    📞 Contact Us
+                    <svg style="width:15px;height:15px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                    Contact Us
                 </a>
                 <a href="{{ route('walkin.index') }}"
                    style="display:inline-flex;align-items:center;gap:8px;background:rgba(212,175,55,0.85);color:#fff;font-weight:700;font-size:0.9rem;padding:0.875rem 2rem;border-radius:9999px;text-decoration:none;border:1.5px solid rgba(212,175,55,0.5);transition:all 0.2s;"
                    onmouseover="this.style.background='rgba(212,175,55,1)';" onmouseout="this.style.background='rgba(212,175,55,0.85)';">
-                    ✍️ Walk-in Booking
+                    <svg style="width:15px;height:15px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                    Walk-in Booking
                 </a>
                 <a href="{{ route('announcements') }}"
                    style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.12);color:#fff;font-weight:600;font-size:0.9rem;padding:0.875rem 2rem;border-radius:9999px;text-decoration:none;border:1.5px solid rgba(255,255,255,0.25);transition:all 0.2s;"
                    onmouseover="this.style.background='rgba(255,255,255,0.2)';" onmouseout="this.style.background='rgba(255,255,255,0.12)';">
-                    📢 Announcements
+                    <svg style="width:15px;height:15px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+                    Announcements
                 </a>
             </div>
         </div>
