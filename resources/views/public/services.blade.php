@@ -98,12 +98,14 @@
 
 /* ── Book button ── */
 .svc-book-btn {
-    display:flex; align-items:center; justify-content:center; gap:6px;
+    display:flex; flex-direction:row; align-items:center; justify-content:center;
+    gap:6px; white-space:nowrap; flex-wrap:nowrap;
     padding:0.75rem 1rem; border-radius:0.875rem;
     font-size:0.875rem; font-weight:700; text-decoration:none;
-    transition:all 0.2s; margin-top:auto;
+    transition:all 0.2s;
     border:none; cursor:pointer; width:100%;
 }
+.svc-book-btn svg { flex-shrink:0; }
 .svc-book-btn.primary {
     background:linear-gradient(135deg,#1e3a8a,#2563eb);
     color:#fff; box-shadow:0 4px 14px rgba(37,99,235,0.3);
@@ -369,7 +371,8 @@
                 <div style="margin-top:auto;">
                     <a href="{{ route('contact') }}"
                        class="svc-book-btn secondary" style="font-size:0.8125rem;">
-                        📞 Inquire at Parish Office
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                        Inquire at Parish Office
                     </a>
                 </div>
                 @endif
