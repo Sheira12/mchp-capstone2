@@ -1,4 +1,4 @@
-@extends('layouts.public')
+﻿@extends('layouts.public')
 @section('title', 'Services & Sacraments')
 @section('meta-description', 'Parish services including sacraments, blessings, seminars, and certificates at Mary Help of Christians Parish')
 
@@ -193,7 +193,7 @@
             @foreach([
                 [$services->sum(fn($s) => count($s)), 'Services Available'],
                 ['Daily', 'Sacramental Ministry'],
-                ['₱100', 'Certificate Fee'],
+                ['&#8369;100', 'Certificate Fee'],
                 ['Walk-in', 'No Account Needed'],
             ] as $stat)
             <div style="text-align:center;">
@@ -302,7 +302,7 @@
                         </h3>
                     </div>
                     @if($service->fee > 0)
-                    <span class="fee-badge fee-paid">₱{{ number_format($service->fee, 0) }}</span>
+                    <span class="fee-badge fee-paid">&#8369;{{ number_format($service->fee, 0) }}</span>
                     @else
                     <span class="fee-badge fee-free">Free</span>
                     @endif
@@ -362,9 +362,10 @@
                     @endauth
                     <a href="{{ route('walkin.index') }}"
                        class="svc-book-btn secondary"
-                       style="flex:0 0 auto;padding:0.75rem;"
+                       style="flex:0 0 auto;padding:0.75rem 1rem;gap:5px;"
                        title="Walk-in Booking">
-                        <svg style="width:15px;height:15px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        Walk-in
                     </a>
                 </div>
                 @else
