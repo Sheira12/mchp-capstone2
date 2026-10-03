@@ -70,7 +70,6 @@
     display:flex; flex-direction:column; gap:0.875rem;
     height:100%;
     position:relative;
-    overflow:hidden;
 }
 .svc-card:hover {
     box-shadow:0 12px 32px rgba(37,99,235,0.13);
@@ -362,7 +361,7 @@
                     @endauth
                     <a href="{{ route('walkin.index') }}"
                        class="svc-book-btn secondary"
-                       style="flex:0 0 auto;padding:0.75rem 1rem;gap:5px;"
+                       style="flex:0 0 auto;width:auto;padding:0.75rem 1rem;gap:5px;white-space:nowrap;"
                        title="Walk-in Booking">
                         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                         Walk-in
