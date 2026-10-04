@@ -178,8 +178,15 @@ class PaymentService
             'status'           => 'pending',
         ]);
 
-        // Build return URL using APP_URL (never localhost in production)
-        $appUrl    = rtrim(config('app.url'), '/');
+        // Build return URL.
+        // PayMongo runs on the internet and must be able to reach this URL after
+        // GCash/Maya authentication. In local dev APP_URL is a LAN address
+        // (e.g. http://172.16.x.x:8000) that PayMongo's servers can't reach.
+        // Set PAYMONGO_RETURN_URL_BASE in your local .env to the deployed Render
+        // URL so redirects work during local testing with live PayMongo keys:
+        //   PAYMONGO_RETURN_URL_BASE=https://mchp-capstone2.onrender.com
+        // On Render this env var is left empty and APP_URL is used automatically.
+        $appUrl    = rtrim(config('services.paymongo.return_url_base') ?: config('app.url'), '/');
         $returnUrl = $appUrl . route('parishioner.payments.success', ['ref' => $payment->reference_number], false);
         $failedUrl = $appUrl . route('parishioner.payments.failed', [], false) . '?ref=' . $payment->reference_number;
 

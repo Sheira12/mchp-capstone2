@@ -23,6 +23,12 @@ return [
         'public_key'      => env('PAYMONGO_PUBLIC_KEY'),
         'secret_key'      => env('PAYMONGO_SECRET_KEY'),
         'webhook_secret'  => env('PAYMONGO_WEBHOOK_SECRET'),
+        // Override the base URL PayMongo redirects back to.
+        // Useful in local dev where APP_URL is a LAN address unreachable by PayMongo.
+        // Set this in .env to your deployed Render URL when testing locally:
+        //   PAYMONGO_RETURN_URL_BASE=https://mchp-capstone2.onrender.com
+        // Leave empty on Render (APP_URL is used automatically).
+        'return_url_base' => env('PAYMONGO_RETURN_URL_BASE'),
     ],
 
     'semaphore' => [
