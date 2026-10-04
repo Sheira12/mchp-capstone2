@@ -309,16 +309,23 @@
                class="px-5 py-2.5 border border-gray-200 text-gray-600 hover:bg-gray-50 font-semibold text-sm rounded-xl transition">
                 Cancel
             </a>
-            <form action="{{ route('admin.certificates.destroy', $certificate) }}" method="POST"
-                  class="ml-auto" onsubmit="return confirm('Delete this certificate? This cannot be undone.')">
-                @csrf @method('DELETE')
-                <button type="submit"
-                        class="px-5 py-2.5 border border-red-200 text-red-600 hover:bg-red-50 font-semibold text-sm rounded-xl transition">
-                    Delete Certificate
-                </button>
-            </form>
+            {{-- Delete button is OUTSIDE the main form — placed via JS click to a separate form below --}}
+            <button type="button"
+                    class="ml-auto px-5 py-2.5 border border-red-200 text-red-600 hover:bg-red-50 font-semibold text-sm rounded-xl transition"
+                    onclick="if(confirm('Delete this certificate? This cannot be undone.')) document.getElementById('delete-cert-form').submit();">
+                Delete Certificate
+            </button>
         </div>
 
+    </form>{{-- /main PUT form ends here --}}
+
+    {{-- Delete form is OUTSIDE the main form so its _method=DELETE
+         never contaminates the Save/Regenerate submit. --}}
+    <form id="delete-cert-form"
+          action="{{ route('admin.certificates.destroy', $certificate) }}"
+          method="POST"
+          style="display:none;">
+        @csrf @method('DELETE')
     </form>
 </div>
 
