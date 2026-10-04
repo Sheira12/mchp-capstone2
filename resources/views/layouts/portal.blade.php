@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -341,7 +341,7 @@
 <div class="sb-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
 
 {{-- Compute pending bookings count once for the entire layout --}}
-@php $_pendingBookings = auth()->user()->parishioner?->bookings()->where('status','pending')->count() ?? 0; @endphp
+@php $_pendingBookings = auth()->check() ? (auth()->user()?->parishioner?->bookings()->where('status','pending')->count() ?? 0) : 0; @endphp
 
 <div class="portal-shell">
 
@@ -359,19 +359,19 @@
 
         {{-- User card --}}
         <div class="sb-user">
-            @if(auth()->user()->parishioner?->photo_path)
-                @php $sbPhoto = auth()->user()->parishioner->photo_path; @endphp
+            @if(auth()->user()?->parishioner?->photo_path)
+                @php $sbPhoto = auth()->user()?->parishioner->photo_path; @endphp
                 <img src="{{ str_starts_with($sbPhoto, 'data:') ? $sbPhoto : media_url($sbPhoto) }}"
                      class="sb-avatar" alt="Photo"
                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                <div class="sb-avatar-placeholder" style="display:none;">{{ substr(auth()->user()->name, 0, 1) }}</div>
+                <div class="sb-avatar-placeholder" style="display:none;">{{ substr(auth()->user()?->name, 0, 1) }}</div>
             @else
-                <div class="sb-avatar-placeholder">{{ substr(auth()->user()->name, 0, 1) }}</div>
+                <div class="sb-avatar-placeholder">{{ substr(auth()->user()?->name, 0, 1) }}</div>
             @endif
             <div class="sb-user-info">
-                <p class="sb-user-name">{{ auth()->user()->name }}</p>
+                <p class="sb-user-name">{{ auth()->user()?->name }}</p>
                 <p class="sb-user-role">Parishioner</p>
-                @if(auth()->user()->parishioner)
+                @if(auth()->user()?->parishioner)
                     <span class="sb-verified">✓ Verified</span>
                 @else
                     <a href="{{ route('parishioner.profile') }}" class="sb-incomplete">⚠ Complete Profile</a>
@@ -536,21 +536,21 @@
                 <a href="{{ route('parishioner.profile') }}"
                    style="display:flex;align-items:center;gap:8px;text-decoration:none;padding:4px 10px 4px 4px;border-radius:9999px;border:1.5px solid #e2e8f0;transition:background 0.15s;"
                    onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='transparent';">
-                    @if(auth()->user()->parishioner?->photo_path)
-                        @php $topPhoto = auth()->user()->parishioner->photo_path; @endphp
+                    @if(auth()->user()?->parishioner?->photo_path)
+                        @php $topPhoto = auth()->user()?->parishioner->photo_path; @endphp
                         <img src="{{ str_starts_with($topPhoto, 'data:') ? $topPhoto : media_url($topPhoto) }}"
                              style="width:30px;height:30px;border-radius:50%;object-fit:cover;"
                              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                         <div style="display:none;width:30px;height:30px;border-radius:50%;background:#dbeafe;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#1e3a8a;">
-                            {{ substr(auth()->user()->name, 0, 1) }}
+                            {{ substr(auth()->user()?->name, 0, 1) }}
                         </div>
                     @else
                         <div style="width:30px;height:30px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;font-size:0.875rem;font-weight:700;color:#fff;">
-                            {{ substr(auth()->user()->name, 0, 1) }}
+                            {{ substr(auth()->user()?->name, 0, 1) }}
                         </div>
                     @endif
                     <span class="topbar-user-name" style="font-size:0.8125rem;font-weight:600;color:#374151;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                        {{ auth()->user()->name }}
+                        {{ auth()->user()?->name }}
                     </span>
                 </a>
             </div>
