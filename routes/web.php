@@ -94,10 +94,8 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
     // Payments — static segments MUST come before {payment} wildcard
     Route::get('/payments', [ParishionerPaymentController::class, 'index'])->name('payments.index');
 
-    // Static-segment GET routes (no wildcards that could match string IDs)
-    Route::get('/payments/success', [ParishionerPaymentController::class, 'success'])->name('payments.success');
-    Route::get('/payments/failed', [ParishionerPaymentController::class, 'failed'])->name('payments.failed');
-    Route::get('/payments/status', [ParishionerPaymentController::class, 'checkStatus'])->name('payments.check-status');
+    // NOTE: payments.success, payments.failed, payments.check-status are defined
+    // OUTSIDE this auth group (below) so PayMongo can redirect back without a session.
 
     // Static-segment POST routes
     Route::post('/payments/initiate', [ParishionerPaymentController::class, 'initiate'])->name('payments.initiate');
@@ -329,9 +327,30 @@ Route::post('/webhooks/paymongo', [PaymentWebhookController::class, 'paymongo'])
 
 /*
 |--------------------------------------------------------------------------
-| Payment Redirect Routes
+| Payment Redirect Routes — PUBLIC (no auth middleware)
 |--------------------------------------------------------------------------
+| PayMongo redirects the user's browser here after GCash/Maya authentication.
+| The browser has NO session at this point (the user just came from
+| secure-authentication.paymongo.com), so these routes MUST NOT be inside
+| any auth or role middleware group, or the redirect will silently fail and
+| the user will be stuck on PayMongo's "Authentication Done" page forever.
 */
+
+// GCash / Maya return URL — PayMongo appends nothing; we embed ?ref= ourselves
+Route::get('/portal/payments/success', [\App\Http\Controllers\Parishioner\PaymentController::class, 'success'])
+    ->name('parishioner.payments.success');
+
+Route::get('/portal/payments/failed', [\App\Http\Controllers\Parishioner\PaymentController::class, 'failed'])
+    ->name('parishioner.payments.failed');
+
+// Status polling endpoint — called by the success page JS (no session needed for JSON)
+Route::get('/portal/payments/status', [\App\Http\Controllers\Parishioner\PaymentController::class, 'checkStatus'])
+    ->name('parishioner.payments.check-status');
+
+// 3D Secure return URL — also must be public for the same reason
+Route::get('/payment/3ds-return', [\App\Http\Controllers\Parishioner\PaymentController::class, 'threeDsReturn'])
+    ->name('payment.3ds-return');
+
 Route::get('/payment/success', function () {
     return view('payment.success');
 })->name('payment.success');
@@ -339,8 +358,3 @@ Route::get('/payment/success', function () {
 Route::get('/payment/failed', function () {
     return view('payment.failed');
 })->name('payment.failed');
-
-// 3D Secure return URL (must be public — PayMongo redirects here)
-Route::get('/payment/3ds-return', [App\Http\Controllers\Parishioner\PaymentController::class, 'threeDsReturn'])
-    ->middleware(['auth', 'role:parishioner'])
-    ->name('payment.3ds-return');

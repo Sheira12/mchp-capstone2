@@ -570,23 +570,42 @@ class PaymentController extends Controller
 
     /**
      * PayMongo redirect — payment success return URL.
-     * User arrives here after PayMongo GCash/Maya checkout completes.
-     * NOTE: Payment status is verified server-side via webhook, NOT by this redirect.
-     * The webhook may arrive slightly after the user returns — we poll briefly.
+     *
+     * IMPORTANT: This route is PUBLIC (no auth middleware).
+     * The user arrives here directly from secure-authentication.paymongo.com
+     * after completing GCash/Maya authentication. They may not have an active
+     * Laravel session at this moment (especially on Render's free tier where
+     * the instance may have been cold-started mid-redirect).
+     *
+     * We show a polling page that periodically calls checkStatus() until the
+     * webhook confirms payment — no session required.
      */
     public function success(Request $request)
     {
-        $ref     = $request->get('ref');
-        $payment = $ref ? Payment::where('reference_number', $ref)->first() : null;
+        $ref = $request->get('ref');
 
-        // If already paid (webhook arrived first), go straight to receipt
-        if ($payment && $payment->status === 'paid') {
-            return redirect()->route('parishioner.payments.receipt', $payment);
+        try {
+            $payment = $ref ? Payment::where('reference_number', $ref)->first() : null;
+
+            // If already paid (webhook arrived first), go straight to receipt.
+            // Guard with auth check — receipt requires a logged-in user.
+            if ($payment && $payment->status === 'paid' && auth()->check()) {
+                return redirect()->route('parishioner.payments.receipt', $payment);
+            }
+
+            // Webhook may not have arrived yet — show a pending confirmation page.
+            // The page polls checkStatus() every 3 seconds until confirmed.
+            return view('parishioner.payments.success', compact('ref', 'payment'));
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('[PAYMENT_SUCCESS_RETURN] exception', [
+                'ref'   => $ref,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Never crash — always show a safe "we're confirming your payment" page
+            return view('parishioner.payments.success', ['ref' => $ref, 'payment' => null]);
         }
-
-        // Webhook may not have arrived yet — show a pending confirmation page
-        // The page will poll for payment status and redirect when confirmed
-        return view('parishioner.payments.success', compact('ref', 'payment'));
     }
 
     /**
@@ -787,11 +806,28 @@ class PaymentController extends Controller
 
     /**
      * PayMongo redirect — payment failed.
+     * Also PUBLIC — same reason as success() above.
      */
     public function failed(Request $request)
     {
         $ref = $request->get('ref');
-        return view('parishioner.payments.failed', compact('ref'));
+
+        try {
+            $payment = $ref ? Payment::where('reference_number', $ref)->first() : null;
+
+            if ($payment && $payment->status !== 'failed') {
+                $payment->update(['status' => 'failed']);
+            }
+
+            return view('parishioner.payments.failed', compact('ref'));
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('[PAYMENT_FAILED_RETURN] exception', [
+                'ref'   => $ref,
+                'error' => $e->getMessage(),
+            ]);
+            return view('parishioner.payments.failed', ['ref' => $ref]);
+        }
     }
 
     // ── CERTIFICATE PAYMENT METHODS ─────────────────────────────────────────
