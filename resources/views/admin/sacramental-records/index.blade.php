@@ -165,3 +165,21 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    // 300 ms debounced live search for sacramental records
+    const searchInput = document.querySelector('input[name="search"][data-live-input]');
+    if (!searchInput) return;
+
+    let timer;
+    searchInput.addEventListener('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+            searchInput.closest('form').submit();
+        }, 300);
+    });
+})();
+</script>
+@endpush

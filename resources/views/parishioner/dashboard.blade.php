@@ -414,7 +414,7 @@
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0" style="min-width:80px;">
                 <span class="status-pill {{ $sc }}">{{ $booking->getStatusLabel() }}</span>
                 <a href="{{ route('parishioner.bookings.show', $booking) }}"
-                   class="text-xs text-blue-600 hover:underline font-semibold whitespace-nowrap">Details ?</a>
+                   class="text-xs text-blue-600 hover:underline font-semibold whitespace-nowrap">Details &rarr;</a>
             </div>
         </div>
         @empty
@@ -445,7 +445,7 @@
                     </div>
                     <h2 class="font-extrabold text-gray-900 text-sm">Payments</h2>
                 </div>
-                <a href="{{ route('parishioner.payments.index') }}" class="text-xs font-bold text-green-600 hover:underline">View all ?</a>
+                <a href="{{ route('parishioner.payments.index') }}" class="text-xs font-bold text-green-600 hover:underline">View all &rarr;</a>
             </div>
             @forelse($recentPayments as $payment)
             @php
@@ -459,10 +459,10 @@
                         <span style="display:inline-flex;align-items:center;padding:1px 6px;border-radius:9999px;font-size:0.65rem;font-weight:700;
                             background:{{ $txBadge['color'] === 'green' ? '#dcfce7' : '#fee2e2' }};
                             color:{{ $txBadge['color'] === 'green' ? '#166534' : '#991b1b' }};">
-                            {{ $txBadge['label'] === 'Debit' ? '?' : '?' }} {{ $txBadge['label'] }}
+                            {{ $txBadge['label'] }}
                         </span>
                     </div>
-                    <p class="text-xs text-gray-400 capitalize mt-0.5">{{ \App\Models\Payment::METHODS[$payment->payment_method] ?? $payment->payment_method }} � {{ $payment->created_at->format('M d') }}</p>
+                    <p class="text-xs text-gray-400 capitalize mt-0.5">{{ \App\Models\Payment::METHODS[$payment->payment_method] ?? $payment->payment_method }} &middot; {{ $payment->created_at->format('M d') }}</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="status-pill {{ $ps }}">{{ ucfirst($payment->status) }}</span>
@@ -490,7 +490,7 @@
                     </div>
                     <h2 class="font-extrabold text-gray-900 text-sm">Certificates</h2>
                 </div>
-                <a href="{{ route('parishioner.certificates.index') }}" class="text-xs font-bold text-purple-600 hover:underline">View all ?</a>
+                <a href="{{ route('parishioner.certificates.index') }}" class="text-xs font-bold text-purple-600 hover:underline">View all &rarr;</a>
             </div>
             @forelse($certificates as $cert)
             @php $cs = ['draft'=>'status-pending','issued'=>'status-confirmed','released'=>'status-paid'][$cert->status] ?? 'status-pending'; @endphp
@@ -612,7 +612,7 @@
                 </div>
                 <h2 class="font-extrabold text-gray-900 text-sm">Parish Announcements</h2>
             </div>
-            <a href="{{ route('announcements') }}" class="text-xs font-bold text-indigo-600 hover:underline">View all ?</a>
+            <a href="{{ route('announcements') }}" class="text-xs font-bold text-indigo-600 hover:underline">View all &rarr;</a>
         </div>
         @forelse($announcements as $ann)
         <a href="{{ route('announcements.show', $ann) }}" class="ann-item group">
