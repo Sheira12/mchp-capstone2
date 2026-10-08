@@ -11,7 +11,9 @@ return new class extends Migration
     {
         Schema::table('announcements', function (Blueprint $table) {
             // draft | published | scheduled
-            $table->string('status')->default('draft')->after('is_published');
+            if (!Schema::hasColumn('announcements', 'status')) {
+                $table->string('status')->default('draft')->after('is_published');
+            }
             // is_pinned was in the model fillable but may be missing from the column
             if (!Schema::hasColumn('announcements', 'is_pinned')) {
                 $table->boolean('is_pinned')->default(false)->after('status');
@@ -22,18 +24,37 @@ return new class extends Migration
             }
         });
 
-        // Backfill: derive status from existing is_published + published_at
-        DB::statement("
-            UPDATE announcements
-            SET status = CASE
-                WHEN is_published = TRUE  THEN 'published'
-                WHEN is_published = FALSE AND published_at IS NOT NULL AND published_at > NOW() THEN 'scheduled'
-                ELSE 'draft'
-            END
-        ");
+        $driver = DB::getDriverName();
+
+        // Backfill status from is_published + published_at (works on both MySQL and PostgreSQL)
+        if ($driver === 'pgsql') {
+            DB::statement("
+                UPDATE announcements
+                SET status = CASE
+                    WHEN is_published = TRUE  THEN 'published'
+                    WHEN is_published = FALSE AND published_at IS NOT NULL AND published_at > NOW() THEN 'scheduled'
+                    ELSE 'draft'
+                END
+            ");
+        } else {
+            // MySQL / MariaDB
+            DB::statement("
+                UPDATE announcements
+                SET status = CASE
+                    WHEN is_published = 1  THEN 'published'
+                    WHEN is_published = 0 AND published_at IS NOT NULL AND published_at > NOW() THEN 'scheduled'
+                    ELSE 'draft'
+                END
+            ");
+        }
 
         // One-time fix: strip trailing backslash from titles
-        DB::statement("UPDATE announcements SET title = RTRIM(title, '\\') WHERE title LIKE '%\\'");
+        // MySQL: TRIM(TRAILING '\\' FROM title) — PostgreSQL: RTRIM(title, '\\')
+        if ($driver === 'pgsql') {
+            DB::statement("UPDATE announcements SET title = RTRIM(title, '\\') WHERE title LIKE '%\\\\'");
+        } else {
+            DB::statement("UPDATE announcements SET title = TRIM(TRAILING '\\\\' FROM title) WHERE title LIKE '%\\\\'");
+        }
     }
 
     public function down(): void
