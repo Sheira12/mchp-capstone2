@@ -356,11 +356,38 @@
                         @error('scheduled_time')<p class="form-error">{{ $message }}</p>@enderror
                     </div>
                     <div>
-                        <label class="form-label">Address <span class="text-gray-400 text-xs">(for blessings)</span></label>
+                        <label class="form-label">Service Location</label>
+                        <select name="location_type" id="location_type_select" class="form-select w-full" onchange="toggleLocationFields(this.value)">
+                            <option value="in_church" {{ old('location_type','in_church')==='in_church' ? 'selected' : '' }}>In-Church (Parish Premises)</option>
+                            <option value="off_site"  {{ old('location_type')==='off_site'  ? 'selected' : '' }}>Off-Site (Home / Other Venue)</option>
+                        </select>
+                    </div>
+                    {{-- Off-site fields — hidden unless off_site is selected --}}
+                    <div id="offsite-fields" class="{{ old('location_type')==='off_site' ? '' : 'hidden' }} sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div class="sm:col-span-2">
+                            <label class="form-label">Off-Site Address <span class="text-red-500">*</span></label>
+                            <input type="text" name="address" value="{{ old('address') }}"
+                                   class="form-input w-full @error('address') border-red-400 @enderror"
+                                   placeholder="House No., Street, Barangay, City — where service will be performed">
+                            @error('address')<p class="form-error">{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <label class="form-label">Contact Person <span class="text-gray-400 text-xs">(at venue)</span></label>
+                            <input type="text" name="contact_person" value="{{ old('contact_person') }}"
+                                   class="form-input w-full" placeholder="Name of person at the location">
+                        </div>
+                        <div>
+                            <label class="form-label">Contact Phone <span class="text-gray-400 text-xs">(at venue)</span></label>
+                            <input type="text" name="contact_phone" value="{{ old('contact_phone') }}"
+                                   class="form-input w-full" placeholder="09XX-XXX-XXXX">
+                        </div>
+                    </div>
+                    {{-- In-church address (optional note) --}}
+                    <div id="inchurch-fields" class="{{ old('location_type')==='off_site' ? 'hidden' : '' }}">
+                        <label class="form-label">Additional Address Info <span class="text-gray-400 text-xs">(optional)</span></label>
                         <input type="text" name="address" value="{{ old('address') }}"
-                               class="form-input w-full @error('address') border-red-400 @enderror"
-                               placeholder="Where service will be performed">
-                        @error('address')<p class="form-error">{{ $message }}</p>@enderror
+                               class="form-input w-full"
+                               placeholder="e.g., specific chapel or area within the parish">
                     </div>
                     <div class="sm:col-span-2">
                         <label class="form-label">Additional Notes <span class="text-gray-400 text-xs">(optional)</span></label>
@@ -608,6 +635,20 @@ document.getElementById('booking-form').addEventListener('submit', function(e) {
     btn.classList.add('opacity-75', 'cursor-not-allowed');
     btn.innerHTML = '<svg style="width:16px;height:16px;animation:spin 1s linear infinite;flex-shrink:0" fill="none" viewBox="0 0 24 24"><circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path style="opacity:.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/></svg> Submitting…';
 });
+
+// ── Off-site / In-church location toggle ────────────────────────────────────
+function toggleLocationFields(type) {
+    const offsite  = document.getElementById('offsite-fields');
+    const inchurch = document.getElementById('inchurch-fields');
+    if (!offsite || !inchurch) return;
+    if (type === 'off_site') {
+        offsite.classList.remove('hidden');
+        inchurch.classList.add('hidden');
+    } else {
+        offsite.classList.add('hidden');
+        inchurch.classList.remove('hidden');
+    }
+}
 </script>
 @push('styles')
 <style>@keyframes spin { to { transform: rotate(360deg); } }</style>

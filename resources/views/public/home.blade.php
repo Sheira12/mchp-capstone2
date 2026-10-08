@@ -85,6 +85,7 @@
                 <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 Walk-in Booking
             </a>
+            @guest
             <a href="{{ route('register') }}"
                style="display:inline-flex;align-items:center;gap:8px;background:rgba(37,99,235,0.9);color:#fff;font-weight:700;font-size:0.875rem;padding:0.8rem 1.75rem;border-radius:9999px;border:1.5px solid rgba(147,197,253,0.35);box-shadow:0 6px 24px rgba(0,0,0,0.35);text-decoration:none;transition:all 0.2s;"
                onmouseover="this.style.background='#2563eb';this.style.transform='translateY(-2px)';"
@@ -98,6 +99,15 @@
                onmouseout="this.style.background='transparent';this.style.transform='';">
                 Sign In
             </a>
+            @else
+            <a href="{{ auth()->user()->hasRole(['super_admin','parish_secretary','finance_officer']) ? route('admin.dashboard') : route('parishioner.dashboard') }}"
+               style="display:inline-flex;align-items:center;gap:8px;background:rgba(37,99,235,0.9);color:#fff;font-weight:700;font-size:0.875rem;padding:0.8rem 1.75rem;border-radius:9999px;border:1.5px solid rgba(147,197,253,0.35);box-shadow:0 6px 24px rgba(0,0,0,0.35);text-decoration:none;transition:all 0.2s;"
+               onmouseover="this.style.background='#2563eb';this.style.transform='translateY(-2px)';"
+               onmouseout="this.style.background='rgba(37,99,235,0.9)';this.style.transform='';">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                My Portal
+            </a>
+            @endguest
         </div>
 
         <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:2.5rem;">
@@ -450,6 +460,7 @@
 
         {{-- CTA buttons --}}
         <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:1rem;">
+            @guest
             <a href="{{ route('register') }}"
                style="display:inline-flex;align-items:center;gap:8px;background:#c9a227;color:#0f172a;font-weight:700;font-size:0.9rem;padding:0.875rem 2rem;border-radius:9999px;box-shadow:0 4px 20px rgba(201,162,39,0.4);text-decoration:none;transition:all 0.2s;"
                onmouseover="this.style.background='#d4af37';this.style.transform='translateY(-2px)';"
@@ -463,6 +474,15 @@
                onmouseout="this.style.background='transparent';this.style.transform='';">
                 Sign In to My Account
             </a>
+            @else
+            <a href="{{ auth()->user()->hasRole(['super_admin','parish_secretary','finance_officer']) ? route('admin.dashboard') : route('parishioner.dashboard') }}"
+               style="display:inline-flex;align-items:center;gap:8px;background:#c9a227;color:#0f172a;font-weight:700;font-size:0.9rem;padding:0.875rem 2rem;border-radius:9999px;box-shadow:0 4px 20px rgba(201,162,39,0.4);text-decoration:none;transition:all 0.2s;"
+               onmouseover="this.style.background='#d4af37';this.style.transform='translateY(-2px)';"
+               onmouseout="this.style.background='#c9a227';this.style.transform='';">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                Go to My Portal
+            </a>
+            @endguest
         </div>
 
     </div>

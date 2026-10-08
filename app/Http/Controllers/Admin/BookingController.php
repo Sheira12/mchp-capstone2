@@ -62,11 +62,24 @@ class BookingController extends Controller
     {
         $validated = $this->validateBooking($request);
 
-        // Conflict detection
+        // Conflict detection — checks overlapping time slots including service duration + 30-min buffer
         $conflict = Booking::where('scheduled_date', $validated['scheduled_date'])
-            ->where('scheduled_time', $validated['scheduled_time'])
             ->where('booking_type', $validated['booking_type'])
             ->whereIn('status', ['pending', 'confirmed'])
+            ->when($validated['scheduled_time'] ?? null, function ($q) use ($validated) {
+                $service      = \App\Models\Service::where('slug', $validated['booking_type'])->first();
+                $durationMins = ($service?->duration_minutes ?? 60) + 30;
+
+                $startNew = \Carbon\Carbon::createFromFormat('H:i', $validated['scheduled_time']);
+                $endNew   = $startNew->copy()->addMinutes($durationMins);
+
+                $q->whereNotNull('scheduled_time')
+                  ->whereRaw('scheduled_time::time < ?', [$endNew->format('H:i:s')])
+                  ->whereRaw(
+                      "scheduled_time::time + (COALESCE((SELECT duration_minutes FROM services WHERE slug = bookings.booking_type LIMIT 1), 60) + 30) * interval '1 minute' > ?",
+                      [$startNew->format('H:i:s')]
+                  );
+            })
             ->exists();
 
         if ($conflict) {

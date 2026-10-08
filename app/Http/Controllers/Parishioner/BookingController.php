@@ -41,23 +41,42 @@ class BookingController extends Controller
         }
 
         $validated = $request->validate([
-            'booking_type'   => ['required', 'string'],
+            'booking_type'   => ['required', 'string', 'in:' . implode(',', array_keys(\App\Models\Booking::TYPES))],
             'scheduled_date' => ['required', 'date', 'after_or_equal:today'],
             'scheduled_time' => ['nullable', 'date_format:H:i'],
+            'location_type'  => ['nullable', 'in:in_church,off_site'],
             'address'        => ['nullable', 'string', 'max:255'],
+            'contact_person' => ['nullable', 'string', 'max:100'],
+            'contact_phone'  => ['nullable', 'string', 'max:20'],
             'notes'          => ['nullable', 'string', 'max:1000'],
         ]);
 
-        // Conflict detection
-        $conflict = Booking::where('scheduled_date', $validated['scheduled_date'])
-            ->where('scheduled_time', $validated['scheduled_time'])
+        // Conflict detection — checks overlapping time slots including service duration + 30-min buffer
+        $conflict = \App\Models\Booking::where('scheduled_date', $validated['scheduled_date'])
             ->where('booking_type', $validated['booking_type'])
             ->whereIn('status', ['pending', 'confirmed'])
+            ->when($validated['scheduled_time'], function ($q) use ($validated) {
+                // Get service duration; default 60 min + 30 min buffer
+                $service      = \App\Models\Service::where('slug', $validated['booking_type'])->first();
+                $durationMins = ($service?->duration_minutes ?? 60) + 30;
+
+                $startNew = \Carbon\Carbon::createFromFormat('H:i', $validated['scheduled_time']);
+                $endNew   = $startNew->copy()->addMinutes($durationMins);
+
+                // A conflict exists if the existing booking's time-window overlaps the new one.
+                // Overlap: existing_start < new_end AND existing_end > new_start
+                $q->whereNotNull('scheduled_time')
+                  ->whereRaw('scheduled_time::time < ?', [$endNew->format('H:i:s')])
+                  ->whereRaw(
+                      "scheduled_time::time + (COALESCE((SELECT duration_minutes FROM services WHERE slug = bookings.booking_type LIMIT 1), 60) + 30) * interval '1 minute' > ?",
+                      [$startNew->format('H:i:s')]
+                  );
+            })
             ->exists();
 
         if ($conflict) {
             return back()->withInput()->withErrors([
-                'scheduled_time' => 'This time slot is already taken. Please choose another time.',
+                'scheduled_time' => 'This time slot is already taken. Please choose another time or date.',
             ]);
         }
 

@@ -40,6 +40,45 @@ Route::get('/livestream', [PublicController::class, 'livestream'])->name('livest
 Route::get('/verify/{token}', [VerificationController::class, 'verify'])->name('verify');
 Route::get('/api/verify/{token}', [VerificationController::class, 'apiVerify'])->name('verify.api');
 
+// Booking availability API — used by the parishioner booking calendar (no auth needed)
+Route::get('/api/booked-dates', function (\Illuminate\Http\Request $request) {
+    $month = $request->get('month'); // 'YYYY-MM'
+    $type  = $request->get('type');  // optional booking_type slug
+
+    if (!$month || !preg_match('/^\d{4}-\d{2}$/', $month)) {
+        return response()->json(['booked' => [], 'busy' => []]);
+    }
+
+    [$year, $mon] = explode('-', $month);
+
+    $query = \App\Models\Booking::whereYear('scheduled_date', (int)$year)
+        ->whereMonth('scheduled_date', (int)$mon)
+        ->whereIn('status', ['pending', 'confirmed']);
+
+    if ($type) {
+        $query->where('booking_type', $type);
+    }
+
+    // Count bookings per date
+    $counts = $query->selectRaw('scheduled_date, COUNT(*) as cnt')
+        ->groupBy('scheduled_date')
+        ->get()
+        ->keyBy(fn($row) => \Carbon\Carbon::parse($row->scheduled_date)->format('Y-m-d'));
+
+    // Cap: 5+ = fully booked (red), 1-4 = busy (yellow)
+    $booked = [];
+    $busy   = [];
+    foreach ($counts as $dateStr => $row) {
+        if ($row->cnt >= 5) {
+            $booked[] = $dateStr;
+        } else {
+            $busy[] = $dateStr;
+        }
+    }
+
+    return response()->json(['booked' => $booked, 'busy' => $busy]);
+})->name('api.booked-dates');
+
 // Walk-in Booking Kiosk (public — no login required, for use at parish office)
 Route::get('/walk-in', [\App\Http\Controllers\WalkInBookingController::class, 'index'])->name('walkin.index');
 Route::post('/walk-in', [\App\Http\Controllers\WalkInBookingController::class, 'store'])->name('walkin.store');
@@ -129,6 +168,12 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
     Route::get('/certificates/{certificate}/edit-request', [\App\Http\Controllers\Parishioner\CertificateEditRequestController::class, 'create'])->name('certificates.edit-request.create');
     Route::post('/certificates/{certificate}/edit-request', [\App\Http\Controllers\Parishioner\CertificateEditRequestController::class, 'store'])->name('certificates.edit-request.store');
     Route::delete('/certificate-edit-requests/{editRequest}/cancel', [\App\Http\Controllers\Parishioner\CertificateEditRequestController::class, 'cancel'])->name('certificates.edit-request.cancel');
+
+    // Family portal — parishioner can create/manage their own family record
+    Route::get('/family', [\App\Http\Controllers\Parishioner\FamilyController::class, 'index'])->name('family.index');
+    Route::post('/family', [\App\Http\Controllers\Parishioner\FamilyController::class, 'store'])->name('family.store');
+    Route::post('/family/members', [\App\Http\Controllers\Parishioner\FamilyController::class, 'addMember'])->name('family.add-member');
+    Route::delete('/family/members/{parishioner}', [\App\Http\Controllers\Parishioner\FamilyController::class, 'removeMember'])->name('family.remove-member');
 
     // Portal notifications
     Route::get('/notifications/unread', function () {
