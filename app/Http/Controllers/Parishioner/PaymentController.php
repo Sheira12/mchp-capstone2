@@ -175,7 +175,6 @@ class PaymentController extends Controller
                 ->with('info', 'Your payment is pending admin verification. You will be notified once approved.');
         }
 
-        // Failed/rejected — allow re-submission (show form again)
         // For all other statuses (no payment, failed), show the payment form
         return view('parishioner.payments.pay', compact('booking', 'existingPayment'));
     }

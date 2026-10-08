@@ -303,7 +303,7 @@ body { padding: 6pt 7pt; }
 }
 .sig-line {
     border-top: 1pt solid #1F3A5F;
-    padding-top: 2pt; margin-top: 14pt;
+    padding-top: 2pt; margin-top: 8pt;
     display: block; width: 85%; margin-left: auto; margin-right: auto;
 }
 .sig-name { font-size: 8pt; font-weight: bold; color: #1F3A5F; }
@@ -314,7 +314,7 @@ body { padding: 6pt 7pt; }
 }
 .sig-line-r {
     border-top: 1pt solid #1F3A5F;
-    padding-top: 2pt; margin-top: 14pt;
+    padding-top: 2pt; margin-top: 8pt;
     display: block; width: 90%; margin-left: auto; margin-right: auto;
 }
 

@@ -39,6 +39,7 @@ class Payment extends Model
         'parishioner_id',
         'booking_id',
         'certificate_id',
+        'order_id',
         'amount',
         'payment_method',
         'transaction_type',
@@ -125,6 +126,11 @@ class Payment extends Model
     public function certificate()
     {
         return $this->belongsTo(Certificate::class);
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
     }
 
     public function refundedBy()

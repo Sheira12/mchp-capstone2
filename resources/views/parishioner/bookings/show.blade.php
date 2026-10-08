@@ -222,12 +222,25 @@
             </div>
             <p class="text-sm text-green-700 mt-1 ml-6">Amount due: <strong>₱{{ number_format($booking->service_fee, 2) }}</strong></p>
         </div>
+        {{-- Order of Payment step before payment --}}
+        @if(!$booking->order || $booking->order->status === 'expired')
+        <a href="{{ route('parishioner.orders.booking.create', $booking) }}"
+           class="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition text-sm mb-3">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            Generate Order of Payment (Choose Package)
+        </a>
+        @elseif($booking->order && $booking->order->status === 'pending')
+        <a href="{{ route('parishioner.orders.show', $booking->order) }}"
+           class="w-full flex items-center justify-center gap-2 bg-white border border-indigo-200 text-indigo-700 font-semibold py-2.5 rounded-xl hover:bg-indigo-50 transition text-sm mb-3">
+            View Order of Payment ({{ $booking->order->order_number }})
+        </a>
+        @endif
+
         <a href="{{ route('parishioner.payments.pay', $booking) }}"
            class="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition text-sm shadow-md hover:shadow-lg">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
             Pay Now — GCash, Maya or Cash
-        </a>
-        @endif
+        </a>        @endif
         @else
         <p class="text-sm text-gray-400">No payment required for this booking.</p>
         @endif

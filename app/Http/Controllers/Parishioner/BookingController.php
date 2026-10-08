@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Parishioner;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\BookingRequirement;
 use App\Models\Service;
+use App\Models\ServiceRequirement;
 use App\Notifications\BookingStatusNotification;
 use App\Services\QrCodeService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class BookingController extends Controller
 {
@@ -26,10 +29,24 @@ class BookingController extends Controller
 
     public function create()
     {
+        $parishioner = auth()->user()->parishioner;
+        if (!$parishioner) {
+            return redirect()->route('parishioner.profile')->with('info', 'Please complete your profile first.');
+        }
+
         $services = Service::where('is_bookable', true)->where('is_active', true)
             ->orderBy('sort_order')->get()->groupBy('category');
 
-        return view('parishioner.bookings.create', compact('services'));
+        // If resuming from requirements page, pre-select the service and booking
+        $preService = request('service') ? Service::where('slug', request('service'))->first() : null;
+        $preBooking = request('booking_id') ? Booking::find(request('booking_id')) : null;
+
+        // Ensure the pre-booking belongs to this parishioner and is approved
+        if ($preBooking && ($preBooking->parishioner_id !== $parishioner->id || !$preBooking->requirementsApproved())) {
+            $preBooking = null;
+        }
+
+        return view('parishioner.bookings.create', compact('services', 'preService', 'preBooking'));
     }
 
     public function store(Request $request)
@@ -49,7 +66,41 @@ class BookingController extends Controller
             'contact_person' => ['nullable', 'string', 'max:100'],
             'contact_phone'  => ['nullable', 'string', 'max:20'],
             'notes'          => ['nullable', 'string', 'max:1000'],
+            'booking_id'     => ['nullable', 'exists:bookings,id'],  // resume from requirements step
         ]);
+
+        // ── SERVER-SIDE REQUIREMENTS GATE ────────────────────────────────────
+        // If the service has required requirements, check they are all approved.
+        $service = Service::where('slug', $validated['booking_type'])->first();
+        if ($service && $service->requiresPreApproval()) {
+            // Check if parishioner has a pre-approved booking stub for this service
+            $approvedBooking = null;
+            if (!empty($validated['booking_id'])) {
+                $approvedBooking = Booking::where('id', $validated['booking_id'])
+                    ->where('parishioner_id', $parishioner->id)
+                    ->whereNotNull('requirements_approved_at')
+                    ->first();
+            }
+
+            // Also check for any approved booking stub they may already have
+            if (!$approvedBooking) {
+                $approvedBooking = Booking::where('parishioner_id', $parishioner->id)
+                    ->where('booking_type', $validated['booking_type'])
+                    ->whereNotNull('requirements_approved_at')
+                    ->whereNull('scheduled_date')  // stub — no date yet
+                    ->latest()
+                    ->first();
+            }
+
+            if (!$approvedBooking) {
+                return redirect()
+                    ->route('parishioner.bookings.requirements', $service)
+                    ->with('error', 'You must submit and have all required documents approved before booking this service.');
+            }
+
+            // Use the approved stub's ID so requirements stay linked
+            $stubId = $approvedBooking->id;
+        }
 
         // Conflict detection — checks overlapping time slots including service duration + 30-min buffer
         $conflict = \App\Models\Booking::where('scheduled_date', $validated['scheduled_date'])
@@ -86,7 +137,24 @@ class BookingController extends Controller
         $validated['parishioner_id'] = $parishioner->id;
         $validated['status']         = 'pending'; // Always start as pending
 
-        $booking = Booking::create($validated);
+        unset($validated['booking_id']); // don't pass internal field to create()
+
+        // If we have an approved stub, update it with the date instead of creating a new booking
+        if (!empty($stubId)) {
+            $booking = Booking::find($stubId);
+            $booking->update([
+                'scheduled_date' => $validated['scheduled_date'],
+                'scheduled_time' => $validated['scheduled_time'] ?? null,
+                'location_type'  => $validated['location_type'] ?? 'in_church',
+                'address'        => $validated['address'] ?? null,
+                'contact_person' => $validated['contact_person'] ?? null,
+                'contact_phone'  => $validated['contact_phone'] ?? null,
+                'notes'          => $validated['notes'] ?? null,
+                'service_fee'    => $service?->fee ?? 0,
+            ]);
+        } else {
+            $booking = Booking::create($validated);
+        }
 
         // Generate QR code
         app(QrCodeService::class)->generateForBooking($booking);
@@ -143,5 +211,144 @@ class BookingController extends Controller
         ]);
 
         return redirect()->route('parishioner.bookings.index')->with('success', 'Booking cancelled.');
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  REQUIREMENTS FLOW
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Show the requirements checklist for a given service.
+     * Creates a "stub" booking (no date) if one doesn't already exist for this parishioner+service.
+     */
+    public function requirementsForm(Service $service)
+    {
+        $parishioner = auth()->user()->parishioner;
+        if (!$parishioner) {
+            return redirect()->route('parishioner.profile')->with('info', 'Please complete your profile first.');
+        }
+
+        $requirements = $service->serviceRequirements()->get();
+
+        // Find or create a stub booking (status=pending, no scheduled_date)
+        $booking = Booking::where('parishioner_id', $parishioner->id)
+            ->where('booking_type', $service->slug)
+            ->whereNull('scheduled_date')
+            ->whereNotIn('status', ['cancelled'])
+            ->latest()
+            ->first();
+
+        if (!$booking) {
+            $booking = Booking::create([
+                'parishioner_id' => $parishioner->id,
+                'booking_type'   => $service->slug,
+                'status'         => 'pending',
+                'service_fee'    => $service->fee ?? 0,
+                'scheduled_date' => null,
+            ]);
+
+            // Create placeholder BookingRequirement rows for each active requirement
+            foreach ($requirements as $req) {
+                BookingRequirement::firstOrCreate([
+                    'booking_id'             => $booking->id,
+                    'service_requirement_id' => $req->id,
+                ]);
+            }
+        } else {
+            // Ensure rows exist for any newly-added requirements
+            foreach ($requirements as $req) {
+                BookingRequirement::firstOrCreate([
+                    'booking_id'             => $booking->id,
+                    'service_requirement_id' => $req->id,
+                ]);
+            }
+        }
+
+        $bookingRequirements = $booking->bookingRequirements()->with('requirement')->get()
+            ->keyBy('service_requirement_id');
+
+        return view('parishioner.bookings.requirements', compact(
+            'service', 'requirements', 'booking', 'bookingRequirements'
+        ));
+    }
+
+    /**
+     * Handle file/text/checkbox submission for a single requirement item.
+     */
+    public function uploadRequirement(Request $request, Booking $booking, ServiceRequirement $req)
+    {
+        $this->authorize('view', $booking);
+
+        // Validate based on type
+        $rules = ['parishioner_note' => ['nullable', 'string', 'max:500']];
+
+        if ($req->type === 'file') {
+            $rules['file'] = ['required', 'file', 'max:10240'];  // 10MB max
+        } elseif ($req->type === 'checkbox') {
+            $rules['text_value'] = ['required', 'string'];
+        } elseif ($req->type === 'text') {
+            $rules['text_value'] = ['required', 'string', 'max:1000'];
+        }
+
+        $validated = $request->validate($rules);
+
+        $item = BookingRequirement::firstOrCreate([
+            'booking_id'             => $booking->id,
+            'service_requirement_id' => $req->id,
+        ]);
+
+        $update = [
+            'status'           => 'pending',
+            'parishioner_note' => $validated['parishioner_note'] ?? null,
+            'submitted_at'     => now(),
+            'admin_remark'     => null,   // reset previous remark on resubmit
+        ];
+
+        if ($req->type === 'file' && $request->hasFile('file')) {
+            // Delete old file if exists
+            if ($item->file_path) {
+                try { Storage::disk('supabase')->delete($item->file_path); } catch (\Exception $e) {}
+            }
+            $path = $request->file('file')->store(
+                'booking-requirements/' . $booking->id,
+                'supabase'
+            );
+            $update['file_path'] = $path;
+        } elseif (in_array($req->type, ['checkbox', 'text'])) {
+            $update['text_value'] = $validated['text_value'];
+        }
+
+        $item->update($update);
+
+        // Notify admins of new submission
+        try {
+            $admins = \App\Models\User::role(['super_admin', 'parish_secretary'])->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new \App\Notifications\AdminBookingRequirementNotification($booking, $item));
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Admin requirement notification failed: ' . $e->getMessage());
+        }
+
+        return redirect()
+            ->route('parishioner.bookings.requirements', $booking->service ?? $req->service)
+            ->with('success', 'Requirement submitted! The parish office will review it shortly.');
+    }
+
+    /**
+     * Show full requirement status for an existing booking.
+     */
+    public function bookingRequirements(Booking $booking)
+    {
+        $this->authorize('view', $booking);
+        $booking->load(['bookingRequirements.requirement.service']);
+
+        $service      = Service::where('slug', $booking->booking_type)->first();
+        $requirements = $service?->serviceRequirements()->get() ?? collect();
+        $bookingRequirements = $booking->bookingRequirements->keyBy('service_requirement_id');
+
+        return view('parishioner.bookings.requirements', compact(
+            'service', 'requirements', 'booking', 'bookingRequirements'
+        ));
     }
 }

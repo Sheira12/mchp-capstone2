@@ -40,9 +40,11 @@ Route::get('/livestream', [PublicController::class, 'livestream'])->name('livest
 Route::get('/verify/{token}', [VerificationController::class, 'verify'])->name('verify');
 Route::get('/api/verify/{token}', [VerificationController::class, 'apiVerify'])->name('verify.api');
 
+// Package API (public — no auth — used by booking form JS to load packages per service)
+Route::get('/api/packages-for-service', [\App\Http\Controllers\Admin\PackageController::class, 'forService'])->name('api.packages-for-service');
+
 // Booking availability API — used by the parishioner booking calendar (no auth needed)
-Route::get('/api/booked-dates', function (\Illuminate\Http\Request $request) {
-    $month = $request->get('month'); // 'YYYY-MM'
+Route::get('/api/booked-dates', function (\Illuminate\Http\Request $request) {    $month = $request->get('month'); // 'YYYY-MM'
     $type  = $request->get('type');  // optional booking_type slug
 
     if (!$month || !preg_match('/^\d{4}-\d{2}$/', $month)) {
@@ -130,9 +132,21 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
     Route::get('/bookings/{booking}', [ParishionerBookingController::class, 'show'])->name('bookings.show');
     Route::post('/bookings/{booking}/cancel', [ParishionerBookingController::class, 'cancel'])->name('bookings.cancel');
 
+    // Booking Requirements (parishioner submission)
+    Route::get('/bookings/requirements/{service}',            [ParishionerBookingController::class, 'requirementsForm'])->name('bookings.requirements');
+    Route::post('/bookings/requirements/{service}',           [ParishionerBookingController::class, 'submitRequirements'])->name('bookings.requirements.submit');
+    Route::get('/bookings/{booking}/requirements',            [ParishionerBookingController::class, 'bookingRequirements'])->name('bookings.requirements.show');
+    Route::post('/bookings/{booking}/requirements/{req}/upload', [ParishionerBookingController::class, 'uploadRequirement'])->name('bookings.requirements.upload');
+
+    // Orders of Payment
+    Route::get('/orders',                                   [\App\Http\Controllers\Parishioner\OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}',                           [\App\Http\Controllers\Parishioner\OrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order}/pdf',                       [\App\Http\Controllers\Parishioner\OrderController::class, 'pdf'])->name('orders.pdf');
+    Route::get('/bookings/{booking}/order-of-payment',      [\App\Http\Controllers\Parishioner\OrderController::class, 'createForBooking'])->name('orders.booking.create');
+    Route::post('/bookings/{booking}/order-of-payment',     [\App\Http\Controllers\Parishioner\OrderController::class, 'storeForBooking'])->name('orders.booking.store');
+
     // Payments — static segments MUST come before {payment} wildcard
     Route::get('/payments', [ParishionerPaymentController::class, 'index'])->name('payments.index');
-
     // NOTE: payments.success, payments.failed, payments.check-status are defined
     // OUTSIDE this auth group (below) so PayMongo can redirect back without a session.
 
@@ -244,6 +258,11 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
     Route::get('/reports/bookings', [\App\Http\Controllers\Admin\ReportsController::class, 'bookings'])->name('reports.bookings');
     Route::post('/reports/export', [\App\Http\Controllers\Admin\ReportsController::class, 'export'])->name('reports.export');
 
+    // Analytics & Data Analysis
+    Route::get('/analytics',        [\App\Http\Controllers\Admin\AnalyticsController::class, 'index'])->name('analytics.index');
+    Route::get('/analytics/data',   [\App\Http\Controllers\Admin\AnalyticsController::class, 'data'])->name('analytics.data');
+    Route::get('/analytics/export', [\App\Http\Controllers\Admin\AnalyticsController::class, 'export'])->name('analytics.export');
+
     // Sacramental Records
     Route::post('/sacramental-records/{sacramentalRecord}/verify', [SacramentalRecordController::class, 'verify'])
         ->name('sacramental-records.verify');
@@ -336,6 +355,28 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
 
     // Announcements
     Route::resource('announcements', \App\Http\Controllers\Admin\AnnouncementController::class);
+
+    // Service Packages (admin CRUD)
+    Route::resource('packages', \App\Http\Controllers\Admin\PackageController::class)->except(['show']);
+    Route::get('/packages/for-service', [\App\Http\Controllers\Admin\PackageController::class, 'forService'])->name('packages.for-service');
+
+    // Service Requirement Templates (admin-manageable per service)
+    Route::prefix('services/{service}/requirements')->name('services.requirements.')->group(function () {        Route::get('/',          [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'index'])->name('index');
+        Route::get('/create',    [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'create'])->name('create');
+        Route::post('/',         [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'store'])->name('store');
+        Route::get('/{requirement}/edit',    [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'edit'])->name('edit');
+        Route::put('/{requirement}',         [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'update'])->name('update');
+        Route::delete('/{requirement}',      [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'destroy'])->name('destroy');
+    });
+
+    // Booking Requirements Review Queue
+    Route::prefix('booking-requirements')->name('booking-requirements.')->group(function () {
+        Route::get('/',                     [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'reviewQueue'])->name('index');
+        Route::get('/booking/{booking}',    [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'showBookingRequirements'])->name('show');
+        Route::post('/{bookingRequirement}/approve',          [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'approve'])->name('approve');
+        Route::post('/{bookingRequirement}/request-revision', [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'requestRevision'])->name('request-revision');
+        Route::post('/booking/{booking}/approve-all',         [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'approveAll'])->name('approve-all');
+    });
 
     // Mass Schedules
     Route::resource('mass-schedules', \App\Http\Controllers\Admin\MassScheduleController::class);

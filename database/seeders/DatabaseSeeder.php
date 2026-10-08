@@ -13,6 +13,8 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             MassScheduleSeeder::class,
             ServiceSeeder::class,
+            ServiceRequirementSeeder::class,
+            ServicePackageSeeder::class,
             DemoDataSeeder::class,
             AnalyticsDataSeeder::class,
             DemoUsersSeeder::class,

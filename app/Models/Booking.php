@@ -58,15 +58,20 @@ class Booking extends Model
         'cancellation_reason',
         'reference_number',
         'reminder_sent',
+        'requirements_approved_at',
+        'requirements_approved_by',
+        'service_package_id',
+        'order_id',
     ];
 
     protected $casts = [
         'scheduled_date' => 'date',
         'scheduled_time' => 'string',
         'service_fee'    => 'decimal:2',
-        'confirmed_at'   => 'datetime',
-        'cancelled_at'   => 'datetime',
-        'reminder_sent'  => 'boolean',
+        'confirmed_at'              => 'datetime',
+        'cancelled_at'              => 'datetime',
+        'requirements_approved_at'  => 'datetime',
+        'reminder_sent'             => 'boolean',
     ];
 
     protected static function boot()
@@ -97,9 +102,68 @@ class Booking extends Model
         return $this->hasOne(Payment::class);
     }
 
+    public function package()
+    {
+        return $this->belongsTo(ServicePackage::class, 'service_package_id');
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
+
     public function qrCode()
     {
         return $this->morphOne(QrCode::class, 'qr_codeable');
+    }
+
+    public function bookingRequirements()
+    {
+        return $this->hasMany(BookingRequirement::class);
+    }
+
+    /** True when all required items for this booking are approved. */
+    public function requirementsApproved(): bool
+    {
+        // If requirements_approved_at is set by admin, honour it directly
+        if ($this->requirements_approved_at) return true;
+
+        // Otherwise compute from booking_requirements rows
+        $service = \App\Models\Service::where('slug', $this->booking_type)->first();
+        if (!$service) return true; // unknown service — no gate
+
+        $requiredIds = $service->serviceRequirements()
+            ->where('is_required', true)
+            ->pluck('id');
+
+        if ($requiredIds->isEmpty()) return true; // no required items
+
+        // All required items must exist AND be approved
+        $approvedCount = $this->bookingRequirements()
+            ->whereIn('service_requirement_id', $requiredIds)
+            ->where('status', 'approved')
+            ->count();
+
+        return $approvedCount >= $requiredIds->count();
+    }
+
+    /** Count approved / total required requirements for progress display. */
+    public function requirementsProgress(): array
+    {
+        $service = \App\Models\Service::where('slug', $this->booking_type)->first();
+        if (!$service) return ['approved' => 0, 'total' => 0];
+
+        $requiredIds = $service->serviceRequirements()
+            ->where('is_required', true)
+            ->pluck('id');
+
+        $total    = $requiredIds->count();
+        $approved = $this->bookingRequirements()
+            ->whereIn('service_requirement_id', $requiredIds)
+            ->where('status', 'approved')
+            ->count();
+
+        return ['approved' => $approved, 'total' => $total];
     }
 
     public function getStatusLabel(): string
