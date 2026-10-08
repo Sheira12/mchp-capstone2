@@ -10,9 +10,18 @@ use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AnalyticsController extends Controller
 {
+    /** True when running on PostgreSQL (Supabase/Render). */
+    private bool $isPg;
+
+    public function __construct()
+    {
+        $this->isPg = DB::getDriverName() === 'pgsql';
+    }
+
     public function index()
     {
         return view('admin.analytics.index');
@@ -21,6 +30,8 @@ class AnalyticsController extends Controller
     /**
      * Main data endpoint — returns all analytics data as JSON.
      * Cached for 5 minutes. Can be busted via ?bust=1 by admins.
+     * Every sub-method is individually try/catch so one bad query
+     * doesn't kill the whole response.
      */
     public function data(Request $request)
     {
@@ -29,18 +40,29 @@ class AnalyticsController extends Controller
         }
 
         $data = Cache::remember('analytics_full', 300, function () {
-            return [
-                'heatmap'           => $this->heatmap(),
-                'sacrament_trends'  => $this->sacramentTrends(),
-                'service_demand'    => $this->serviceDemand(),
-                'revenue_by_service'=> $this->revenueByService(),
-                'demographics_age'  => $this->demographicsAge(),
-                'demographics_brgy' => $this->demographicsBarangay(),
-                'monthly_bookings'  => $this->monthlyBookings(),
-                'forecast'          => $this->forecast(),
-                'insights'          => $this->insights(),
-                'req_turnaround'    => $this->requirementTurnaround(),
+            $methods = [
+                'heatmap'            => fn() => $this->heatmap(),
+                'sacrament_trends'   => fn() => $this->sacramentTrends(),
+                'service_demand'     => fn() => $this->serviceDemand(),
+                'revenue_by_service' => fn() => $this->revenueByService(),
+                'demographics_age'   => fn() => $this->demographicsAge(),
+                'demographics_brgy'  => fn() => $this->demographicsBarangay(),
+                'monthly_bookings'   => fn() => $this->monthlyBookings(),
+                'forecast'           => fn() => $this->forecast(),
+                'insights'           => fn() => $this->insights(),
+                'req_turnaround'     => fn() => $this->requirementTurnaround(),
             ];
+
+            $result = [];
+            foreach ($methods as $key => $fn) {
+                try {
+                    $result[$key] = $fn();
+                } catch (\Throwable $e) {
+                    Log::warning("Analytics [{$key}] failed: " . $e->getMessage());
+                    $result[$key] = [];
+                }
+            }
+            return $result;
         });
 
         return response()->json($data);
@@ -81,21 +103,31 @@ class AnalyticsController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    //  DATA METHODS
+    //  DATA METHODS — all dual MySQL/PostgreSQL
     // ─────────────────────────────────────────────────────────────────────────
 
     /** Booking heatmap: weekday × hour bucket → count. */
     private function heatmap(): array
     {
-        $rows = Booking::whereNotNull('scheduled_time')
-            ->whereIn('status', ['confirmed', 'completed', 'pending'])
-            ->whereNotNull('scheduled_date')
-            ->selectRaw("EXTRACT(DOW FROM scheduled_date)::int AS dow, EXTRACT(HOUR FROM scheduled_time::time)::int AS hour, COUNT(*) AS cnt")
-            ->groupByRaw('dow, hour')
-            ->orderByRaw('dow, hour')
-            ->get();
+        if ($this->isPg) {
+            $rows = Booking::whereNotNull('scheduled_time')
+                ->whereIn('status', ['confirmed', 'completed', 'pending'])
+                ->whereNotNull('scheduled_date')
+                ->selectRaw("EXTRACT(DOW FROM scheduled_date)::int AS dow, EXTRACT(HOUR FROM scheduled_time::time)::int AS hour, COUNT(*) AS cnt")
+                ->groupByRaw('dow, hour')
+                ->orderByRaw('dow, hour')
+                ->get();
+        } else {
+            // MySQL: DAYOFWEEK returns 1=Sun..7=Sat; we want 0=Sun..6=Sat
+            $rows = Booking::whereNotNull('scheduled_time')
+                ->whereIn('status', ['confirmed', 'completed', 'pending'])
+                ->whereNotNull('scheduled_date')
+                ->selectRaw("(DAYOFWEEK(scheduled_date) - 1) AS dow, HOUR(scheduled_time) AS hour, COUNT(*) AS cnt")
+                ->groupByRaw('dow, hour')
+                ->orderByRaw('dow, hour')
+                ->get();
+        }
 
-        // Build full 7×24 grid (all zeros by default)
         $grid = [];
         for ($d = 0; $d < 7; $d++) {
             for ($h = 0; $h < 24; $h++) {
@@ -111,12 +143,16 @@ class AnalyticsController extends Controller
         return ['grid' => $grid, 'max' => $max];
     }
 
-    /** Sacrament trends: monthly counts for last 24 months + YoY comparison. */
+    /** Sacrament trends: monthly counts for last 24 months. */
     private function sacramentTrends(): array
     {
+        $monthExpr = $this->isPg
+            ? "TO_CHAR(scheduled_date, 'YYYY-MM')"
+            : "DATE_FORMAT(scheduled_date, '%Y-%m')";
+
         $rows = Booking::whereIn('status', ['confirmed', 'completed'])
             ->where('scheduled_date', '>=', now()->subMonths(24))
-            ->selectRaw("TO_CHAR(scheduled_date, 'YYYY-MM') AS month, booking_type, COUNT(*) AS cnt")
+            ->selectRaw("{$monthExpr} AS month, booking_type, COUNT(*) AS cnt")
             ->groupByRaw("month, booking_type")
             ->orderByRaw("month")
             ->get();
@@ -128,12 +164,12 @@ class AnalyticsController extends Controller
             $types[$r->booking_type] = Booking::TYPES[$r->booking_type] ?? $r->booking_type;
         }
 
-        $labels = array_keys($months);
+        $labels   = array_keys($months);
         $datasets = [];
         foreach ($types as $slug => $label) {
             $values = [];
             foreach ($labels as $m) {
-                $found = $rows->first(fn($r) => $r->month === $m && $r->booking_type === $slug);
+                $found    = $rows->first(fn($r) => $r->month === $m && $r->booking_type === $slug);
                 $values[] = $found ? (int) $found->cnt : 0;
             }
             $datasets[] = ['label' => $label, 'slug' => $slug, 'data' => $values];
@@ -151,18 +187,18 @@ class AnalyticsController extends Controller
             ->get();
 
         return $rows->map(fn($r) => [
-            'type'          => $r->booking_type,
-            'label'         => Booking::TYPES[$r->booking_type] ?? $r->booking_type,
-            'total'         => (int) $r->cnt,
-            'confirmed'     => (int) $r->confirmed_cnt,
+            'type'      => $r->booking_type,
+            'label'     => Booking::TYPES[$r->booking_type] ?? $r->booking_type,
+            'total'     => (int) $r->cnt,
+            'confirmed' => (int) $r->confirmed_cnt,
         ])->values()->all();
     }
 
     /** Revenue by booking service type. */
     private function revenueByService(): array
     {
-        $rows = Payment::where('status', 'paid')
-            ->where('transaction_type', 'debit')
+        $rows = Payment::where('payments.status', 'paid')
+            ->where('payments.transaction_type', 'debit')
             ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
             ->selectRaw("bookings.booking_type, SUM(payments.amount) AS total")
             ->groupBy('bookings.booking_type')
@@ -179,24 +215,29 @@ class AnalyticsController extends Controller
     /** Parishioner age group demographics. */
     private function demographicsAge(): array
     {
+        if ($this->isPg) {
+            $ageExpr = "DATE_PART('year', AGE(birthdate))";
+        } else {
+            $ageExpr = "TIMESTAMPDIFF(YEAR, birthdate, CURDATE())";
+        }
+
         $rows = Parishioner::whereNotNull('birthdate')
             ->where('is_active', true)
             ->selectRaw("
                 CASE
-                    WHEN DATE_PART('year', AGE(birthdate)) < 13 THEN 'Children (0–12)'
-                    WHEN DATE_PART('year', AGE(birthdate)) < 18 THEN 'Teens (13–17)'
-                    WHEN DATE_PART('year', AGE(birthdate)) < 30 THEN 'Young Adults (18–29)'
-                    WHEN DATE_PART('year', AGE(birthdate)) < 45 THEN 'Adults (30–44)'
-                    WHEN DATE_PART('year', AGE(birthdate)) < 60 THEN 'Middle-aged (45–59)'
+                    WHEN {$ageExpr} < 13 THEN 'Children (0-12)'
+                    WHEN {$ageExpr} < 18 THEN 'Teens (13-17)'
+                    WHEN {$ageExpr} < 30 THEN 'Young Adults (18-29)'
+                    WHEN {$ageExpr} < 45 THEN 'Adults (30-44)'
+                    WHEN {$ageExpr} < 60 THEN 'Middle-aged (45-59)'
                     ELSE 'Senior (60+)'
                 END AS age_group,
                 COUNT(*) AS cnt
             ")
             ->groupByRaw('age_group')
-            ->orderByRaw('age_group')
             ->get();
 
-        $order = ['Children (0–12)','Teens (13–17)','Young Adults (18–29)','Adults (30–44)','Middle-aged (45–59)','Senior (60+)'];
+        $order = ['Children (0-12)','Teens (13-17)','Young Adults (18-29)','Adults (30-44)','Middle-aged (45-59)','Senior (60+)'];
 
         return collect($order)->map(fn($g) => [
             'label' => $g,
@@ -224,9 +265,13 @@ class AnalyticsController extends Controller
     /** Monthly booking counts for last 15 months (for forecast). */
     private function monthlyBookings(): array
     {
+        $monthExpr = $this->isPg
+            ? "TO_CHAR(scheduled_date, 'YYYY-MM')"
+            : "DATE_FORMAT(scheduled_date, '%Y-%m')";
+
         $rows = Booking::whereIn('status', ['confirmed', 'completed', 'pending'])
             ->where('scheduled_date', '>=', now()->subMonths(15))
-            ->selectRaw("TO_CHAR(scheduled_date, 'YYYY-MM') AS month, COUNT(*) AS cnt")
+            ->selectRaw("{$monthExpr} AS month, COUNT(*) AS cnt")
             ->groupByRaw('month')
             ->orderByRaw('month')
             ->get();
@@ -236,18 +281,17 @@ class AnalyticsController extends Controller
 
     /**
      * 3-month moving average forecast for the next 3 months.
-     * Uses the last 3 months' average as the forecast value.
      */
     private function forecast(): array
     {
-        $monthly = collect($this->monthlyBookings());
+        $monthly  = collect($this->monthlyBookings());
         if ($monthly->count() < 3) return [];
 
         $last3avg = $monthly->takeLast(3)->avg('count');
 
         $forecasts = [];
         for ($i = 1; $i <= 3; $i++) {
-            $month = now()->addMonths($i)->format('Y-m');
+            $month       = now()->addMonths($i)->format('Y-m');
             $forecasts[] = ['month' => $month, 'forecast' => round($last3avg)];
         }
 
@@ -286,9 +330,9 @@ class AnalyticsController extends Controller
         }
 
         // Completion rate
-        $total       = Booking::count();
-        $completed   = Booking::where('status', 'completed')->count();
-        $cancelled   = Booking::where('status', 'cancelled')->count();
+        $total     = Booking::count();
+        $completed = Booking::where('status', 'completed')->count();
+        $cancelled = Booking::where('status', 'cancelled')->count();
         if ($total > 0) {
             $compRate = round(($completed / $total) * 100);
             $canxRate = round(($cancelled / $total) * 100);
@@ -305,7 +349,7 @@ class AnalyticsController extends Controller
             $insights[] = [
                 'icon'  => '💰',
                 'title' => 'Total Revenue Collected',
-                'text'  => "₱" . number_format($totalRevenue, 2) . " in total payments received.",
+                'text'  => '₱' . number_format($totalRevenue, 2) . ' in total payments received.',
             ];
         }
 
@@ -326,11 +370,19 @@ class AnalyticsController extends Controller
     private function requirementTurnaround(): array
     {
         try {
-            $avg = BookingRequirement::where('status', 'approved')
-                ->whereNotNull('submitted_at')
-                ->whereNotNull('reviewed_at')
-                ->selectRaw("AVG(EXTRACT(EPOCH FROM (reviewed_at - submitted_at)) / 3600) AS avg_hours")
-                ->value('avg_hours');
+            if ($this->isPg) {
+                $avg = BookingRequirement::where('status', 'approved')
+                    ->whereNotNull('submitted_at')
+                    ->whereNotNull('reviewed_at')
+                    ->selectRaw("AVG(EXTRACT(EPOCH FROM (reviewed_at - submitted_at)) / 3600) AS avg_hours")
+                    ->value('avg_hours');
+            } else {
+                $avg = BookingRequirement::where('status', 'approved')
+                    ->whereNotNull('submitted_at')
+                    ->whereNotNull('reviewed_at')
+                    ->selectRaw("AVG(TIMESTAMPDIFF(SECOND, submitted_at, reviewed_at) / 3600) AS avg_hours")
+                    ->value('avg_hours');
+            }
 
             return ['avg_hours' => $avg ? round((float)$avg, 1) : 0];
         } catch (\Exception $e) {
