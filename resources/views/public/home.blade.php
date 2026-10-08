@@ -86,13 +86,6 @@
                 Walk-in Booking
             </a>
             @guest
-            <a href="{{ route('register') }}"
-               style="display:inline-flex;align-items:center;gap:8px;background:rgba(37,99,235,0.9);color:#fff;font-weight:700;font-size:0.875rem;padding:0.8rem 1.75rem;border-radius:9999px;border:1.5px solid rgba(147,197,253,0.35);box-shadow:0 6px 24px rgba(0,0,0,0.35);text-decoration:none;transition:all 0.2s;"
-               onmouseover="this.style.background='#2563eb';this.style.transform='translateY(-2px)';"
-               onmouseout="this.style.background='rgba(37,99,235,0.9)';this.style.transform='';">
-                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-                Register
-            </a>
             <a href="{{ route('login') }}"
                style="display:inline-flex;align-items:center;gap:8px;background:transparent;color:#fff;font-weight:600;font-size:0.875rem;padding:0.8rem 1.75rem;border-radius:9999px;border:1.5px solid rgba(255,255,255,0.28);text-decoration:none;transition:all 0.2s;"
                onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.transform='translateY(-2px)';"
