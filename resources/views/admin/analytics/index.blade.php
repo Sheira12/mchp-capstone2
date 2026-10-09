@@ -4,126 +4,154 @@
 
 @push('styles')
 <style>
-/* ── Section card ── */
-.an-card { background:#fff; border-radius:1rem; border:1px solid #e2e8f0; padding:1.5rem; box-shadow:0 1px 4px rgba(0,0,0,.04); }
-.an-card-title { font-size:0.75rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#64748b; margin-bottom:1rem; }
+/* ── Cards ── */
+.an-card {
+    background:#fff; border-radius:1rem; border:1px solid #e2e8f0;
+    padding:1.25rem; box-shadow:0 1px 4px rgba(0,0,0,.04);
+}
+.an-card-title {
+    font-size:0.72rem; font-weight:700; letter-spacing:.08em;
+    text-transform:uppercase; color:#64748b; margin-bottom:.75rem;
+}
 
-/* ── Heatmap grid ── */
-#heatmap-grid { display:grid; grid-template-columns:60px repeat(24,1fr); gap:2px; }
-.hm-label { font-size:0.65rem; color:#94a3b8; display:flex; align-items:center; justify-content:flex-end; padding-right:6px; }
+/* ── Chart containers — FIXED HEIGHT so bars don't overflow ── */
+.chart-wrap { position:relative; width:100%; height:260px; }
+.chart-wrap-sm { position:relative; width:100%; height:220px; }
+.chart-wrap-doughnut { position:relative; width:100%; height:240px; }
+
+/* ── Heatmap ── */
+.heatmap-scroll { overflow-x:auto; }
+#heatmap-grid { display:grid; grid-template-columns:44px repeat(24,minmax(20px,1fr)); gap:2px; min-width:600px; }
+.hm-label {
+    font-size:0.6rem; color:#94a3b8;
+    display:flex; align-items:center; justify-content:flex-end;
+    padding-right:5px; height:20px;
+}
 .hm-cell {
-    aspect-ratio:1; border-radius:3px; background:#f1f5f9;
-    transition:transform .1s;
-    cursor:default;
-    position:relative;
+    height:20px; border-radius:2px; background:#f1f5f9;
+    cursor:default; position:relative;
 }
-.hm-cell:hover .hm-tooltip { display:block; }
-.hm-tooltip {
-    display:none; position:absolute; bottom:calc(100%+4px); left:50%; transform:translateX(-50%);
-    background:#1e293b; color:#fff; font-size:0.65rem; padding:3px 7px; border-radius:5px;
-    white-space:nowrap; z-index:10; pointer-events:none;
+.hm-cell:hover::after {
+    content:attr(data-tip);
+    position:absolute; bottom:calc(100%+4px); left:50%;
+    transform:translateX(-50%);
+    background:#1e293b; color:#fff; font-size:0.6rem;
+    padding:2px 6px; border-radius:4px;
+    white-space:nowrap; z-index:20; pointer-events:none;
 }
-.hm-hour-labels { grid-column:1 / -1; display:grid; grid-template-columns:60px repeat(24,1fr); gap:2px; }
-.hm-hour-lbl { font-size:0.6rem; color:#cbd5e1; text-align:center; }
+.hm-hour-labels {
+    display:grid; grid-template-columns:44px repeat(24,minmax(20px,1fr));
+    gap:2px; min-width:600px; margin-bottom:3px;
+}
+.hm-hour-lbl { font-size:0.55rem; color:#cbd5e1; text-align:center; }
 
 /* ── Insight cards ── */
-.insight-card { background:linear-gradient(135deg,#f8faff,#f0f9ff); border:1.5px solid #bfdbfe; border-radius:.75rem; padding:1rem 1.25rem; display:flex; gap:.75rem; align-items:flex-start; }
-.insight-icon { font-size:1.5rem; flex-shrink:0; line-height:1; }
-.insight-title { font-size:.75rem; font-weight:700; color:#1e3a8a; margin-bottom:.2rem; }
-.insight-text  { font-size:.82rem; color:#475569; line-height:1.5; }
+.insight-card {
+    background:linear-gradient(135deg,#f8faff,#f0f9ff);
+    border:1.5px solid #bfdbfe; border-radius:.75rem;
+    padding:.875rem 1rem; display:flex; gap:.75rem; align-items:flex-start;
+}
+.insight-icon { font-size:1.3rem; flex-shrink:0; line-height:1; }
+.insight-title { font-size:.72rem; font-weight:700; color:#1e3a8a; margin-bottom:.15rem; }
+.insight-text { font-size:.78rem; color:#475569; line-height:1.5; }
 
-/* ── Stat pill ── */
-.stat-pill { background:#f8fafc; border:1px solid #e2e8f0; border-radius:.5rem; padding:.6rem 1rem; text-align:center; }
-.stat-pill .val { font-size:1.5rem; font-weight:800; color:#1e3a8a; line-height:1; }
-.stat-pill .lbl { font-size:.68rem; font-weight:600; color:#64748b; margin-top:.2rem; text-transform:uppercase; letter-spacing:.06em; }
+/* ── Section header ── */
+.section-head {
+    font-size:1rem; font-weight:700; color:#0f172a;
+    padding-bottom:.5rem; border-bottom:2px solid #e2e8f0; margin-bottom:1rem;
+}
 </style>
 @endpush
 
 @section('content')
-<div class="py-6 space-y-6">
+<div class="py-4 space-y-6 max-w-7xl">
 
-    {{-- Header --}}
+    {{-- ── Page header ── --}}
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Analytics & Data Analysis</h1>
-            <p class="text-sm text-gray-500 mt-0.5">Real-time insights from parish data. Cached for 5 minutes.</p>
+            <h1 class="text-xl font-bold text-gray-900">Analytics & Data Analysis</h1>
+            <p class="text-sm text-gray-500">Insights from parish data — cached 5 min.</p>
         </div>
         <div class="flex gap-2">
-            <button onclick="loadData(true)" class="btn-secondary text-sm">
-                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <button onclick="loadData(true)"
+                    class="inline-flex items-center gap-1.5 text-sm bg-white border border-gray-300 text-gray-700 font-semibold px-3 py-2 rounded-lg hover:bg-gray-50 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 Refresh
             </button>
-            <a href="{{ route('admin.analytics.export') }}" class="btn-secondary text-sm">
-                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <a href="{{ route('admin.analytics.export') }}"
+               class="inline-flex items-center gap-1.5 text-sm bg-blue-600 text-white font-semibold px-3 py-2 rounded-lg hover:bg-blue-700 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 Export CSV
             </a>
         </div>
     </div>
 
-    {{-- Loading state --}}
+    {{-- ── Spinner ── --}}
     <div id="analytics-loading" class="py-20 text-center text-gray-400">
         <svg class="w-8 h-8 mx-auto mb-3 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
         </svg>
-        <p class="text-sm">Loading analytics data…</p>
+        <p class="text-sm font-medium">Loading analytics…</p>
     </div>
 
     <div id="analytics-content" class="hidden space-y-6">
 
-        {{-- ── PLAIN-LANGUAGE INSIGHTS ── --}}
+        {{-- ── 1. KEY INSIGHTS ── --}}
         <div>
-            <h2 class="text-lg font-bold text-gray-900 mb-3">Key Insights</h2>
-            <div id="insights-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            <p class="section-head">💡 Key Insights</p>
+            <div id="insights-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3"></div>
         </div>
 
-        {{-- ── ROW: Booking Heatmap ── --}}
+        {{-- ── 2. BOOKING HEATMAP (full width) ── --}}
         <div class="an-card">
-            <p class="an-card-title">Booking Heatmap — Day × Time (all-time)</p>
-            <p class="text-xs text-gray-400 mb-3">Each cell = bookings on that weekday at that hour. Darker = busier.</p>
-            <div id="heatmap-hour-labels" class="hm-hour-labels mb-1"></div>
-            <div id="heatmap-grid"></div>
-            <div class="mt-2 flex items-center gap-2 text-xs text-gray-400">
-                <div class="w-4 h-4 rounded bg-blue-50 border border-blue-100"></div> Low
-                <div class="w-4 h-4 rounded bg-blue-200 ml-2"></div> Medium
-                <div class="w-4 h-4 rounded bg-blue-600 ml-2"></div> High
+            <p class="an-card-title">📅 Booking Heatmap — Day × Hour (all bookings)</p>
+            <p class="text-xs text-gray-400 mb-3">Darker = more bookings at that day and hour. Hover for count.</p>
+            <div class="heatmap-scroll">
+                <div id="heatmap-hour-labels" class="hm-hour-labels"></div>
+                <div id="heatmap-grid"></div>
+            </div>
+            <div class="flex items-center gap-3 mt-3 text-xs text-gray-400">
+                <div class="flex items-center gap-1"><div class="w-4 h-3 rounded" style="background:rgba(37,99,235,.06)"></div>Low</div>
+                <div class="flex items-center gap-1"><div class="w-4 h-3 rounded" style="background:rgba(37,99,235,.4)"></div>Medium</div>
+                <div class="flex items-center gap-1"><div class="w-4 h-3 rounded" style="background:rgba(37,99,235,.9)"></div>High</div>
             </div>
         </div>
 
-        {{-- ── ROW: Monthly Trends + Forecast ── --}}
+        {{-- ── 3. MONTHLY + DEMAND (2 col) ── --}}
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <div class="an-card">
-                <p class="an-card-title">Monthly Bookings (last 15 months + 3-month forecast)</p>
-                <canvas id="chart-monthly" height="220"></canvas>
+                <p class="an-card-title">📊 Monthly Bookings + 3-Month Forecast</p>
+                <div class="chart-wrap"><canvas id="chart-monthly"></canvas></div>
             </div>
             <div class="an-card">
-                <p class="an-card-title">Sacrament Trends (last 12 months)</p>
-                <canvas id="chart-sacrament" height="220"></canvas>
+                <p class="an-card-title">🏆 Service Demand Ranking</p>
+                <div class="chart-wrap"><canvas id="chart-demand"></canvas></div>
             </div>
         </div>
 
-        {{-- ── ROW: Service Demand + Revenue ── --}}
+        {{-- ── 4. SACRAMENT TRENDS (full width) ── --}}
+        <div class="an-card">
+            <p class="an-card-title">✝ Sacrament Trends (last 24 months)</p>
+            <div class="chart-wrap"><canvas id="chart-sacrament"></canvas></div>
+        </div>
+
+        {{-- ── 5. REVENUE + AGE (2 col) ── --}}
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <div class="an-card">
-                <p class="an-card-title">Service Demand Ranking</p>
-                <canvas id="chart-demand" height="250"></canvas>
+                <p class="an-card-title">💰 Revenue by Service</p>
+                <div class="chart-wrap-doughnut"><canvas id="chart-revenue"></canvas></div>
             </div>
             <div class="an-card">
-                <p class="an-card-title">Revenue by Service Type</p>
-                <canvas id="chart-revenue" height="250"></canvas>
+                <p class="an-card-title">👥 Parishioner Age Groups</p>
+                <div class="chart-wrap-sm"><canvas id="chart-age"></canvas></div>
             </div>
         </div>
 
-        {{-- ── ROW: Demographics ── --}}
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div class="an-card">
-                <p class="an-card-title">Parishioner Age Groups</p>
-                <canvas id="chart-age" height="220"></canvas>
-            </div>
-            <div class="an-card">
-                <p class="an-card-title">Top 10 Barangays</p>
-                <canvas id="chart-brgy" height="220"></canvas>
-            </div>
+        {{-- ── 6. TOP BARANGAYS (full width) ── --}}
+        <div class="an-card">
+            <p class="an-card-title">📍 Top 10 Barangays by Parishioner Count</p>
+            <div class="chart-wrap-sm"><canvas id="chart-brgy"></canvas></div>
         </div>
 
     </div>
@@ -133,17 +161,24 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-const COLORS = [
+'use strict';
+
+const PALETTE = [
     '#3b82f6','#f59e0b','#10b981','#ef4444','#8b5cf6',
     '#06b6d4','#f97316','#14b8a6','#e11d48','#a855f7',
-    '#84cc16','#0ea5e9',
+    '#84cc16','#0ea5e9','#ec4899','#6366f1','#22d3ee',
 ];
 
-let charts = {};
+let _charts = {};
 
-function destroyChart(id) {
-    if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+function killChart(id) {
+    if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
 }
+
+/* ── Shared Chart.js defaults ── */
+Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+Chart.defaults.font.size   = 11;
+Chart.defaults.color       = '#64748b';
 
 function loadData(bust = false) {
     document.getElementById('analytics-loading').classList.remove('hidden');
@@ -152,232 +187,206 @@ function loadData(bust = false) {
     const url = '{{ route("admin.analytics.data") }}' + (bust ? '?bust=1' : '');
 
     fetch(url)
-        .then(r => r.json())
-        .then(data => {
-            renderInsights(data.insights || []);
-            renderHeatmap(data.heatmap || {});
-            renderMonthly(data.monthly_bookings || [], data.forecast || []);
-            renderSacrament(data.sacrament_trends || {});
-            renderDemand(data.service_demand || []);
-            renderRevenue(data.revenue_by_service || []);
-            renderAge(data.demographics_age || []);
-            renderBarangay(data.demographics_brgy || []);
+        .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
+        .then(d => {
+            renderInsights(d.insights  || []);
+            renderHeatmap(d.heatmap    || {});
+            renderMonthly(d.monthly_bookings || [], d.forecast || []);
+            renderDemand(d.service_demand    || []);
+            renderSacrament(d.sacrament_trends || {});
+            renderRevenue(d.revenue_by_service || []);
+            renderAge(d.demographics_age       || []);
+            renderBarangay(d.demographics_brgy || []);
 
             document.getElementById('analytics-loading').classList.add('hidden');
             document.getElementById('analytics-content').classList.remove('hidden');
         })
         .catch(err => {
             document.getElementById('analytics-loading').innerHTML =
-                '<p class="text-red-500 text-sm">Failed to load analytics data. <button onclick="loadData()" class="underline">Retry</button></p>';
-            console.error(err);
+                '<p class="text-red-500 text-sm font-medium">Failed to load analytics. ' +
+                '<button onclick="loadData()" class="underline text-blue-600">Retry</button> ' +
+                '<span class="text-gray-400 ml-2 text-xs">(' + err.message + ')</span></p>';
+            console.error('[analytics]', err);
         });
 }
 
-// ── Insights ──────────────────────────────────────────────────────────────
-function renderInsights(insights) {
-    const grid = document.getElementById('insights-grid');
-    grid.innerHTML = '';
-    insights.forEach(ins => {
-        grid.innerHTML += `
-            <div class="insight-card">
-                <div class="insight-icon">${ins.icon}</div>
-                <div>
-                    <div class="insight-title">${ins.title}</div>
-                    <div class="insight-text">${ins.text}</div>
-                </div>
-            </div>`;
+/* ── Insights ── */
+function renderInsights(ins) {
+    const el = document.getElementById('insights-grid');
+    el.innerHTML = ins.length ? '' : '<p class="text-sm text-gray-400 col-span-3">No insights yet — add bookings and payments to see data.</p>';
+    ins.forEach(i => {
+        el.insertAdjacentHTML('beforeend',
+            `<div class="insight-card"><div class="insight-icon">${i.icon}</div>
+            <div><div class="insight-title">${i.title}</div>
+            <div class="insight-text">${i.text}</div></div></div>`);
     });
 }
 
-// ── Heatmap ───────────────────────────────────────────────────────────────
-function renderHeatmap(heatmap) {
-    const grid  = document.getElementById('heatmap-grid');
-    const lbls  = document.getElementById('heatmap-hour-labels');
-    const g     = heatmap.grid || {};
-    const max   = heatmap.max  || 1;
-    const days  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+/* ── Heatmap ── */
+function renderHeatmap(hm) {
+    const gridEl  = document.getElementById('heatmap-grid');
+    const lblsEl  = document.getElementById('heatmap-hour-labels');
+    const g       = hm.grid || {};
+    const max     = Math.max(1, hm.max || 1);
+    const days    = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const hours   = ['12a','1a','2a','3a','4a','5a','6a','7a','8a','9a','10a','11a',
+                     '12p','1p','2p','3p','4p','5p','6p','7p','8p','9p','10p','11p'];
 
     // Hour labels row
-    lbls.innerHTML = '<div></div>' + Array.from({length:24}, (_,h) =>
-        `<div class="hm-hour-lbl">${h === 0 ? '12a' : h < 12 ? h+'a' : h === 12 ? '12p' : (h-12)+'p'}</div>`
-    ).join('');
+    lblsEl.innerHTML = '<div></div>' + hours.map(h => `<div class="hm-hour-lbl">${h}</div>`).join('');
 
-    grid.innerHTML = '';
+    gridEl.innerHTML = '';
     for (let d = 0; d < 7; d++) {
-        grid.innerHTML += `<div class="hm-label text-xs">${days[d]}</div>`;
+        gridEl.insertAdjacentHTML('beforeend', `<div class="hm-label">${days[d]}</div>`);
         for (let h = 0; h < 24; h++) {
-            const cnt = (g[d] && g[d][h]) ? g[d][h] : 0;
-            const pct = Math.min(cnt / max, 1);
-            const alpha = pct === 0 ? 0.05 : 0.1 + pct * 0.9;
-            grid.innerHTML += `
-                <div class="hm-cell" style="background:rgba(37,99,235,${alpha.toFixed(2)})">
-                    <div class="hm-tooltip">${days[d]} ${h}:00 — ${cnt} booking${cnt !== 1 ? 's' : ''}</div>
-                </div>`;
+            const cnt   = (g[d] && g[d][h]) ? g[d][h] : 0;
+            const alpha = cnt === 0 ? 0.05 : Math.min(0.12 + (cnt / max) * 0.88, 1);
+            const tip   = `${days[d]} ${hours[h]} — ${cnt} booking${cnt !== 1 ? 's' : ''}`;
+            gridEl.insertAdjacentHTML('beforeend',
+                `<div class="hm-cell" data-tip="${tip}" style="background:rgba(37,99,235,${alpha.toFixed(2)})"></div>`);
         }
     }
 }
 
-// ── Monthly + Forecast ────────────────────────────────────────────────────
+/* ── Monthly + Forecast ── */
 function renderMonthly(monthly, forecast) {
-    destroyChart('monthly');
-    const historicLabels = monthly.map(m => m.month);
-    const historicData   = monthly.map(m => m.count);
+    killChart('monthly');
+    const hLabels = monthly.map(m => m.month);
+    const hData   = monthly.map(m => m.count);
 
-    // 3-month moving average overlay
-    const ma3 = historicData.map((_, i) => {
-        if (i < 2) return null;
-        return Math.round((historicData[i] + historicData[i-1] + historicData[i-2]) / 3);
-    });
+    // 3-month moving average
+    const ma3 = hData.map((_, i) =>
+        i < 2 ? null : Math.round((hData[i] + hData[i-1] + hData[i-2]) / 3));
 
-    const forecastLabels = forecast.map(f => f.month);
-    const forecastData   = forecast.map(f => f.forecast);
+    const fLabels = forecast.map(f => f.month);
+    const fData   = forecast.map(f => f.forecast);
 
-    const allLabels = [...historicLabels, ...forecastLabels];
-    const barData   = [...historicData,   ...Array(forecastLabels.length).fill(null)];
-    const maData    = [...ma3,            ...Array(forecastLabels.length).fill(null)];
-    const fData     = [...Array(historicLabels.length).fill(null), ...forecastData];
+    const labels = [...hLabels, ...fLabels];
+    const barD   = [...hData,   ...Array(fLabels.length).fill(null)];
+    const maD    = [...ma3,     ...Array(fLabels.length).fill(null)];
+    const fcD    = [...Array(hLabels.length).fill(null), ...fData];
 
-    charts['monthly'] = new Chart(document.getElementById('chart-monthly'), {
+    _charts['monthly'] = new Chart(document.getElementById('chart-monthly'), {
         data: {
-            labels: allLabels,
+            labels,
             datasets: [
-                {
-                    type: 'bar', label: 'Bookings',
-                    data: barData, backgroundColor: 'rgba(59,130,246,.55)',
-                    borderColor: '#3b82f6', borderWidth: 1, borderRadius: 4,
-                },
-                {
-                    type: 'line', label: '3-Month Avg',
-                    data: maData, borderColor: '#f59e0b', borderWidth: 2,
-                    pointRadius: 0, tension: 0.4, fill: false,
-                },
-                {
-                    type: 'line', label: 'Forecast',
-                    data: fData, borderColor: '#10b981', borderWidth: 2,
-                    borderDash: [6,4], pointRadius: 4, tension: 0.4, fill: false,
-                    pointBackgroundColor: '#10b981',
-                },
+                { type:'bar',  label:'Bookings',     data:barD, backgroundColor:'rgba(59,130,246,.5)', borderColor:'#3b82f6', borderWidth:1, borderRadius:3 },
+                { type:'line', label:'3-Month Avg',  data:maD,  borderColor:'#f59e0b', borderWidth:2, pointRadius:0, tension:.4, fill:false },
+                { type:'line', label:'Forecast',     data:fcD,  borderColor:'#10b981', borderWidth:2, borderDash:[6,4], pointRadius:4, tension:.4, fill:false, pointBackgroundColor:'#10b981' },
             ],
         },
-        options: { responsive:true, maintainAspectRatio:false,
-            plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, font:{size:11} } } },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, padding:12 } } },
             scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } },
         },
     });
 }
 
-// ── Sacrament Trends ──────────────────────────────────────────────────────
+/* ── Sacrament Trends ── */
 function renderSacrament(data) {
-    destroyChart('sacrament');
-    if (!data.labels || !data.datasets) return;
-
-    charts['sacrament'] = new Chart(document.getElementById('chart-sacrament'), {
-        type: 'line',
-        data: {
-            labels: data.labels,
-            datasets: data.datasets.map((ds, i) => ({
-                label: ds.label, data: ds.data,
-                borderColor: COLORS[i % COLORS.length],
-                backgroundColor: COLORS[i % COLORS.length] + '22',
-                borderWidth: 2, tension: 0.4, fill: false, pointRadius: 3,
+    killChart('sacrament');
+    if (!data.labels?.length) return;
+    _charts['sacrament'] = new Chart(document.getElementById('chart-sacrament'), {
+        type:'line',
+        data:{
+            labels:data.labels,
+            datasets:(data.datasets || []).map((ds,i) => ({
+                label:ds.label, data:ds.data,
+                borderColor:PALETTE[i % PALETTE.length],
+                backgroundColor:PALETTE[i % PALETTE.length] + '18',
+                borderWidth:2, tension:.4, fill:false, pointRadius:2,
             })),
         },
-        options: { responsive:true, maintainAspectRatio:false,
-            plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:10} } } },
+        options:{
+            responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, padding:10 } } },
             scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } },
         },
     });
 }
 
-// ── Service Demand ────────────────────────────────────────────────────────
+/* ── Service Demand ── */
 function renderDemand(data) {
-    destroyChart('demand');
-    charts['demand'] = new Chart(document.getElementById('chart-demand'), {
-        type: 'bar',
-        data: {
-            labels: data.map(d => d.label),
-            datasets: [{
-                label: 'Total Bookings',
-                data: data.map(d => d.total),
-                backgroundColor: data.map((_, i) => COLORS[i % COLORS.length] + 'cc'),
-                borderRadius: 5,
-            }],
+    killChart('demand');
+    if (!data.length) return;
+    _charts['demand'] = new Chart(document.getElementById('chart-demand'), {
+        type:'bar',
+        data:{
+            labels:data.map(d => d.label),
+            datasets:[{ label:'Total Bookings', data:data.map(d => d.total),
+                backgroundColor:data.map((_,i) => PALETTE[i % PALETTE.length] + 'cc'), borderRadius:4 }],
         },
-        options: {
-            indexAxis: 'y', responsive:true, maintainAspectRatio:false,
+        options:{
+            indexAxis:'y', responsive:true, maintainAspectRatio:false,
             plugins:{ legend:{ display:false } },
             scales:{ x:{ beginAtZero:true, ticks:{ precision:0 } } },
         },
     });
 }
 
-// ── Revenue by Service ────────────────────────────────────────────────────
+/* ── Revenue Doughnut ── */
 function renderRevenue(data) {
-    destroyChart('revenue');
+    killChart('revenue');
     if (!data.length) return;
-    charts['revenue'] = new Chart(document.getElementById('chart-revenue'), {
-        type: 'doughnut',
-        data: {
-            labels: data.map(d => d.label),
-            datasets: [{
-                data: data.map(d => d.total),
-                backgroundColor: data.map((_, i) => COLORS[i % COLORS.length]),
-                hoverOffset: 8,
-            }],
+    _charts['revenue'] = new Chart(document.getElementById('chart-revenue'), {
+        type:'doughnut',
+        data:{
+            labels:data.map(d => d.label),
+            datasets:[{ data:data.map(d => d.total),
+                backgroundColor:data.map((_,i) => PALETTE[i % PALETTE.length]), hoverOffset:6 }],
         },
-        options: { responsive:true, maintainAspectRatio:false,
+        options:{
+            responsive:true, maintainAspectRatio:false,
             plugins:{
-                legend:{ position:'right', labels:{ boxWidth:12, font:{size:11} } },
-                tooltip:{ callbacks:{ label: ctx => ` ₱${ctx.parsed.toLocaleString('en-PH',{minimumFractionDigits:2})}` } },
+                legend:{ position:'right', labels:{ boxWidth:10, padding:10 } },
+                tooltip:{ callbacks:{ label: ctx => ' ₱' + ctx.parsed.toLocaleString('en-PH',{minimumFractionDigits:2}) } },
             },
         },
     });
 }
 
-// ── Age Demographics ──────────────────────────────────────────────────────
+/* ── Age Groups ── */
 function renderAge(data) {
-    destroyChart('age');
-    charts['age'] = new Chart(document.getElementById('chart-age'), {
-        type: 'bar',
-        data: {
-            labels: data.map(d => d.label),
-            datasets: [{
-                label: 'Parishioners',
-                data: data.map(d => d.count),
-                backgroundColor: COLORS,
-                borderRadius: 5,
-            }],
+    killChart('age');
+    if (!data.length) return;
+    _charts['age'] = new Chart(document.getElementById('chart-age'), {
+        type:'bar',
+        data:{
+            labels:data.map(d => d.label),
+            datasets:[{ label:'Parishioners', data:data.map(d => d.count),
+                backgroundColor:PALETTE, borderRadius:4 }],
         },
-        options: { responsive:true, maintainAspectRatio:false,
+        options:{
+            responsive:true, maintainAspectRatio:false,
             plugins:{ legend:{ display:false } },
             scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } },
         },
     });
 }
 
-// ── Barangay Demographics ─────────────────────────────────────────────────
+/* ── Top Barangays ── */
 function renderBarangay(data) {
-    destroyChart('brgy');
-    charts['brgy'] = new Chart(document.getElementById('chart-brgy'), {
-        type: 'bar',
-        data: {
-            labels: data.map(d => d.barangay),
-            datasets: [{
-                label: 'Parishioners',
-                data: data.map(d => d.count),
-                backgroundColor: '#6366f1cc',
-                borderRadius: 5,
-            }],
+    killChart('brgy');
+    if (!data.length) return;
+    _charts['brgy'] = new Chart(document.getElementById('chart-brgy'), {
+        type:'bar',
+        data:{
+            labels:data.map(d => d.barangay),
+            datasets:[{ label:'Parishioners', data:data.map(d => d.count),
+                backgroundColor:'#6366f1cc', borderRadius:4 }],
         },
-        options: {
-            indexAxis: 'y', responsive:true, maintainAspectRatio:false,
+        options:{
+            indexAxis:'y', responsive:true, maintainAspectRatio:false,
             plugins:{ legend:{ display:false } },
             scales:{ x:{ beginAtZero:true, ticks:{ precision:0 } } },
         },
     });
 }
 
-// Auto-load on page ready
 document.addEventListener('DOMContentLoaded', () => loadData());
 </script>
 @endpush

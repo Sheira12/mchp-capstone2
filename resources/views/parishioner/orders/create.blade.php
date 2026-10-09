@@ -3,20 +3,38 @@
 
 @push('styles')
 <style>
-.pkg-card { background:#fff; border:2px solid #e2e8f0; border-radius:1rem; padding:1.25rem; cursor:pointer; transition:all 0.15s; position:relative; }
+.pkg-card {
+    background:#fff;
+    border:2px solid #e2e8f0;
+    border-radius:1rem;
+    padding:1.25rem 1.25rem 1.25rem 3.25rem;
+    cursor:pointer;
+    transition:border-color .15s, background .15s, box-shadow .15s;
+    position:relative;
+    display:block;
+    width:100%;
+}
 .pkg-card:hover { border-color:#93c5fd; background:#f0f9ff; }
-.pkg-card.selected { border-color:#2563eb; background:#eff6ff; box-shadow:0 0 0 3px rgba(37,99,235,.15); }
-.pkg-card input[type=radio] { position:absolute; opacity:0; }
-.pkg-check { position:absolute; top:0.75rem; right:0.75rem; width:22px; height:22px; border-radius:50%; border:2px solid #e2e8f0; background:#fff; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
-.pkg-card.selected .pkg-check { background:#2563eb; border-color:#2563eb; }
-.pkg-card.selected .pkg-check svg { display:block; }
-.pkg-check svg { display:none; }
+.pkg-card.selected {
+    border-color:#2563eb;
+    background:#eff6ff;
+    box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+/* Hidden native radio — we style our own indicator */
+.pkg-card input[type=radio] {
+    position:absolute;
+    left:1rem; top:1.3rem;
+    width:18px; height:18px;
+    accent-color:#2563eb;
+    cursor:pointer;
+}
 </style>
 @endpush
 
 @section('content')
 <div class="space-y-6 max-w-3xl w-full">
 
+    {{-- Header --}}
     <div class="flex items-center gap-3">
         <a href="{{ route('parishioner.bookings.show', $booking) }}"
            class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50">
@@ -42,26 +60,26 @@
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
                 <h2 class="font-bold text-gray-900">Choose a Package</h2>
-                <p class="text-sm text-gray-500 mt-0.5">Select the package that fits your needs, or choose Standard.</p>
+                <p class="text-sm text-gray-500 mt-0.5">Select the package that best fits your needs, or keep the standard fee.</p>
             </div>
             <div class="p-6 space-y-3">
-                {{-- Standard / No package option --}}
-                <label class="pkg-card" id="pkg-none" onclick="selectPkg(this, null, {{ (float)($service?->fee ?? $booking->service_fee ?? 0) }})">
+                {{-- Standard / No Package --}}
+                <label class="pkg-card selected" data-price="{{ (float)($service?->fee ?? $booking->service_fee ?? 0) }}">
                     <input type="radio" name="service_package_id" value="" checked>
-                    <div class="pkg-check"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
                     <p class="font-bold text-gray-900">Standard (No Package)</p>
                     <p class="text-sm text-gray-500 mt-0.5">Base service fee only — no add-ons.</p>
-                    <p class="text-lg font-bold text-blue-700 mt-2">₱{{ number_format($service?->fee ?? $booking->service_fee ?? 0, 2) }}</p>
+                    <p class="text-xl font-bold text-blue-700 mt-2">₱{{ number_format($service?->fee ?? $booking->service_fee ?? 0, 2) }}</p>
                 </label>
 
                 @foreach($packages as $pkg)
-                <label class="pkg-card" id="pkg-{{ $pkg->id }}" onclick="selectPkg(this, {{ $pkg->id }}, {{ (float)$pkg->price }})">
+                <label class="pkg-card" data-price="{{ (float)$pkg->price }}">
                     <input type="radio" name="service_package_id" value="{{ $pkg->id }}">
-                    <div class="pkg-check"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
                     <p class="font-bold text-gray-900">{{ $pkg->name }}</p>
-                    @if($pkg->description)<p class="text-sm text-gray-500 mt-0.5">{{ $pkg->description }}</p>@endif
+                    @if($pkg->description)
+                    <p class="text-sm text-gray-500 mt-0.5">{{ $pkg->description }}</p>
+                    @endif
                     @if($pkg->inclusionsList())
-                    <ul class="mt-2 space-y-0.5">
+                    <ul class="mt-2 space-y-1">
                         @foreach($pkg->inclusionsList() as $inc)
                         <li class="text-xs text-gray-600 flex items-start gap-1.5">
                             <svg class="w-3 h-3 text-green-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
@@ -70,11 +88,12 @@
                         @endforeach
                     </ul>
                     @endif
-                    <p class="text-lg font-bold text-blue-700 mt-3">₱{{ number_format($pkg->price, 2) }}</p>
+                    <p class="text-xl font-bold text-blue-700 mt-3">₱{{ number_format($pkg->price, 2) }}</p>
                 </label>
                 @endforeach
             </div>
         </div>
+
         @else
         {{-- No packages defined — standard fee only --}}
         <input type="hidden" name="service_package_id" value="">
@@ -111,18 +130,32 @@
 
 @push('scripts')
 <script>
-function selectPkg(el, pkgId, price) {
-    document.querySelectorAll('.pkg-card').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
-    const radio = el.querySelector('input[type=radio]');
-    radio.checked = true;
-    document.getElementById('order-total').textContent = '₱' + price.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
-}
-// Pre-select Standard
-document.addEventListener('DOMContentLoaded', () => {
-    const none = document.getElementById('pkg-none');
-    if (none) none.classList.add('selected');
-});
+(function () {
+    // Use change events on the radio inputs — no onclick on labels to avoid double-fire
+    const cards  = document.querySelectorAll('.pkg-card');
+    const totalEl = document.getElementById('order-total');
+
+    cards.forEach(card => {
+        const radio = card.querySelector('input[type=radio]');
+        if (!radio) return;
+
+        // When the radio changes, update styles and total
+        radio.addEventListener('change', function () {
+            cards.forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            const price = parseFloat(card.dataset.price || 0);
+            totalEl.textContent = '₱' + price.toLocaleString('en-PH', { minimumFractionDigits:2, maximumFractionDigits:2 });
+        });
+
+        // Clicking anywhere on the card should check the radio
+        card.addEventListener('click', function (e) {
+            if (e.target !== radio) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+})();
 </script>
 @endpush
 @endsection

@@ -198,6 +198,9 @@
         </div>
     </div>
 
+    {{-- Eligibility Overview --}}
+    @include('admin.parishioners._eligibility_overview', ['parishioner' => $parishioner])
+
     {{-- Delete --}}
     <div class="flex justify-end">
         <form action="{{ route('admin.parishioners.destroy', $parishioner) }}" method="POST"

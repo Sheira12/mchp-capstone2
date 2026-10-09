@@ -8,6 +8,7 @@ use App\Models\BookingRequirement;
 use App\Models\Service;
 use App\Models\ServiceRequirement;
 use App\Notifications\BookingStatusNotification;
+use App\Services\EligibilityService;
 use App\Services\QrCodeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -37,16 +38,32 @@ class BookingController extends Controller
         $services = Service::where('is_bookable', true)->where('is_active', true)
             ->orderBy('sort_order')->get()->groupBy('category');
 
-        // If resuming from requirements page, pre-select the service and booking
-        $preService = request('service') ? Service::where('slug', request('service'))->first() : null;
-        $preBooking = request('booking_id') ? Booking::find(request('booking_id')) : null;
+        // Pre-select service if coming from eligibility page
+        $preselect  = request('preselect');
+        $preService = $preselect ? Service::where('slug', $preselect)->first() : null;
 
-        // Ensure the pre-booking belongs to this parishioner and is approved
+        // Pre-compute eligibility per service so the view can show badges and lock ineligible ones
+        $eligibilityResults = [];
+        try {
+            $eligSvc = app(EligibilityService::class);
+            foreach ($services->flatten() as $svc) {
+                if ($svc->hasEligibilityRules()) {
+                    $eligibilityResults[$svc->slug] = $eligSvc->check($parishioner, $svc->slug)->toArray();
+                }
+            }
+        } catch (\Exception $e) {
+            // fail-open — eligibility info is decorative here; gate is enforced on store()
+        }
+
+        // If resuming from requirements page
+        $preBooking = request('booking_id') ? Booking::find(request('booking_id')) : null;
         if ($preBooking && ($preBooking->parishioner_id !== $parishioner->id || !$preBooking->requirementsApproved())) {
             $preBooking = null;
         }
 
-        return view('parishioner.bookings.create', compact('services', 'preService', 'preBooking'));
+        return view('parishioner.bookings.create', compact(
+            'services', 'preService', 'preBooking', 'eligibilityResults'
+        ));
     }
 
     public function store(Request $request)
@@ -72,6 +89,24 @@ class BookingController extends Controller
         // ── SERVER-SIDE REQUIREMENTS GATE ────────────────────────────────────
         // If the service has required requirements, check they are all approved.
         $service = Service::where('slug', $validated['booking_type'])->first();
+
+        // ── SERVER-SIDE ELIGIBILITY GATE (runs BEFORE requirements gate) ─────
+        // Check that the parishioner satisfies all eligibility rules for this service.
+        if ($service && $service->hasEligibilityRules()) {
+            try {
+                $eligResult = app(EligibilityService::class)->check($parishioner, $validated['booking_type']);
+                if (!$eligResult->isEligible()) {
+                    $blocking = $eligResult->blocking()->map(fn($r) => $r->ruleName)->implode(', ');
+                    return redirect()
+                        ->route('parishioner.eligibility.index')
+                        ->with('error', "You are not yet eligible to book {$service->name}. Please complete the required prerequisites first. Missing: {$blocking}.");
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Eligibility gate check failed (fail-open): ' . $e->getMessage());
+                // fail-open — don't block on unexpected error
+            }
+        }
+
         if ($service && $service->requiresPreApproval()) {
             // Check if parishioner has a pre-approved booking stub for this service
             $approvedBooking = null;

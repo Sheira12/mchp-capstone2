@@ -1,0 +1,25 @@
+@extends('layouts.app')
+@section('title', 'New Seminar')
+@section('page-title', 'Schedule Seminar')
+
+@section('content')
+<div class="py-6 max-w-2xl">
+    <div class="flex items-center gap-3 mb-5">
+        <a href="{{ route('admin.seminars.index') }}"
+           class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50">
+            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <h1 class="text-xl font-bold text-gray-900">Schedule a Seminar</h1>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+        <form method="POST" action="{{ route('admin.seminars.store') }}" class="space-y-5">
+            @csrf
+            @include('admin.seminars._form')
+            <div class="flex gap-3 pt-2 border-t border-gray-100">
+                <button type="submit" class="btn-primary">Schedule Seminar</button>
+                <a href="{{ route('admin.seminars.index') }}" class="btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection

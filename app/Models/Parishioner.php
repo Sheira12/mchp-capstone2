@@ -112,6 +112,21 @@ class Parishioner extends Model
         return $this->hasMany(ProfileChangeLog::class);
     }
 
+    public function seminarRegistrations()
+    {
+        return $this->hasMany(SeminarRegistration::class);
+    }
+
+    public function attendedSeminars()
+    {
+        return $this->hasMany(SeminarRegistration::class)->where('status', 'attended')->with('seminar');
+    }
+
+    public function eligibilityWaivers()
+    {
+        return $this->hasMany(EligibilityWaiver::class);
+    }
+
     public function scopeSearch($query, string $term)
     {
         return $query->where(function ($q) use ($term) {

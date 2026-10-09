@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             ServiceSeeder::class,
             ServiceRequirementSeeder::class,
             ServicePackageSeeder::class,
+            EligibilityRuleSeeder::class,
             DemoDataSeeder::class,
             AnalyticsDataSeeder::class,
             DemoUsersSeeder::class,

@@ -138,6 +138,16 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
     Route::get('/bookings/{booking}/requirements',            [ParishionerBookingController::class, 'bookingRequirements'])->name('bookings.requirements.show');
     Route::post('/bookings/{booking}/requirements/{req}/upload', [ParishionerBookingController::class, 'uploadRequirement'])->name('bookings.requirements.upload');
 
+    // Eligibility (My Eligibility page + JSON check)
+    Route::get('/eligibility',            [\App\Http\Controllers\Parishioner\EligibilityController::class, 'index'])->name('eligibility.index');
+    Route::get('/eligibility/check/{slug}',[\App\Http\Controllers\Parishioner\EligibilityController::class, 'check'])->name('eligibility.check');
+
+    // Seminars (parishioner)
+    Route::get('/seminars',                              [\App\Http\Controllers\Parishioner\SeminarController::class, 'index'])->name('seminars.index');
+    Route::get('/seminars/history',                      [\App\Http\Controllers\Parishioner\SeminarController::class, 'myHistory'])->name('seminars.history');
+    Route::post('/seminars/{seminar}/register',          [\App\Http\Controllers\Parishioner\SeminarController::class, 'register'])->name('seminars.register');
+    Route::post('/seminars/{seminar}/cancel',            [\App\Http\Controllers\Parishioner\SeminarController::class, 'cancel'])->name('seminars.cancel');
+
     // Orders of Payment
     Route::get('/orders',                                   [\App\Http\Controllers\Parishioner\OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}',                           [\App\Http\Controllers\Parishioner\OrderController::class, 'show'])->name('orders.show');
@@ -359,6 +369,27 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
     // Service Packages (admin CRUD)
     Route::resource('packages', \App\Http\Controllers\Admin\PackageController::class)->except(['show']);
     Route::get('/packages/for-service', [\App\Http\Controllers\Admin\PackageController::class, 'forService'])->name('packages.for-service');
+
+    // Service Eligibility Rules (admin CRUD per service)
+    Route::prefix('services/{service}/eligibility-rules')->name('eligibility-rules.')->group(function () {
+        Route::get('/',                  [\App\Http\Controllers\Admin\EligibilityRuleController::class, 'index'])->name('index');
+        Route::get('/create',            [\App\Http\Controllers\Admin\EligibilityRuleController::class, 'create'])->name('create');
+        Route::post('/',                 [\App\Http\Controllers\Admin\EligibilityRuleController::class, 'store'])->name('store');
+        Route::get('/{eligibilityRule}/edit',  [\App\Http\Controllers\Admin\EligibilityRuleController::class, 'edit'])->name('edit');
+        Route::put('/{eligibilityRule}',       [\App\Http\Controllers\Admin\EligibilityRuleController::class, 'update'])->name('update');
+        Route::delete('/{eligibilityRule}',    [\App\Http\Controllers\Admin\EligibilityRuleController::class, 'destroy'])->name('destroy');
+    });
+
+    // Seminars (admin)
+    Route::resource('seminars', \App\Http\Controllers\Admin\SeminarController::class);
+    Route::post('/seminars/{seminar}/attendance/{registration}', [\App\Http\Controllers\Admin\SeminarController::class, 'markAttendance'])->name('seminars.attendance');
+    Route::post('/seminars/{seminar}/complete-all',              [\App\Http\Controllers\Admin\SeminarController::class, 'completeAll'])->name('seminars.complete-all');
+    Route::post('/seminars/check-in',                            [\App\Http\Controllers\Admin\SeminarController::class, 'checkIn'])->name('seminars.check-in');
+
+    // Eligibility Waivers (super_admin only)
+    Route::get('/eligibility-waivers',         [\App\Http\Controllers\Admin\EligibilityWaiverController::class, 'index'])->name('eligibility-waivers.index');
+    Route::get('/eligibility-waivers/create',  [\App\Http\Controllers\Admin\EligibilityWaiverController::class, 'create'])->name('eligibility-waivers.create');
+    Route::post('/eligibility-waivers',        [\App\Http\Controllers\Admin\EligibilityWaiverController::class, 'store'])->name('eligibility-waivers.store');
 
     // Service Requirement Templates (admin-manageable per service)
     Route::prefix('services/{service}/requirements')->name('services.requirements.')->group(function () {        Route::get('/',          [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'index'])->name('index');

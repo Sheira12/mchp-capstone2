@@ -220,17 +220,24 @@
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{{ $category }}</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         @foreach($categoryServices as $service)
-                        <label class="relative flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all hover:border-blue-300 hover:bg-blue-50 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                        @php
+                            $elig      = $eligibilityResults[$service->slug] ?? null;
+                            $isEligible = $elig ? $elig['eligible'] : true; // services without rules = open
+                            $blockCount = $elig ? count(array_filter($elig['items'] ?? [], fn($i) => $i['required'] && !$i['satisfied'])) : 0;
+                        @endphp
+                        <label class="relative flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all
+                                      hover:border-blue-300 hover:bg-blue-50 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50
+                                      {{ !$isEligible ? 'opacity-75' : '' }}">
                             <input type="radio" name="booking_type" value="{{ $service->slug }}"
                                    class="mt-0.5 text-blue-600 focus:ring-blue-500 service-radio"
                                    data-service="{{ $service->slug }}" required
-                                   {{ old('booking_type') === $service->slug ? 'checked' : '' }}>
+                                   {{ old('booking_type') === $service->slug || ($preService && $preService->slug === $service->slug) ? 'checked' : '' }}>
                             <div class="flex-1 min-w-0">
                                 <p class="font-bold text-sm text-gray-900">{{ $service->name }}</p>
                                 @if($service->description)
                                 <p class="text-xs text-gray-500 mt-0.5 line-clamp-2">{{ $service->description }}</p>
                                 @endif
-                                <div class="mt-2">
+                                <div class="mt-2 flex flex-wrap gap-1.5 items-center">
                                     @if($service->fee > 0)
                                     <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-bold px-2.5 py-0.5 rounded-full">
                                         ₱{{ number_format($service->fee, 0) }}
@@ -240,7 +247,26 @@
                                         Free / Donation
                                     </span>
                                     @endif
+
+                                    @if($elig)
+                                        @if($isEligible)
+                                        <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                                            ✓ Eligible
+                                        </span>
+                                        @else
+                                        <span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                                            {{ $blockCount }} req. missing
+                                        </span>
+                                        @endif
+                                    @endif
                                 </div>
+
+                                @if($elig && !$isEligible)
+                                <p class="text-xs text-red-600 mt-1.5 font-medium">
+                                    ⚠ You must meet eligibility requirements before booking.
+                                    <a href="{{ route('parishioner.eligibility.index') }}" class="underline ml-1">View checklist →</a>
+                                </p>
+                                @endif
                             </div>
                         </label>
                         @endforeach
