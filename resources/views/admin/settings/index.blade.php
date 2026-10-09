@@ -80,9 +80,100 @@
         </form>
     </div>
 
-    {{-- ── Social Media Links ── --}}
+    {{-- ── Parish Media (Logo + Banner) ── --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 class="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            Parish Media
+        </h2>
+        <p class="text-xs text-gray-400 mb-5">Upload a parish logo (used in emails, receipts, certificates) and a church background banner (used on the public homepage hero). Images are stored on Supabase — they will persist across redeploys.</p>
+
+        <form method="POST" action="{{ route('admin.settings.update-media') }}" enctype="multipart/form-data" class="space-y-5">
+            @csrf
+
+            {{-- Parish Logo --}}
+            <div class="flex flex-wrap items-start gap-5">
+                <div class="flex-shrink-0">
+                    @php $logoUrl = $media['parish_logo'] ? \App\Helpers\MediaHelper::url($media['parish_logo']) : asset('images/parish-logo.png'); @endphp
+                    <img src="{{ $logoUrl }}" alt="Parish Logo"
+                         class="w-20 h-20 rounded-full object-cover border-2 border-blue-200 shadow"
+                         onerror="this.src='{{ asset('images/parish-logo.png') }}'">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <label class="form-label">Parish Logo</label>
+                    <input type="file" name="parish_logo" accept="image/*"
+                           class="block w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    <p class="text-xs text-gray-400 mt-1">Recommended: 300×300 px square. Max 3 MB. JPG, PNG, WebP.</p>
+                    @if($media['parish_logo'])
+                    <p class="text-xs text-green-600 mt-1 font-medium flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        Custom logo active — stored on Supabase
+                    </p>
+                    @endif
+                </div>
+            </div>
+
+            {{-- Church Banner --}}
+            <div class="flex flex-wrap items-start gap-5">
+                <div class="flex-shrink-0">
+                    @php $bannerUrl = $media['church_banner'] ? \App\Helpers\MediaHelper::url($media['church_banner']) : asset('images/church-bg.jpg'); @endphp
+                    <img src="{{ $bannerUrl }}" alt="Church Banner"
+                         class="w-32 h-20 rounded-lg object-cover border border-gray-200 shadow"
+                         onerror="this.src='{{ asset('images/church-bg.jpg') }}'">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <label class="form-label">Church Background Banner</label>
+                    <input type="file" name="church_banner" accept="image/*"
+                           class="block w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    <p class="text-xs text-gray-400 mt-1">Recommended: 1920×1080 px landscape. Max 5 MB. Used as the blurred hero background on the homepage.</p>
+                    @if($media['church_banner'])
+                    <p class="text-xs text-green-600 mt-1 font-medium flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        Custom banner active — stored on Supabase
+                    </p>
+                    @endif
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button type="submit" class="btn-primary">Upload Media</button>
+            </div>
+        </form>
+    </div>
+
+    {{-- ── Office Hours ── --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Office Hours
+        </h2>
+        <p class="text-xs text-gray-400 mb-4">Displayed on the Contact page and the Mass Schedule page.</p>
+        <form method="POST" action="{{ route('admin.settings.update') }}" class="space-y-4">
+            @csrf @method('PUT')
+            {{-- Pass all existing settings through so they're not cleared --}}
+            <input type="hidden" name="parish_name"            value="{{ $settings['parish_name'] }}">
+            <input type="hidden" name="parish_address"         value="{{ $settings['parish_address'] }}">
+            <input type="hidden" name="parish_phone"           value="{{ $settings['parish_phone'] }}">
+            <input type="hidden" name="parish_email"           value="{{ $settings['parish_email'] }}">
+            <input type="hidden" name="parish_priest"          value="{{ $settings['parish_priest'] }}">
+            <input type="hidden" name="parish_secretary"       value="{{ $settings['parish_secretary'] }}">
+            <input type="hidden" name="parish_finance_officer" value="{{ $settings['parish_finance_officer'] }}">
+            <div>
+                <label class="form-label">Office Hours</label>
+                <input type="text" name="office_hours"
+                       value="{{ old('office_hours', $settings['office_hours']) }}"
+                       class="form-input w-full"
+                       placeholder="e.g. Mon–Fri 8:00 AM – 5:00 PM, Sat 8:00 AM – 12:00 PM">
+                <p class="text-xs text-gray-400 mt-1">Single line of text. Leave blank to hide.</p>
+            </div>
+            <div class="pt-1">
+                <button type="submit" class="btn-primary">Save Office Hours</button>
+            </div>
+        </form>
+    </div>
+
+    {{-- ── Social Media Links ── --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">        <h2 class="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
             <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
             Social Media Links
         </h2>

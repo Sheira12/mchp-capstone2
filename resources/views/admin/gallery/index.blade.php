@@ -50,6 +50,25 @@
     <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{{ session('success') }}</div>
     @endif
 
+    {{-- Category filter (only show when not in a specific album) --}}
+    @if(!request('album'))
+    <div class="flex flex-wrap gap-2">
+        <a href="{{ route('admin.gallery.index') }}"
+           class="px-3 py-1.5 rounded-full text-xs font-semibold border transition
+                  {{ !request('category') ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400' }}">
+            All Categories
+        </a>
+        @foreach($categories as $val => $label)
+        <a href="{{ route('admin.gallery.index', ['category' => $val]) }}"
+           class="px-3 py-1.5 rounded-full text-xs font-semibold border transition
+                  {{ request('category') === $val ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600' }}">
+            {{ $label }}
+            @php $catCount = $items->getCollection()->where('category', $val)->count(); @endphp
+        </a>
+        @endforeach
+    </div>
+    @endif
+
     {{-- Album heading when viewing a specific album --}}
     @if(request('album'))
     <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 flex items-center justify-between">

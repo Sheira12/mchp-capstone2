@@ -37,7 +37,9 @@ class GalleryItem extends Model
 
     public function getImageUrlAttribute(): string
     {
-        return asset('storage/' . $this->image_path);
+        // Use the Supabase-aware media_url() helper.
+        // The old asset('storage/...') accessor was broken in production.
+        return media_url($this->image_path);
     }
 
     /**

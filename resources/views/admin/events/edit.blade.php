@@ -5,7 +5,7 @@
 @section('content')
 <div class="py-6 max-w-2xl">
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <form method="POST" action="{{ route('admin.events.update', $event) }}" enctype="multipart/form-data" class="space-y-5">
+        <form method="POST" action="{{ route('admin.events.update', $event) }}" enctype="multipart/form-data" class="space-y-5" id="ann-form">
             @csrf @method('PUT')
 
             <div>
@@ -54,8 +54,27 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea name="description" rows="5"
-                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ old('description', $event->description) }}</textarea>
+
+                {{-- TipTap toolbar --}}
+                <div id="tiptap-toolbar"
+                     class="flex flex-wrap items-center gap-0.5 bg-gray-50 border border-b-0 border-gray-300 rounded-t-lg px-2 py-1.5">
+                    <button type="button" class="tip-btn" data-cmd="toggleBold"><b>B</b></button>
+                    <button type="button" class="tip-btn" data-cmd="toggleItalic"><i>I</i></button>
+                    <button type="button" class="tip-btn" data-cmd="toggleUnderline"><u>U</u></button>
+                    <span class="w-px h-4 bg-gray-300 mx-1"></span>
+                    <button type="button" class="tip-btn" data-cmd="toggleHeading1">H1</button>
+                    <button type="button" class="tip-btn" data-cmd="toggleHeading2">H2</button>
+                    <span class="w-px h-4 bg-gray-300 mx-1"></span>
+                    <button type="button" class="tip-btn" data-cmd="toggleBulletList">• List</button>
+                    <button type="button" class="tip-btn" data-cmd="toggleOrderedList">1. List</button>
+                    <span class="w-px h-4 bg-gray-300 mx-1"></span>
+                    <button type="button" class="tip-btn" data-cmd="toggleBlockquote">❝</button>
+                    <button type="button" class="tip-btn" data-cmd="clearNodes">✕ Fmt</button>
+                </div>
+                <div id="tiptap-editor"
+                     class="min-h-[160px] bg-white border border-gray-300 rounded-b-lg px-4 py-3 text-sm prose max-w-none focus-within:ring-2 focus-within:ring-blue-200 focus-within:border-blue-400"
+                     style="outline:none;"></div>
+                <textarea name="description" id="tiptap-hidden" class="hidden">{{ old('description', $event->description) }}</textarea>
             </div>
 
             <div>
@@ -80,4 +99,5 @@
         </form>
     </div>
 </div>
+@include('admin.announcements._tiptap_scripts', ['existingContent' => old('description', $event->description ?? '')])
 @endsection

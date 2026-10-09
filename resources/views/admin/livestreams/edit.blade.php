@@ -13,7 +13,10 @@
             </div>
             <div>
                 <label class="form-label">YouTube URL <span class="text-red-500">*</span></label>
-                <input type="text" name="youtube_url" value="{{ old('youtube_url', $livestream->youtube_url) }}" required id="yt-url" class="form-input w-full">
+                <input type="text" name="youtube_url" value="{{ old('youtube_url', $livestream->youtube_url) }}" required id="yt-url"
+                       class="form-input w-full @error('youtube_url') border-red-400 @enderror">
+                @error('youtube_url')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                <p class="text-xs text-gray-400 mt-1">Accepts full YouTube URL, youtu.be short link, or 11-character video ID.</p>
                 <div class="mt-3 aspect-video bg-gray-900 rounded-xl overflow-hidden">
                     <iframe id="yt-iframe" src="{{ $livestream->embed_url }}" class="w-full h-full" frameborder="0" allow="accelerometer;autoplay;encrypted-media" allowfullscreen></iframe>
                 </div>

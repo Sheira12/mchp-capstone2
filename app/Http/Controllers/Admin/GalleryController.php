@@ -20,10 +20,11 @@ class GalleryController extends Controller
             $query->where('category', $cat);
         }
 
-        $items  = $query->orderBy('sort_order')->orderByDesc('created_at')->paginate(24)->withQueryString();
-        $albums = GalleryItem::albumCounts();
+        $items      = $query->orderBy('sort_order')->orderByDesc('created_at')->paginate(24)->withQueryString();
+        $albums     = GalleryItem::albumCounts();
+        $categories = GalleryItem::CATEGORIES;   // ← expose categories for filter UI
 
-        return view('admin.gallery.index', compact('items', 'albums'));
+        return view('admin.gallery.index', compact('items', 'albums', 'categories'));
     }
 
     // ── Album detail / manage page ────────────────────────────

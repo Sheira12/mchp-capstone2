@@ -11,9 +11,6 @@ class SettingsController extends Controller
 {
     public function index()
     {
-        // Read all parish fields from the Settings DB table first,
-        // falling back to config() (which reads .env) if not set in DB.
-        // This way the admin can update values without writing to .env.
         $settings = [
             'parish_name'            => Setting::get('parish_name',    config('parish.name')),
             'parish_address'         => Setting::get('parish_address', config('parish.address')),
@@ -22,11 +19,18 @@ class SettingsController extends Controller
             'parish_priest'          => Setting::get('parish_priest',  config('parish.priest')),
             'parish_secretary'       => Setting::get('parish_secretary', ''),
             'parish_finance_officer' => Setting::get('parish_finance_officer', ''),
+            'office_hours'           => Setting::get('office_hours', ''),
         ];
 
         $socials = Setting::socials();
 
-        return view('admin.settings.index', compact('settings', 'socials'));
+        // Media paths stored in settings (Supabase URLs)
+        $media = [
+            'parish_logo'   => Setting::get('media_parish_logo', ''),
+            'church_banner' => Setting::get('media_church_banner', ''),
+        ];
+
+        return view('admin.settings.index', compact('settings', 'socials', 'media'));
     }
 
     public function update(Request $request)
@@ -39,17 +43,14 @@ class SettingsController extends Controller
             'parish_priest'          => ['nullable', 'string', 'max:255'],
             'parish_secretary'       => ['nullable', 'string', 'max:255'],
             'parish_finance_officer' => ['nullable', 'string', 'max:255'],
+            'office_hours'           => ['nullable', 'string', 'max:255'],
         ]);
 
-        // Store ALL fields in the settings DB table.
-        // This replaces the old approach of writing to .env (which fails on
-        // production because .env is owned by root and Apache runs as www-data).
-        // config('parish.*') reads from .env; the admin panel reads from DB.
-        // The two sources are kept in sync here.
         $keys = [
             'parish_name', 'parish_address', 'parish_phone',
             'parish_email', 'parish_priest',
             'parish_secretary', 'parish_finance_officer',
+            'office_hours',
         ];
 
         foreach ($keys as $key) {
@@ -84,6 +85,57 @@ class SettingsController extends Controller
         }
 
         return back()->with('success', 'Social media links updated.');
+    }
+
+    /**
+     * Upload parish logo or church banner to Supabase.
+     * Stores the Supabase path in Settings, not local disk.
+     */
+    public function updateMedia(Request $request)
+    {
+        $request->validate([
+            'parish_logo'   => ['nullable', 'image', 'max:3072'],  // 3MB
+            'church_banner' => ['nullable', 'image', 'max:5120'],  // 5MB
+        ]);
+
+        $uploaded = [];
+
+        foreach (['parish_logo', 'church_banner'] as $key) {
+            if ($request->hasFile($key)) {
+                try {
+                    // Delete old image if exists
+                    $old = Setting::get("media_{$key}", '');
+                    if ($old) {
+                        try {
+                            \Illuminate\Support\Facades\Storage::disk('supabase')->delete($old);
+                        } catch (\Exception $e) {
+                            \Illuminate\Support\Facades\Log::warning("Failed to delete old {$key}: " . $e->getMessage());
+                        }
+                    }
+
+                    $file = $request->file($key);
+                    $ext  = $file->getClientOriginalExtension() ?: 'jpg';
+                    $path = $file->storeAs(
+                        'settings',
+                        $key . '-' . now()->format('YmdHis') . '.' . $ext,
+                        'supabase'
+                    );
+
+                    if ($path !== false) {
+                        Setting::set("media_{$key}", $path);
+                        $uploaded[] = str_replace('_', ' ', ucfirst($key));
+                    } else {
+                        return back()->with('warning', ucfirst(str_replace('_', ' ', $key)) . ' upload failed. Please try again.');
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Media upload failed for {$key}: " . $e->getMessage());
+                    return back()->with('warning', 'Upload failed: ' . $e->getMessage());
+                }
+            }
+        }
+
+        $msg = $uploaded ? implode(' & ', $uploaded) . ' updated successfully.' : 'No files uploaded.';
+        return back()->with('success', $msg);
     }
 
     public function clearCache(Request $request)

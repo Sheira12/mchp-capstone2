@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Route;
 */
 Route::get('/', [PublicController::class, 'home'])->name('home');
 Route::get('/about', [PublicController::class, 'about'])->name('about');
+Route::get('/mass-schedule', [PublicController::class, 'massSchedule'])->name('mass-schedule');
 Route::get('/services', [PublicController::class, 'services'])->name('services');
 Route::get('/contact', [PublicController::class, 'contact'])->name('contact');
 Route::post('/contact', [PublicController::class, 'submitInquiry'])->name('contact.submit');
@@ -330,6 +331,7 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
         Route::get('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
         Route::put('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
         Route::put('/settings/socials', [\App\Http\Controllers\Admin\SettingsController::class, 'updateSocials'])->name('settings.update-socials');
+        Route::post('/settings/media', [\App\Http\Controllers\Admin\SettingsController::class, 'updateMedia'])->name('settings.update-media');
         Route::post('/settings/clear-cache', [\App\Http\Controllers\Admin\SettingsController::class, 'clearCache'])->name('settings.clear-cache');
     });
 
@@ -365,6 +367,7 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
 
     // Announcements
     Route::resource('announcements', \App\Http\Controllers\Admin\AnnouncementController::class);
+    Route::post('/announcements/bulk', [\App\Http\Controllers\Admin\AnnouncementController::class, 'bulkAction'])->name('announcements.bulk');
 
     // Service Packages (admin CRUD)
     Route::resource('packages', \App\Http\Controllers\Admin\PackageController::class)->except(['show']);

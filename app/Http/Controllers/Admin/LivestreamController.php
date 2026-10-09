@@ -21,7 +21,14 @@ class LivestreamController extends Controller
         $v = $request->validate([
             'title'        => ['required', 'string', 'max:255'],
             'description'  => ['nullable', 'string'],
-            'youtube_url'  => ['required', 'string', 'max:500'],
+            'youtube_url'  => [
+                'required', 'string', 'max:500',
+                function ($attribute, $value, $fail) {
+                    if (!Livestream::extractYoutubeId($value)) {
+                        $fail('Please enter a valid YouTube URL (e.g. https://youtube.com/watch?v=... or https://youtu.be/...).');
+                    }
+                },
+            ],
             'type'         => ['required', 'in:live,upcoming,recorded'],
             'scheduled_at' => ['nullable', 'date'],
             'is_active'    => ['boolean'],
@@ -44,7 +51,14 @@ class LivestreamController extends Controller
         $v = $request->validate([
             'title'        => ['required', 'string', 'max:255'],
             'description'  => ['nullable', 'string'],
-            'youtube_url'  => ['required', 'string', 'max:500'],
+            'youtube_url'  => [
+                'required', 'string', 'max:500',
+                function ($attribute, $value, $fail) {
+                    if (!Livestream::extractYoutubeId($value)) {
+                        $fail('Please enter a valid YouTube URL (e.g. https://youtube.com/watch?v=... or https://youtu.be/...).');
+                    }
+                },
+            ],
             'type'         => ['required', 'in:live,upcoming,recorded'],
             'scheduled_at' => ['nullable', 'date'],
             'is_active'    => ['boolean'],

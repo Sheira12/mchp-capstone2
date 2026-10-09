@@ -26,7 +26,23 @@ class PublicController extends Controller
             ->orderBy('time')
             ->get();
 
-        return view('public.home', compact('announcements', 'massSchedules'));
+        // CMS-managed media — falls back to hardcoded public assets
+        $parishLogoUrl   = \App\Models\Setting::get('media_parish_logo', '');
+        $churchBannerUrl = \App\Models\Setting::get('media_church_banner', '');
+
+        if ($parishLogoUrl) {
+            $parishLogoUrl = \App\Helpers\MediaHelper::url($parishLogoUrl);
+        } else {
+            $parishLogoUrl = asset('images/parish-logo.png');
+        }
+
+        if ($churchBannerUrl) {
+            $churchBannerUrl = \App\Helpers\MediaHelper::url($churchBannerUrl);
+        } else {
+            $churchBannerUrl = asset('images/church-bg.jpg');
+        }
+
+        return view('public.home', compact('announcements', 'massSchedules', 'parishLogoUrl', 'churchBannerUrl'));
     }
 
     public function about()
@@ -34,6 +50,28 @@ class PublicController extends Controller
         return view('public.about');
     }
 
+    public function massSchedule()
+    {
+        $days = [0=>'Sunday',1=>'Monday',2=>'Tuesday',3=>'Wednesday',4=>'Thursday',5=>'Friday',6=>'Saturday'];
+
+        $regular = MassSchedule::where('is_active', true)
+            ->whereNull('special_date')
+            ->orderBy('day_of_week')
+            ->orderBy('time')
+            ->get()
+            ->groupBy('day_of_week');
+
+        $special = MassSchedule::where('is_active', true)
+            ->whereNotNull('special_date')
+            ->where('special_date', '>=', now()->toDateString())
+            ->orderBy('special_date')
+            ->orderBy('time')
+            ->get();
+
+        $officeHours = \App\Models\Setting::get('office_hours', '');
+
+        return view('public.mass-schedule', compact('regular', 'special', 'days', 'officeHours'));
+    }
     public function services()
     {
         $services = Service::where('is_active', true)

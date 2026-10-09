@@ -11,14 +11,69 @@ use Illuminate\Support\Str;
 
 class AnnouncementController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $announcements = Announcement::with('createdBy')
+        $query = Announcement::with('createdBy')
             ->orderByDesc('is_pinned')
-            ->orderByDesc('created_at')
-            ->paginate(20);
+            ->orderByDesc('created_at');
+
+        if ($search = $request->get('search')) {
+            $query->where('title', 'like', "%{$search}%");
+        }
+        if ($status = $request->get('status')) {
+            $query->where('status', $status);
+        }
+        if ($category = $request->get('category')) {
+            $query->where('category', $category);
+        }
+
+        $announcements = $query->paginate(20)->withQueryString();
 
         return view('admin.announcements.index', compact('announcements'));
+    }
+
+    /**
+     * Bulk action: publish / unpublish / delete selected announcements.
+     */
+    public function bulkAction(Request $request)
+    {
+        $request->validate([
+            'action' => ['required', 'in:publish,unpublish,delete'],
+            'ids'    => ['required', 'array'],
+            'ids.*'  => ['exists:announcements,id'],
+        ]);
+
+        $announcements = Announcement::whereIn('id', $request->input('ids'))->get();
+        $count         = $announcements->count();
+
+        match ($request->input('action')) {
+            'publish' => $announcements->each(function ($ann) {
+                $ann->update([
+                    'status'       => 'published',
+                    'is_published' => true,
+                    'published_at' => $ann->published_at ?? now(),
+                ]);
+            }),
+            'unpublish' => $announcements->each(fn($ann) => $ann->update([
+                'status'       => 'draft',
+                'is_published' => false,
+            ])),
+            'delete' => $announcements->each(function ($ann) {
+                if ($ann->image_path) {
+                    try { Storage::disk('supabase')->delete($ann->image_path); } catch (\Exception $e) {}
+                }
+                $ann->delete();
+            }),
+        };
+
+        $label = match ($request->input('action')) {
+            'publish'   => "{$count} announcement(s) published.",
+            'unpublish' => "{$count} announcement(s) moved to draft.",
+            'delete'    => "{$count} announcement(s) deleted.",
+        };
+
+        return redirect()->route('admin.announcements.index')
+            ->with('success', $label);
     }
 
     public function create()

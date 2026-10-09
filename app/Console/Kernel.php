@@ -14,6 +14,8 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('parish:send-reminders')->dailyAt('08:00');
         $schedule->command('parish:backup-db')->dailyAt('02:00');
+        // Auto-publish scheduled announcements every 15 minutes
+        $schedule->command('cms:publish-scheduled')->everyFifteenMinutes();
     }
 
     /**

@@ -5,7 +5,6 @@
 <style>
 .hero-bg {
     position: absolute; inset: 0;
-    background-image: url('/images/church-bg.jpg');
     background-size: cover; background-position: center;
     filter: blur(6px) brightness(0.22) saturate(0.5);
     transform: scale(1.08); z-index: 0;
@@ -42,7 +41,7 @@
 
 {{-- HERO --}}
 <section class="relative text-white overflow-hidden" style="min-height:100vh; display:flex; align-items:center; justify-content:center;">
-    <div class="hero-bg"></div>
+    <div class="hero-bg" style="background-image: url('{{ $churchBannerUrl }}');">
     <div class="hero-overlay"></div>
     <div class="hero-content w-full max-w-3xl mx-auto px-4 py-20 text-center">
 
@@ -53,8 +52,9 @@
         </div>
 
         <div style="display:flex;justify-content:center;margin-bottom:1.5rem;">
-            <img src="{{ asset('images/parish-logo.png') }}" alt="Parish Logo"
-                 style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,0.55);box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+            <img src="{{ $parishLogoUrl }}" alt="Parish Logo"
+                 style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,0.55);box-shadow:0 8px 32px rgba(0,0,0,0.5);"
+                 onerror="this.src='{{ asset('images/parish-logo.png') }}'">
         </div>
 
         <h1 style="font-size:clamp(1.9rem,4.5vw,3.4rem);font-weight:800;line-height:1.15;text-shadow:0 4px 24px rgba(0,0,0,0.7);margin-bottom:0.75rem;">
