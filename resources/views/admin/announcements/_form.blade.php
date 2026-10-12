@@ -56,7 +56,7 @@
     <label class="form-label">Thumbnail Image</label>
     @if($ann?->image_path)
     <div class="mb-2 flex items-center gap-3">
-        <img src="{{ \App\Helpers\MediaHelper::url($ann->image_path) }}" alt="Current thumbnail"
+        <img src="{{ media_url($ann->image_path) }}" alt="Current thumbnail"
              class="w-24 h-16 object-cover rounded-lg border border-gray-200">
         <span class="text-xs text-gray-500">Current thumbnail. Upload a new one to replace it.</span>
     </div>

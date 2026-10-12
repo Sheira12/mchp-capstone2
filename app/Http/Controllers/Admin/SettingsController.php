@@ -57,14 +57,22 @@ class SettingsController extends Controller
             Setting::set($key, $validated[$key] ?? '');
         }
 
-        // Re-cache the config so in-memory values stay consistent.
-        // We do NOT call config:clear because that would destroy the production
-        // route/view caches and force a full re-bootstrap on the next request.
+        // Update the runtime config so config('parish.*') reflects changes immediately
+        // on the current request and the redirect response.
+        config([
+            'parish.name'    => $validated['parish_name'],
+            'parish.address' => $validated['parish_address'] ?? config('parish.address'),
+            'parish.phone'   => $validated['parish_phone'] ?? config('parish.phone'),
+            'parish.email'   => $validated['parish_email'] ?? config('parish.email'),
+            'parish.priest'  => $validated['parish_priest'] ?? config('parish.priest'),
+        ]);
+
+        // Clear the config cache so the next request re-reads from .env + DB.
+        // We clear rather than re-cache to avoid freezing the old values.
         try {
-            Artisan::call('config:cache');
+            Artisan::call('config:clear');
         } catch (\Exception $e) {
-            // Config cache may fail if .env is read-only on this platform.
-            // Settings are already saved to DB, so this is non-fatal.
+            // Non-fatal — settings are saved to DB regardless.
         }
 
         return back()->with('success', 'Parish settings updated.');

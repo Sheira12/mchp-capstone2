@@ -26,6 +26,28 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
+        // ── Override config('parish.*') from the DB settings table ──────────
+        // This ensures admin-editable parish information (name, address, etc.)
+        // is used everywhere that calls config('parish.*'), regardless of what
+        // is frozen in the config cache / .env file.
+        // Wrapped in try/catch so a missing DB table during first-install or
+        // migration doesn't prevent the app from booting.
+        try {
+            $dbName    = \App\Models\Setting::get('parish_name');
+            $dbAddress = \App\Models\Setting::get('parish_address');
+            $dbPhone   = \App\Models\Setting::get('parish_phone');
+            $dbEmail   = \App\Models\Setting::get('parish_email');
+            $dbPriest  = \App\Models\Setting::get('parish_priest');
+
+            if ($dbName)    config(['parish.name'    => $dbName]);
+            if ($dbAddress) config(['parish.address' => $dbAddress]);
+            if ($dbPhone)   config(['parish.phone'   => $dbPhone]);
+            if ($dbEmail)   config(['parish.email'   => $dbEmail]);
+            if ($dbPriest)  config(['parish.priest'  => $dbPriest]);
+        } catch (\Throwable $e) {
+            // Non-fatal — fall back to .env/config values
+        }
+
         // Auto-remove Vite hot file on boot so production assets always load correctly.
         // The hot file is only needed when `npm run dev` is running.
         // If it exists without the dev server, CSS/JS won't load.

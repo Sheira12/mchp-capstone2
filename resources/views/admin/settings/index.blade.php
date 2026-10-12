@@ -94,7 +94,7 @@
             {{-- Parish Logo --}}
             <div class="flex flex-wrap items-start gap-5">
                 <div class="flex-shrink-0">
-                    @php $logoUrl = $media['parish_logo'] ? \App\Helpers\MediaHelper::url($media['parish_logo']) : asset('images/parish-logo.png'); @endphp
+                    @php $logoUrl = $media['parish_logo'] ? media_url($media['parish_logo']) : asset('images/parish-logo.png'); @endphp
                     <img src="{{ $logoUrl }}" alt="Parish Logo"
                          class="w-20 h-20 rounded-full object-cover border-2 border-blue-200 shadow"
                          onerror="this.src='{{ asset('images/parish-logo.png') }}'">
@@ -116,7 +116,7 @@
             {{-- Church Banner --}}
             <div class="flex flex-wrap items-start gap-5">
                 <div class="flex-shrink-0">
-                    @php $bannerUrl = $media['church_banner'] ? \App\Helpers\MediaHelper::url($media['church_banner']) : asset('images/church-bg.jpg'); @endphp
+                    @php $bannerUrl = $media['church_banner'] ? media_url($media['church_banner']) : asset('images/church-bg.jpg'); @endphp
                     <img src="{{ $bannerUrl }}" alt="Church Banner"
                          class="w-32 h-20 rounded-lg object-cover border border-gray-200 shadow"
                          onerror="this.src='{{ asset('images/church-bg.jpg') }}'">
