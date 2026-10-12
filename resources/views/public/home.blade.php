@@ -41,7 +41,7 @@
 
 {{-- HERO --}}
 <section class="relative text-white overflow-hidden" style="min-height:100vh; display:flex; align-items:center; justify-content:center;">
-    <div class="hero-bg" style="background-image: url('{{ $churchBannerUrl }}');">
+    <div class="hero-bg" style="background-image: url('{{ $churchBannerUrl }}');"></div>
     <div class="hero-overlay"></div>
     <div class="hero-content w-full max-w-3xl mx-auto px-4 py-20 text-center">
 
