@@ -31,13 +31,13 @@ class PublicController extends Controller
         $churchBannerUrl = \App\Models\Setting::get('media_church_banner', '');
 
         if ($parishLogoUrl) {
-            $parishLogoUrl = \App\Helpers\MediaHelper::url($parishLogoUrl);
+            $parishLogoUrl = media_url($parishLogoUrl);
         } else {
             $parishLogoUrl = asset('images/parish-logo.png');
         }
 
         if ($churchBannerUrl) {
-            $churchBannerUrl = \App\Helpers\MediaHelper::url($churchBannerUrl);
+            $churchBannerUrl = media_url($churchBannerUrl);
         } else {
             $churchBannerUrl = asset('images/church-bg.jpg');
         }
