@@ -125,7 +125,7 @@
                             @endif
                         </div>
                     </div>
-                    <p class="text-xs text-gray-500 mt-0.5">{{ $cert->parishioner->full_name }} · {{ $cert->issued_date->format('M d, Y') }}</p>
+                    <p class="text-xs text-gray-500 mt-0.5">{{ $cert->parishioner?->full_name ?? '(Parishioner deleted)' }} · {{ $cert->issued_date?->format('M d, Y') ?? '—' }}</p>
                 </div>
             </div>
             <div class="flex items-center gap-1.5 flex-wrap pt-2 border-t border-gray-100">
@@ -197,7 +197,7 @@
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3 font-mono text-xs text-gray-700">{{ $cert->certificate_number }}</td>
                     <td class="px-4 py-3 font-medium text-gray-900">
-                        <a href="{{ route('admin.certificates.show', $cert) }}" class="hover:text-blue-700">{{ $cert->parishioner->full_name }}</a>
+                        <a href="{{ route('admin.certificates.show', $cert) }}" class="hover:text-blue-700">{{ $cert->parishioner?->full_name ?? '(Parishioner deleted)' }}</a>
                     </td>
                     <td class="px-4 py-3 text-gray-600 capitalize">{{ str_replace('_',' ',$cert->type) }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ $cert->issued_date->format('M d, Y') }}</td>

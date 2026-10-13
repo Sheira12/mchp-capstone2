@@ -16,7 +16,10 @@ class CertificateController extends Controller
 
     public function index(Request $request)
     {
-        $query = Certificate::with(['parishioner', 'issuedBy']);
+        $query = Certificate::with([
+            'parishioner' => fn($q) => $q->withTrashed(), // include soft-deleted parishioners
+            'issuedBy',
+        ]);
 
         if ($type = $request->get('type')) {
             $query->where('type', $type);
@@ -124,13 +127,20 @@ class CertificateController extends Controller
 
     public function show(Certificate $certificate)
     {
-        $certificate->load(['parishioner', 'sacramentalRecord', 'issuedBy', 'payment', 'qrCode']);
+        $certificate->load(['parishioner' => fn($q) => $q->withTrashed(), 'sacramentalRecord', 'issuedBy', 'payment', 'qrCode']);
         return view('admin.certificates.show', compact('certificate'));
     }
 
     public function download(Certificate $certificate)
     {
         set_time_limit(120);
+
+        // Ensure parishioner is loaded (including soft-deleted)
+        $certificate->loadMissing(['parishioner' => fn($q) => $q->withTrashed(), 'sacramentalRecord', 'qrCode']);
+
+        if (!$certificate->parishioner) {
+            return back()->withErrors(['error' => 'Cannot download: the associated parishioner record no longer exists.']);
+        }
         $fileExists = false;
         if ($certificate->file_path) {
             try {

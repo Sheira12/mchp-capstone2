@@ -54,7 +54,7 @@
         <div class="flex items-start justify-between mb-5">
             <div>
                 <p class="font-mono text-sm text-gray-500 mb-1">{{ $certificate->certificate_number }}</p>
-                <h2 class="text-xl font-bold text-gray-900">{{ $certificate->parishioner->full_name }}</h2>
+                <h2 class="text-xl font-bold text-gray-900">{{ $certificate->parishioner?->full_name ?? '(Parishioner deleted)' }}</h2>
                 <p class="text-gray-500 capitalize">{{ str_replace('_', ' ', $certificate->type) }} Certificate</p>
             </div>
             @php
