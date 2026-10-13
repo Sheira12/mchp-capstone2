@@ -146,6 +146,18 @@ class SettingsController extends Controller
         return back()->with('success', $msg);
     }
 
+    public function updateEligibility(Request $request)
+    {
+        $allow = $request->input('allow_booking_with_pending_requirements', 'false');
+        // Checkbox sends 'true' when checked, hidden field sends 'false' as fallback
+        \App\Models\Setting::set(
+            'allow_booking_with_pending_requirements',
+            $allow === 'true' ? 'true' : 'false'
+        );
+
+        return back()->with('success', 'Eligibility settings saved.');
+    }
+
     public function clearCache(Request $request)
     {
         $type = $request->get('type', 'config');

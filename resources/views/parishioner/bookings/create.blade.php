@@ -278,6 +278,38 @@
             </div>
         </div>
 
+        {{-- ── ELIGIBILITY CHECKLIST PANEL ──────────────────────────────────
+             Injected between Step 1 (service) and Step 2 (date).
+             Loaded via JS when service changes; server also enforces in store().
+        --}}
+        <div id="eligibility-panel" class="hidden">
+            <div class="bg-white rounded-2xl border-2 border-amber-200 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-amber-100 bg-amber-50 flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center text-sm font-bold shrink-0">!</div>
+                    <div>
+                        <h2 class="font-bold text-gray-900">Requirements Checklist</h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Complete these before you can select a date and submit your booking.</p>
+                    </div>
+                </div>
+                <div id="eligibility-items" class="px-6 py-4 space-y-3"></div>
+                <div id="eligibility-progress-wrap" class="px-6 pb-4">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-semibold text-gray-500">Progress</span>
+                        <span class="text-xs font-bold text-blue-600" id="eligibility-pct">0 / 0 satisfied</span>
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-2">
+                        <div id="eligibility-bar" class="h-2 rounded-full bg-blue-500 transition-all" style="width:0%"></div>
+                    </div>
+                </div>
+                <div id="eligibility-blocked-msg" class="px-6 pb-5 hidden">
+                    <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-800 flex items-start gap-2">
+                        <svg class="w-4 h-4 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                        <span>You must satisfy all required items before scheduling your booking. Visit <a href="{{ route('parishioner.my-requirements.index') }}" class="font-bold underline">My Requirements</a> to submit missing documents or declarations.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- Step 2: Schedule with Calendar Availability --}}
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
@@ -498,6 +530,7 @@ document.querySelectorAll('.service-radio').forEach(radio => {
         currentService = this.value;
         document.getElementById('cal-hint').textContent = 'Loading availability...';
         loadAvailability();
+        checkEligibility(this.value);   // ← new
     });
 });
 
@@ -505,6 +538,7 @@ document.querySelectorAll('.service-radio').forEach(radio => {
 const oldService = document.querySelector('.service-radio:checked');
 if (oldService) {
     currentService = oldService.value;
+    checkEligibility(currentService);   // ← new: run on page load too
 }
 
 // Always load availability on page load (shows all bookings even without service selected)
@@ -674,6 +708,107 @@ function toggleLocationFields(type) {
         offsite.classList.add('hidden');
         inchurch.classList.remove('hidden');
     }
+}
+
+// ── Eligibility checklist ────────────────────────────────────────────────────
+let eligibilityEligible = true;
+
+function checkEligibility(slug) {
+    if (!slug) return;
+
+    const panel     = document.getElementById('eligibility-panel');
+    const itemsEl   = document.getElementById('eligibility-items');
+    const pctEl     = document.getElementById('eligibility-pct');
+    const barEl     = document.getElementById('eligibility-bar');
+    const blockedEl = document.getElementById('eligibility-blocked-msg');
+    const submitBtn = document.getElementById('submit-btn');
+    const step2     = document.querySelector('[data-step2]');
+
+    if (!panel || !itemsEl) return;
+
+    fetch(`/portal/eligibility/check/${encodeURIComponent(slug)}`)
+        .then(r => r.json())
+        .then(data => {
+            // If no items — service is open, hide panel
+            if (!data.items || data.items.length === 0) {
+                panel.classList.add('hidden');
+                eligibilityEligible = true;
+                enableSubmit(submitBtn);
+                return;
+            }
+
+            panel.classList.remove('hidden');
+
+            const stateColors = {
+                satisfied : 'text-green-600',
+                pending   : 'text-yellow-600',
+                rejected  : 'text-red-600',
+                missing   : 'text-gray-400',
+            };
+            const stateIcons = {
+                satisfied : '✓',
+                pending   : '⏳',
+                rejected  : '✗',
+                missing   : '○',
+            };
+
+            itemsEl.innerHTML = data.items.map(item => `
+                <div class="flex items-start gap-2.5 py-2 border-b border-gray-50 last:border-0">
+                    <span class="text-base shrink-0 ${stateColors[item.state] || 'text-gray-400'} font-bold w-5 text-center">
+                        ${stateIcons[item.state] || '○'}
+                    </span>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-gray-900">
+                            ${item.name}
+                            ${!item.is_required ? '<span class="text-gray-400 font-normal text-xs ml-1">(optional)</span>' : ''}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-0.5">${item.message}</p>
+                        ${item.action_url && item.state !== 'satisfied' ? `
+                        <a href="${item.action_url}"
+                           class="inline-flex items-center gap-1 mt-1.5 text-xs font-bold text-blue-600 hover:underline">
+                           ${item.action_label || 'Take Action'} →
+                        </a>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            // Progress bar
+            const prog = data.progress || {};
+            const pct  = prog.pct ?? 0;
+            pctEl.textContent = `${prog.satisfied ?? 0} / ${prog.total ?? 0} satisfied`;
+            barEl.style.width = pct + '%';
+            barEl.className   = 'h-2 rounded-full transition-all ' + (pct === 100 ? 'bg-green-500' : 'bg-blue-500');
+
+            eligibilityEligible = data.eligible;
+
+            if (data.eligible) {
+                blockedEl.classList.add('hidden');
+                enableSubmit(submitBtn);
+            } else {
+                blockedEl.classList.remove('hidden');
+                disableSubmit(submitBtn);
+            }
+        })
+        .catch(() => {
+            // On network error — fail open (don't block the UI)
+            panel.classList.add('hidden');
+            eligibilityEligible = true;
+            enableSubmit(submitBtn);
+        });
+}
+
+function disableSubmit(btn) {
+    if (!btn) return;
+    btn.disabled = true;
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
+    btn.title = 'Complete all required eligibility items first.';
+}
+
+function enableSubmit(btn) {
+    if (!btn) return;
+    btn.disabled = false;
+    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    btn.title = '';
 }
 </script>
 @push('styles')

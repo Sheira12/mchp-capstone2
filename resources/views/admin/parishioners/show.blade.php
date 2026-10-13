@@ -15,6 +15,7 @@
                 Statement of Account
             </a>
             <a href="{{ route('admin.sacramental-records.create', ['parishioner_id' => $parishioner->id]) }}" class="btn-secondary text-sm">+ Add Record</a>
+            <a href="{{ route('admin.parishioner-requirements.create-staff-record', $parishioner) }}" class="btn-secondary text-sm">✓ Record Requirement</a>
             <a href="{{ route('admin.bookings.create') }}?parishioner_id={{ $parishioner->id }}" class="btn-secondary text-sm">+ New Booking</a>
             <a href="{{ route('admin.parishioners.edit', $parishioner) }}" class="btn-primary text-sm">Edit Profile</a>
         </div>

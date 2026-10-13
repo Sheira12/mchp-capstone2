@@ -127,6 +127,16 @@ class Parishioner extends Model
         return $this->hasMany(EligibilityWaiver::class);
     }
 
+    public function parishionerRequirements()
+    {
+        return $this->hasMany(ParishionerRequirement::class);
+    }
+
+    public function verifiedRequirements()
+    {
+        return $this->hasMany(ParishionerRequirement::class)->where('status', 'verified');
+    }
+
     public function scopeSearch($query, string $term)
     {
         return $query->where(function ($q) use ($term) {

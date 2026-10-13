@@ -32,18 +32,31 @@ class ServiceRequirementController extends Controller
     public function store(Request $request, Service $service)
     {
         $validated = $request->validate([
-            'name'                => ['required', 'string', 'max:255'],
-            'description'         => ['nullable', 'string', 'max:1000'],
-            'type'                => ['required', 'in:file,checkbox,text'],
-            'is_required'         => ['boolean'],
-            'accepted_file_types' => ['nullable', 'string', 'max:100'],
-            'sort_order'          => ['nullable', 'integer', 'min:0'],
+            'name'                    => ['required', 'string', 'max:255'],
+            'description'             => ['nullable', 'string', 'max:1000'],
+            'eligibility_type'        => ['required', 'in:' . implode(',', array_keys(ServiceRequirement::ELIGIBILITY_TYPES))],
+            'type'                    => ['nullable', 'in:file,checkbox,text'],
+            'required_sacrament_type' => ['nullable', 'string'],
+            'requires_proof'          => ['boolean'],
+            'is_required'             => ['boolean'],
+            'accepted_file_types'     => ['nullable', 'string', 'max:100'],
+            'sort_order'              => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $validated['service_id']  = $service->id;
-        $validated['is_required'] = $request->boolean('is_required');
-        $validated['is_active']   = true;
-        $validated['sort_order']  = $validated['sort_order'] ?? 0;
+        // Legacy type defaults from eligibility_type
+        if (empty($validated['type'])) {
+            $validated['type'] = match ($validated['eligibility_type']) {
+                'document' => 'file',
+                default    => 'text',
+            };
+        }
+
+        $validated['service_id']   = $service->id;
+        $validated['service_slug'] = $service->slug;
+        $validated['is_required']  = $request->boolean('is_required');
+        $validated['requires_proof']= $request->boolean('requires_proof', true);
+        $validated['is_active']    = true;
+        $validated['sort_order']   = $validated['sort_order'] ?? 0;
 
         ServiceRequirement::create($validated);
 
@@ -61,17 +74,29 @@ class ServiceRequirementController extends Controller
     public function update(Request $request, Service $service, ServiceRequirement $requirement)
     {
         $validated = $request->validate([
-            'name'                => ['required', 'string', 'max:255'],
-            'description'         => ['nullable', 'string', 'max:1000'],
-            'type'                => ['required', 'in:file,checkbox,text'],
-            'is_required'         => ['boolean'],
-            'accepted_file_types' => ['nullable', 'string', 'max:100'],
-            'sort_order'          => ['nullable', 'integer', 'min:0'],
-            'is_active'           => ['boolean'],
+            'name'                    => ['required', 'string', 'max:255'],
+            'description'             => ['nullable', 'string', 'max:1000'],
+            'eligibility_type'        => ['required', 'in:' . implode(',', array_keys(ServiceRequirement::ELIGIBILITY_TYPES))],
+            'type'                    => ['nullable', 'in:file,checkbox,text'],
+            'required_sacrament_type' => ['nullable', 'string'],
+            'requires_proof'          => ['boolean'],
+            'is_required'             => ['boolean'],
+            'accepted_file_types'     => ['nullable', 'string', 'max:100'],
+            'sort_order'              => ['nullable', 'integer', 'min:0'],
+            'is_active'               => ['boolean'],
         ]);
 
-        $validated['is_required'] = $request->boolean('is_required');
-        $validated['is_active']   = $request->boolean('is_active');
+        if (empty($validated['type'])) {
+            $validated['type'] = match ($validated['eligibility_type']) {
+                'document' => 'file',
+                default    => 'text',
+            };
+        }
+
+        $validated['service_slug']  = $service->slug;
+        $validated['is_required']   = $request->boolean('is_required');
+        $validated['is_active']     = $request->boolean('is_active');
+        $validated['requires_proof']= $request->boolean('requires_proof');
 
         $requirement->update($validated);
 

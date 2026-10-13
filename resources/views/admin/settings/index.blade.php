@@ -261,6 +261,40 @@
         </form>
     </div>
 
+    {{-- ── Booking Eligibility Settings ── --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Booking Eligibility
+        </h2>
+        <p class="text-xs text-gray-400 mb-5">Control how eligibility requirements affect booking submissions.</p>
+        <form method="POST" action="{{ route('admin.settings.update-eligibility') }}" class="space-y-4">
+            @csrf @method('PUT')
+            <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+                <div class="flex items-start gap-3">
+                    <div class="mt-0.5">
+                        <input type="hidden" name="allow_booking_with_pending_requirements" value="false">
+                        <input type="checkbox" name="allow_booking_with_pending_requirements" id="allow_pending" value="true"
+                               class="rounded border-gray-300 text-blue-600"
+                               @checked(\App\Models\Setting::get('allow_booking_with_pending_requirements', 'false') === 'true')>
+                    </div>
+                    <div>
+                        <label for="allow_pending" class="text-sm font-semibold text-gray-800 cursor-pointer">
+                            Allow bookings when requirements are still pending verification
+                        </label>
+                        <p class="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                            <strong>Off (default):</strong> Parishioner cannot submit a booking until all required eligibility items are verified.<br>
+                            <strong>On:</strong> Parishioner can submit a booking even with pending declarations. Staff cannot <em>confirm</em> the booking until all requirements are verified.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-1">
+                <button type="submit" class="btn-primary">Save Eligibility Settings</button>
+            </div>
+        </form>
+    </div>
+
     {{-- ── System Info ── --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">System Information</h2>

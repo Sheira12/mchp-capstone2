@@ -9,17 +9,40 @@ class ServiceRequirement extends Model
 {
     use HasFactory;
 
+    // ── Legacy per-booking upload types (kept for backward compat) ───────────
     const TYPES = [
         'file'     => 'File Upload',
         'checkbox' => 'Checkbox Declaration',
         'text'     => 'Text Entry',
     ];
 
+    // ── Eligibility gate types (v2) ──────────────────────────────────────────
+    const ELIGIBILITY_TYPES = [
+        'seminar'          => 'Seminar / Catechesis',
+        'document'         => 'Document Submission',
+        'sacrament_record' => 'Sacramental Record',
+        'file'             => 'File Upload (per booking)',
+        'checkbox'         => 'Checkbox (per booking)',
+        'text'             => 'Text Entry (per booking)',
+    ];
+
+    const SACRAMENT_TYPES = [
+        'baptism'         => 'Baptism',
+        'confirmation'    => 'Confirmation',
+        'marriage'        => 'Marriage',
+        'first_communion' => 'First Communion',
+        'death_burial'    => 'Death/Burial',
+    ];
+
     protected $fillable = [
         'service_id',
+        'service_slug',
         'name',
         'description',
         'type',
+        'eligibility_type',
+        'required_sacrament_type',
+        'requires_proof',
         'is_required',
         'accepted_file_types',
         'sort_order',
@@ -27,9 +50,12 @@ class ServiceRequirement extends Model
     ];
 
     protected $casts = [
-        'is_required' => 'boolean',
-        'is_active'   => 'boolean',
+        'is_required'    => 'boolean',
+        'is_active'      => 'boolean',
+        'requires_proof' => 'boolean',
     ];
+
+    // ── Relations ─────────────────────────────────────────────────────────────
 
     public function service()
     {
@@ -39,6 +65,25 @@ class ServiceRequirement extends Model
     public function bookingRequirements()
     {
         return $this->hasMany(BookingRequirement::class);
+    }
+
+    public function parishionerRequirements()
+    {
+        return $this->hasMany(ParishionerRequirement::class);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /** The effective eligibility type — uses eligibility_type if set, else falls back to type. */
+    public function getEffectiveEligibilityType(): string
+    {
+        return $this->eligibility_type ?? $this->type ?? 'document';
+    }
+
+    /** True if this is a gate-level eligibility requirement (not just per-booking upload). */
+    public function isGateRequirement(): bool
+    {
+        return in_array($this->getEffectiveEligibilityType(), ['seminar', 'document', 'sacrament_record']);
     }
 
     /** Human-readable accepted file types string. */

@@ -45,6 +45,7 @@ class EligibilityController extends Controller
 
     /**
      * Check eligibility for a specific service — JSON endpoint for the booking form.
+     * Uses BookingEligibilityService (v2) which checks parishioner_requirements.
      */
     public function check(string $slug)
     {
@@ -54,17 +55,20 @@ class EligibilityController extends Controller
             return response()->json(['eligible' => false, 'error' => 'No parishioner profile.'], 422);
         }
 
-        $service = Service::where('slug', $slug)->first();
+        $service = \App\Models\Service::where('slug', $slug)->first();
         if (!$service) {
-            return response()->json(['eligible' => true]); // unknown service — open
+            return response()->json(['eligible' => true, 'items' => [], 'progress' => ['satisfied'=>0,'total'=>0,'pct'=>100]]);
         }
 
         try {
-            $result = $this->eligibility->check($parishioner, $slug);
+            // Auto-match sacramental records so any existing records are satisfied immediately
+            app(\App\Services\BookingEligibilityService::class)->autoMatchSacraments($parishioner);
+
+            $result = app(\App\Services\BookingEligibilityService::class)->check($parishioner, $slug);
             return response()->json($result->toArray());
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning('Eligibility check failed: ' . $e->getMessage());
-            return response()->json(['eligible' => true]); // fail-open on error
+            \Illuminate\Support\Facades\Log::warning('BookingEligibilityService check failed: ' . $e->getMessage());
+            return response()->json(['eligible' => true, 'items' => [], 'progress' => ['satisfied'=>0,'total'=>0,'pct'=>100]]);
         }
     }
 }

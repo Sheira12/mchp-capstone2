@@ -351,7 +351,43 @@
             </div>
         </div>
 
-        {{-- STEP 3: Schedule --}}
+        {{-- ── REQUIREMENTS CHECKLIST (shown after service selected) ──
+             Staff ticks each item as "presented in person" before submitting.
+             All requirements with is_active + eligibility gate types are listed.
+        --}}
+        <div id="walkin-requirements-card" style="display:none;">
+            <div class="kiosk-card">
+                <div class="kiosk-card-header" style="background:linear-gradient(to right,#fef9c3,#fefce8);">
+                    <div class="step-badge" style="background:#d97706;">!</div>
+                    <div>
+                        <h2 style="color:#92400e;">Requirements Checklist</h2>
+                        <p style="font-size:0.8rem;color:#78350f;margin:0;">Staff: tick each item the applicant has presented in person before proceeding.</p>
+                    </div>
+                </div>
+                <div class="kiosk-card-body" id="walkin-req-body">
+                    <p style="color:#6b7280;font-size:0.875rem;">Select a service above to see its requirements.</p>
+                </div>
+            </div>
+
+            {{-- Staff override option --}}
+            <div class="kiosk-card" style="border:2px solid #fca5a5;">
+                <div class="kiosk-card-header" style="background:#fef2f2;">
+                    <div class="step-badge" style="background:#dc2626;">⚠</div>
+                    <div>
+                        <h2 style="color:#991b1b;">Staff Override (optional)</h2>
+                        <p style="font-size:0.8rem;color:#7f1d1d;margin:0;">Use ONLY if the standard requirements cannot be met and you have authorization to proceed.</p>
+                    </div>
+                </div>
+                <div class="kiosk-card-body">
+                    <div class="field">
+                        <label style="color:#991b1b;">Override Reason <span style="color:#9ca3af;">(leave blank if no override needed)</span></label>
+                        <textarea name="staff_override_reason" rows="2"
+                                  style="width:100%;border:1.5px solid #fca5a5;border-radius:0.75rem;padding:0.75rem;font-size:0.9rem;resize:none;"
+                                  placeholder="e.g. Applicant is from a different parish and their records are en route. Authorized by Fr. Sanchez."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="kiosk-card">
             <div class="kiosk-card-header">
                 <div class="step-badge">3</div>
@@ -430,13 +466,48 @@
 </div>
 
 <script>
+// ── Service requirements data embedded server-side ────────────────────────
+const serviceRequirements = @json($serviceRequirements ?? []);
+
 function selectService(label, slug) {
-    // Remove selected from all
     document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
-    // Add to clicked
     label.classList.add('selected');
-    // Check the radio
     label.querySelector('input[type=radio]').checked = true;
+    loadRequirementsChecklist(slug);
+}
+
+function loadRequirementsChecklist(slug) {
+    const card  = document.getElementById('walkin-requirements-card');
+    const body  = document.getElementById('walkin-req-body');
+    const reqs  = serviceRequirements[slug] || [];
+
+    if (reqs.length === 0) {
+        card.style.display = 'none';
+        return;
+    }
+
+    card.style.display = 'block';
+    body.innerHTML = reqs.map((req, i) => `
+        <label style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9;cursor:pointer;">
+            <input type="checkbox" name="walkin_requirements[]" value="${req.id}"
+                   style="width:18px;height:18px;margin-top:2px;accent-color:#2563eb;flex-shrink:0;"
+                   ${req.is_required ? 'required' : ''}>
+            <div>
+                <p style="font-weight:700;font-size:0.875rem;color:#0f172a;margin:0;">
+                    ${req.name}
+                    ${req.is_required ? '<span style="color:#dc2626;font-size:.7rem;margin-left:4px;">Required</span>' : '<span style="color:#94a3b8;font-size:.7rem;margin-left:4px;">(optional)</span>'}
+                </p>
+                ${req.description ? `<p style="font-size:.78rem;color:#64748b;margin:2px 0 0;">${req.description}</p>` : ''}
+                <p style="font-size:.7rem;color:#94a3b8;margin:2px 0 0;">
+                    ${{'seminar':'🎓 Seminar/Catechesis','document':'📄 Document','sacrament_record':'✝ Sacramental Record'}[req.eligibility_type] || '📋 Other'}
+                    ${req.requires_proof ? ' — proof required' : ''}
+                </p>
+            </div>
+        </label>
+    `).join('') + `
+        <p style="font-size:.75rem;color:#6b7280;margin-top:8px;padding:8px;background:#f8fafc;border-radius:8px;">
+            ☑ Check each item that the applicant has presented in person. Required items must be checked before submitting.
+        </p>`;
 }
 
 function confirmSubmit(e) {

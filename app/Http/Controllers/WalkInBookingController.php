@@ -22,7 +22,30 @@ class WalkInBookingController extends Controller
             ->get()
             ->groupBy('category');
 
-        return view('walkin.index', compact('services'));
+        // Pre-load requirements per service slug for the JS checklist
+        // Only gate-type requirements (seminar/document/sacrament_record)
+        $serviceRequirements = [];
+        try {
+            foreach ($services->flatten() as $svc) {
+                $reqs = \App\Models\ServiceRequirement::where(function ($q) use ($svc) {
+                        $q->where('service_slug', $svc->slug)
+                          ->orWhere('service_id', $svc->id);
+                    })
+                    ->where('is_active', true)
+                    ->whereIn('eligibility_type', ['seminar', 'document', 'sacrament_record'])
+                    ->orderBy('sort_order')
+                    ->get(['id', 'name', 'description', 'eligibility_type', 'is_required', 'requires_proof']);
+
+                if ($reqs->isNotEmpty()) {
+                    $serviceRequirements[$svc->slug] = $reqs->toArray();
+                }
+            }
+        } catch (\Exception $e) {
+            // If service_requirements table doesn't exist yet, fail silently
+            $serviceRequirements = [];
+        }
+
+        return view('walkin.index', compact('services', 'serviceRequirements'));
     }
 
     /**
@@ -33,19 +56,57 @@ class WalkInBookingController extends Controller
     {
         $validated = $request->validate([
             // Parishioner info
-            'first_name'     => ['required', 'string', 'max:100'],
-            'last_name'      => ['required', 'string', 'max:100'],
-            'middle_name'    => ['nullable', 'string', 'max:100'],
-            'contact_number' => ['required', 'string', 'max:20'],
-            'address'        => ['nullable', 'string', 'max:255'],
-            'barangay'       => ['nullable', 'string', 'max:100'],
-            'email'          => ['nullable', 'email', 'max:255'],
+            'first_name'            => ['required', 'string', 'max:100'],
+            'last_name'             => ['required', 'string', 'max:100'],
+            'middle_name'           => ['nullable', 'string', 'max:100'],
+            'contact_number'        => ['required', 'string', 'max:20'],
+            'address'               => ['nullable', 'string', 'max:255'],
+            'barangay'              => ['nullable', 'string', 'max:100'],
+            'email'                 => ['nullable', 'email', 'max:255'],
             // Booking info
-            'booking_type'   => ['required', 'string'],
-            'scheduled_date' => ['required', 'date', 'after_or_equal:today'],
-            'scheduled_time' => ['nullable', 'date_format:H:i'],
-            'notes'          => ['nullable', 'string', 'max:500'],
+            'booking_type'          => ['required', 'string'],
+            'scheduled_date'        => ['required', 'date', 'after_or_equal:today'],
+            'scheduled_time'        => ['nullable', 'date_format:H:i'],
+            'notes'                 => ['nullable', 'string', 'max:500'],
+            // Requirements checklist ticks
+            'walkin_requirements'   => ['nullable', 'array'],
+            'walkin_requirements.*' => ['integer', 'exists:service_requirements,id'],
+            // Staff override
+            'staff_override_reason' => ['nullable', 'string', 'max:500'],
         ]);
+
+        // ── Server-side requirements gate for walk-in ────────────────────────
+        // Check if all REQUIRED gate requirements are either ticked OR
+        // a staff override reason is provided.
+        $overrideReason = trim($request->input('staff_override_reason', ''));
+        $tickedIds      = $request->input('walkin_requirements', []);
+
+        if (empty($overrideReason)) {
+            try {
+                $requiredReqs = \App\Models\ServiceRequirement::where(function ($q) use ($validated) {
+                        $q->where('service_slug', $validated['booking_type'])
+                          ->orWhereHas('service', fn($sq) => $sq->where('slug', $validated['booking_type']));
+                    })
+                    ->where('is_active', true)
+                    ->whereIn('eligibility_type', ['seminar', 'document', 'sacrament_record'])
+                    ->where('is_required', true)
+                    ->pluck('id')
+                    ->toArray();
+
+                $missingTicks = array_diff($requiredReqs, array_map('intval', $tickedIds));
+
+                if (!empty($missingTicks)) {
+                    $missingNames = \App\Models\ServiceRequirement::whereIn('id', $missingTicks)
+                        ->pluck('name')
+                        ->implode(', ');
+                    return back()->withInput()->withErrors([
+                        'walkin_requirements' => "Please tick all required items as presented in person, or provide a staff override reason. Missing: {$missingNames}",
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // If table doesn't exist yet, skip gate check
+            }
+        }
 
         // Find existing parishioner or create new one
         $parishioner = Parishioner::where('first_name', $validated['first_name'])
@@ -96,6 +157,9 @@ class WalkInBookingController extends Controller
                 ? 'Walk-in booking. ' . $validated['notes']
                 : 'Walk-in booking submitted at parish office.',
             'status'         => 'pending',
+            'admin_notes'    => $overrideReason
+                ? "[STAFF OVERRIDE] {$overrideReason}"
+                : (empty($tickedIds) ? null : '[REQUIREMENTS VERIFIED IN PERSON: ' . implode(', ', \App\Models\ServiceRequirement::whereIn('id', $tickedIds)->pluck('name')->toArray()) . ']'),
         ]);
 
         // Generate QR code
@@ -116,8 +180,12 @@ class WalkInBookingController extends Controller
             'walkin_booking',
             $booking,
             [],
-            $booking->toArray(),
+            array_merge($booking->toArray(), [
+                'requirements_ticked' => $tickedIds,
+                'staff_override'      => $overrideReason ?: null,
+            ]),
             "Walk-in booking created for {$parishioner->full_name}"
+            . ($overrideReason ? " [OVERRIDE: {$overrideReason}]" : '')
         );
 
         return redirect()->route('walkin.confirmation', $booking)

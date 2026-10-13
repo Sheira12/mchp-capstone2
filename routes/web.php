@@ -139,6 +139,11 @@ Route::middleware(['auth', 'role:parishioner'])->prefix('portal')->name('parishi
     Route::get('/bookings/{booking}/requirements',            [ParishionerBookingController::class, 'bookingRequirements'])->name('bookings.requirements.show');
     Route::post('/bookings/{booking}/requirements/{req}/upload', [ParishionerBookingController::class, 'uploadRequirement'])->name('bookings.requirements.upload');
 
+    // My Requirements (self-declaration flow)
+    Route::get('/my-requirements',                                      [\App\Http\Controllers\Parishioner\RequirementController::class, 'index'])->name('my-requirements.index');
+    Route::get('/my-requirements/{serviceRequirement}/declare',         [\App\Http\Controllers\Parishioner\RequirementController::class, 'declare'])->name('my-requirements.declare');
+    Route::post('/my-requirements/{serviceRequirement}/declare',        [\App\Http\Controllers\Parishioner\RequirementController::class, 'store'])->name('my-requirements.store');
+
     // Eligibility (My Eligibility page + JSON check)
     Route::get('/eligibility',            [\App\Http\Controllers\Parishioner\EligibilityController::class, 'index'])->name('eligibility.index');
     Route::get('/eligibility/check/{slug}',[\App\Http\Controllers\Parishioner\EligibilityController::class, 'check'])->name('eligibility.check');
@@ -332,6 +337,7 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
         Route::put('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
         Route::put('/settings/socials', [\App\Http\Controllers\Admin\SettingsController::class, 'updateSocials'])->name('settings.update-socials');
         Route::post('/settings/media', [\App\Http\Controllers\Admin\SettingsController::class, 'updateMedia'])->name('settings.update-media');
+        Route::put('/settings/eligibility', [\App\Http\Controllers\Admin\SettingsController::class, 'updateEligibility'])->name('settings.update-eligibility');
         Route::post('/settings/clear-cache', [\App\Http\Controllers\Admin\SettingsController::class, 'clearCache'])->name('settings.clear-cache');
     });
 
@@ -403,7 +409,17 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
         Route::delete('/{requirement}',      [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'destroy'])->name('destroy');
     });
 
-    // Booking Requirements Review Queue
+    // Parishioner Requirement Verifications (self-declared eligibility docs)
+    Route::prefix('parishioner-requirements')->name('parishioner-requirements.')->group(function () {
+        Route::get('/',                                  [\App\Http\Controllers\Admin\ParishionerRequirementController::class, 'index'])->name('index');
+        Route::get('/{parishionerRequirement}',          [\App\Http\Controllers\Admin\ParishionerRequirementController::class, 'show'])->name('show');
+        Route::post('/{parishionerRequirement}/approve', [\App\Http\Controllers\Admin\ParishionerRequirementController::class, 'approve'])->name('approve');
+        Route::post('/{parishionerRequirement}/reject',  [\App\Http\Controllers\Admin\ParishionerRequirementController::class, 'reject'])->name('reject');
+        Route::post('/staff-record',                     [\App\Http\Controllers\Admin\ParishionerRequirementController::class, 'staffRecord'])->name('staff-record');
+        Route::get('/parishioner/{parishioner}/record',  [\App\Http\Controllers\Admin\ParishionerRequirementController::class, 'createStaffRecord'])->name('create-staff-record');
+    });
+
+    // Booking Requirements Review Queue (per-booking document uploads)
     Route::prefix('booking-requirements')->name('booking-requirements.')->group(function () {
         Route::get('/',                     [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'reviewQueue'])->name('index');
         Route::get('/booking/{booking}',    [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'showBookingRequirements'])->name('show');

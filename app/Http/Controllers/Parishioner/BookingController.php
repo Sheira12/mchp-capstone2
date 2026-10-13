@@ -90,6 +90,44 @@ class BookingController extends Controller
         // If the service has required requirements, check they are all approved.
         $service = Service::where('slug', $validated['booking_type'])->first();
 
+        // ── SERVER-SIDE ELIGIBILITY GATE v2 (BookingEligibilityService) ──────
+        // Checks service_requirements + parishioner_requirements.
+        // Runs before the legacy EligibilityRule gate — if this blocks, we stop.
+        if ($service) {
+            try {
+                $eligV2 = app(\App\Services\BookingEligibilityService::class)
+                    ->check($parishioner, $validated['booking_type']);
+
+                if (!$eligV2->isEligible()) {
+                    $missing = $eligV2->blocking()
+                        ->map(fn($i) => $i->requirementName)
+                        ->implode(', ');
+
+                    $errMsg = "You are not yet eligible to book {$service->name}. Missing requirements: {$missing}. Visit 'My Requirements' to declare what you've completed.";
+
+                    if ($request->wantsJson()) {
+                        return response()->json(['error' => $errMsg], 422);
+                    }
+
+                    return redirect()
+                        ->route('parishioner.my-requirements.index')
+                        ->with('error', $errMsg);
+                }
+
+                // When allow_booking_with_pending_requirements = true,
+                // booking proceeds but is flagged — staff cannot confirm until verified.
+                if ($eligV2->hasPendingItems()
+                    && \App\Models\Setting::get('allow_booking_with_pending_requirements', 'false') === 'true'
+                ) {
+                    $validated['admin_notes'] = trim(($validated['admin_notes'] ?? '') . ' [REQUIREMENTS PENDING VERIFICATION]');
+                }
+
+            } catch (\Exception $e) {
+                \Log::warning('BookingEligibilityService gate failed (fail-open): ' . $e->getMessage());
+                // fail-open on unexpected errors — don't block the parishioner
+            }
+        }
+
         // ── SERVER-SIDE ELIGIBILITY GATE (runs BEFORE requirements gate) ─────
         // Check that the parishioner satisfies all eligibility rules for this service.
         if ($service && $service->hasEligibilityRules()) {

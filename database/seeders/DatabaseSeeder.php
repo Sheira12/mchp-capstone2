@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             MassScheduleSeeder::class,
             ServiceSeeder::class,
             ServiceRequirementSeeder::class,
+            ServiceRequirementV2Seeder::class,
             ServicePackageSeeder::class,
             EligibilityRuleSeeder::class,
             DemoDataSeeder::class,
