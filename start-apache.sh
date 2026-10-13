@@ -86,6 +86,13 @@ echo "=== Running Migrations ==="
 php artisan migrate --force 2>&1
 echo "Migration done."
 
+# ── Seed eligibility requirements (idempotent — safe to run every deploy) ────
+# ServiceRequirementV2Seeder uses firstOrCreate so running it multiple times
+# has no side effects. It seeds the seminar/document/sacrament_record gate
+# requirements for Baptism, Wedding, Confirmation Catechesis, Funeral Mass.
+php artisan db:seed --class=ServiceRequirementV2Seeder --force 2>&1 || echo "ServiceRequirementV2Seeder skipped (non-fatal)."
+echo "Eligibility seed done."
+
 # ── Rebuild Laravel production caches ────────────────────────────────────────
 # These are rebuilt AFTER .env has been patched with real Render secrets,
 # so the cached config reflects the actual runtime values.

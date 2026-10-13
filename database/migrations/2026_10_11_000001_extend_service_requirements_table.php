@@ -48,12 +48,24 @@ return new class extends Migration
         });
 
         // Back-fill service_slug from the related services table
-        \Illuminate\Support\Facades\DB::statement(
-            'UPDATE service_requirements sr
-             JOIN services s ON s.id = sr.service_id
-             SET sr.service_slug = s.slug
-             WHERE sr.service_slug IS NULL'
-        );
+        // Uses ANSI SQL UPDATE...FROM syntax (works on both PostgreSQL and MySQL 8+)
+        $driver = \Illuminate\Support\Facades\DB::getDriverName();
+        if ($driver === 'pgsql') {
+            \Illuminate\Support\Facades\DB::statement(
+                'UPDATE service_requirements
+                 SET service_slug = s.slug
+                 FROM services s
+                 WHERE s.id = service_requirements.service_id
+                   AND (service_requirements.service_slug IS NULL OR service_requirements.service_slug = \'\')'
+            );
+        } else {
+            \Illuminate\Support\Facades\DB::statement(
+                'UPDATE service_requirements sr
+                 JOIN services s ON s.id = sr.service_id
+                 SET sr.service_slug = s.slug
+                 WHERE sr.service_slug IS NULL OR sr.service_slug = \'\''
+            );
+        }
     }
 
     public function down(): void

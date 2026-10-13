@@ -362,7 +362,7 @@ CREATE TABLE IF NOT EXISTS roles (
     guard_name VARCHAR(255) NOT NULL,
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
-    UNIQUE(name, guard_name)
+    UNIQUE(name, guard_name)    
 );
 
 CREATE TABLE IF NOT EXISTS model_has_permissions (
@@ -528,3 +528,147 @@ INSERT INTO migrations (migration, batch) VALUES
     ('2026_08_07_133800_add_card_to_payment_method_enum', 1),
     ('2026_08_24_000001_add_transaction_type_to_payments_table', 1)
 ON CONFLICT DO NOTHING;
+x`
+-- ════════════════════════════════════════════════════════════════════════════
+-- ELIGIBILITY VERIFICATION SYSTEM — added 2026-10-11
+-- Run this block on any existing Supabase instance that was bootstrapped
+-- before these migrations were added. The Render deployment will run
+-- php artisan migrate --force automatically, but this SQL can be run
+-- directly via the Supabase SQL editor as a one-time catch-up.
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- 1. Extend service_requirements with eligibility gate columns
+ALTER TABLE service_requirements
+  ADD COLUMN IF NOT EXISTS service_slug            VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS eligibility_type        VARCHAR(255) NOT NULL DEFAULT 'document',
+  ADD COLUMN IF NOT EXISTS required_sacrament_type VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS requires_proof          BOOLEAN      NOT NULL DEFAULT TRUE;
+
+-- Back-fill service_slug from the services table
+UPDATE service_requirements sr
+SET    service_slug = s.slug
+FROM   services s
+WHERE  s.id = sr.service_id
+  AND  (sr.service_slug IS NULL OR sr.service_slug = '');
+
+-- 2. Create parishioner_requirements table
+CREATE TABLE IF NOT EXISTS parishioner_requirements (
+    id                     BIGSERIAL PRIMARY KEY,
+    parishioner_id         BIGINT       NOT NULL REFERENCES parishioners(id)         ON DELETE CASCADE,
+    service_requirement_id BIGINT       NOT NULL REFERENCES service_requirements(id)  ON DELETE CASCADE,
+    status                 VARCHAR(255) NOT NULL DEFAULT 'pending',
+    date_completed         DATE         NULL,
+    venue_or_organizer     VARCHAR(255) NULL,
+    notes                  TEXT         NULL,
+    proof_path             VARCHAR(255) NULL,
+    source                 VARCHAR(255) NOT NULL DEFAULT 'self_declared',
+    verified_by            BIGINT       NULL     REFERENCES users(id) ON DELETE SET NULL,
+    verified_at            TIMESTAMP    NULL,
+    rejection_reason       TEXT         NULL,
+    created_at             TIMESTAMP    NULL,
+    updated_at             TIMESTAMP    NULL,
+    CONSTRAINT parish_req_unique UNIQUE (parishioner_id, service_requirement_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_parish_req_parishioner_status
+    ON parishioner_requirements (parishioner_id, status);
+CREATE INDEX IF NOT EXISTS idx_parish_req_service_requirement
+    ON parishioner_requirements (service_requirement_id);
+CREATE INDEX IF NOT EXISTS idx_parish_req_status
+    ON parishioner_requirements (status);
+
+-- 3. Seed v2 eligibility-gate service_requirements (placeholders)
+-- Baptism
+INSERT INTO service_requirements (service_id, service_slug, name, description, eligibility_type, required_sacrament_type, requires_proof, is_required, type, is_active, sort_order, created_at, updated_at)
+SELECT s.id, s.slug,
+    'Pre-Baptismal Seminar (Parents & Godparents)',
+    '⚠ PLACEHOLDER — confirm exact rules with your parish office before going live. At least one parent and one designated godparent must attend the Pre-Baptismal Seminar before the baby can be baptized.',
+    'seminar', NULL, FALSE, TRUE, 'text', TRUE, 1, NOW(), NOW()
+FROM services s WHERE s.slug = 'baptism'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO service_requirements (service_id, service_slug, name, description, eligibility_type, required_sacrament_type, requires_proof, is_required, type, is_active, sort_order, created_at, updated_at)
+SELECT s.id, s.slug,
+    'Birth Certificate of Child',
+    '⚠ PLACEHOLDER — confirm exact rules with your parish office before going live. PSA/NSO Birth Certificate (original or certified copy) must be presented.',
+    'document', NULL, TRUE, TRUE, 'file', TRUE, 2, NOW(), NOW()
+FROM services s WHERE s.slug = 'baptism'
+ON CONFLICT DO NOTHING;
+
+-- Confirmation Catechesis
+INSERT INTO service_requirements (service_id, service_slug, name, description, eligibility_type, required_sacrament_type, requires_proof, is_required, type, is_active, sort_order, created_at, updated_at)
+SELECT s.id, s.slug,
+    'Baptismal Record (Candidate)',
+    '⚠ PLACEHOLDER — Confirmation candidates must have been baptized. A baptismal certificate from another parish is accepted with declaration.',
+    'sacrament_record', 'baptism', TRUE, TRUE, 'text', TRUE, 1, NOW(), NOW()
+FROM services s WHERE s.slug = 'confirmation_catechesis'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO service_requirements (service_id, service_slug, name, description, eligibility_type, required_sacrament_type, requires_proof, is_required, type, is_active, sort_order, created_at, updated_at)
+SELECT s.id, s.slug,
+    'Confirmation Catechesis / Preparation',
+    '⚠ PLACEHOLDER — Candidate must complete the Confirmation catechesis program.',
+    'seminar', NULL, FALSE, TRUE, 'text', TRUE, 2, NOW(), NOW()
+FROM services s WHERE s.slug = 'confirmation_catechesis'
+ON CONFLICT DO NOTHING;
+
+-- Wedding
+INSERT INTO service_requirements (service_id, service_slug, name, description, eligibility_type, required_sacrament_type, requires_proof, is_required, type, is_active, sort_order, created_at, updated_at)
+SELECT s.id, s.slug,
+    'Baptismal Record — Applicant',
+    '⚠ PLACEHOLDER — The primary applicant must have a baptismal record on file.',
+    'sacrament_record', 'baptism', TRUE, TRUE, 'text', TRUE, 1, NOW(), NOW()
+FROM services s WHERE s.slug = 'wedding'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO service_requirements (service_id, service_slug, name, description, eligibility_type, required_sacrament_type, requires_proof, is_required, type, is_active, sort_order, created_at, updated_at)
+SELECT s.id, s.slug,
+    'Confirmation Record — Applicant',
+    '⚠ PLACEHOLDER — Confirmation is generally required before marriage in the Catholic Church.',
+    'sacrament_record', 'confirmation', TRUE, FALSE, 'text', TRUE, 2, NOW(), NOW()
+FROM services s WHERE s.slug = 'wedding'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO service_requirements (service_id, service_slug, name, description, eligibility_type, required_sacrament_type, requires_proof, is_required, type, is_active, sort_order, created_at, updated_at)
+SELECT s.id, s.slug,
+    'Pre-Marriage Seminar (Pre-Cana)',
+    '⚠ PLACEHOLDER — Both the groom and bride must complete the Pre-Marriage (Pre-Cana) seminar.',
+    'seminar', NULL, FALSE, TRUE, 'text', TRUE, 3, NOW(), NOW()
+FROM services s WHERE s.slug = 'wedding'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO service_requirements (service_id, service_slug, name, description, eligibility_type, required_sacrament_type, requires_proof, is_required, type, is_active, sort_order, created_at, updated_at)
+SELECT s.id, s.slug,
+    'Civil Marriage License',
+    '⚠ PLACEHOLDER — Civil Marriage License from the Local Civil Registrar (valid for 120 days from issuance).',
+    'document', NULL, TRUE, TRUE, 'file', TRUE, 4, NOW(), NOW()
+FROM services s WHERE s.slug = 'wedding'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO service_requirements (service_id, service_slug, name, description, eligibility_type, required_sacrament_type, requires_proof, is_required, type, is_active, sort_order, created_at, updated_at)
+SELECT s.id, s.slug,
+    'Certificate of No Impediment',
+    '⚠ PLACEHOLDER — Both parties must present a Certificate of No Impediment from their respective baptismal parishes.',
+    'document', NULL, TRUE, TRUE, 'file', TRUE, 5, NOW(), NOW()
+FROM services s WHERE s.slug = 'wedding'
+ON CONFLICT DO NOTHING;
+
+-- Funeral Mass
+INSERT INTO service_requirements (service_id, service_slug, name, description, eligibility_type, required_sacrament_type, requires_proof, is_required, type, is_active, sort_order, created_at, updated_at)
+SELECT s.id, s.slug,
+    'Death Certificate',
+    '⚠ PLACEHOLDER — A death certificate (hospital or PSA) is required to schedule a Funeral Mass.',
+    'document', NULL, TRUE, TRUE, 'file', TRUE, 1, NOW(), NOW()
+FROM services s WHERE s.slug = 'funeral_mass'
+ON CONFLICT DO NOTHING;
+
+-- 4. Mark new migrations as run in the migrations table
+INSERT INTO migrations (migration, batch)
+SELECT migration, (SELECT COALESCE(MAX(batch), 0) + 1 FROM migrations)
+FROM (VALUES
+    ('2026_10_11_000001_extend_service_requirements_table'),
+    ('2026_10_11_000002_create_parishioner_requirements_table')
+) AS t(migration)
+WHERE NOT EXISTS (
+    SELECT 1 FROM migrations m WHERE m.migration = t.migration
+);
