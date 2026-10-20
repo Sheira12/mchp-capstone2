@@ -58,10 +58,10 @@
         </div>
 
         <h1 style="font-size:clamp(1.9rem,4.5vw,3.4rem);font-weight:800;line-height:1.15;text-shadow:0 4px 24px rgba(0,0,0,0.7);margin-bottom:0.75rem;">
-            Mary Help of Christians Parish
+            {{ config('parish.name') }}
         </h1>
         <p style="font-size:1.05rem;color:#bfdbfe;margin-bottom:0.4rem;text-shadow:0 2px 8px rgba(0,0,0,0.5);">
-            Southville 1, Niugan, Cabuyao, Laguna
+            {{ config('parish.address') }}
         </p>
 
         <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:1.5rem 0;">
@@ -486,7 +486,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2rem;text-align:center;">
             @foreach([
-                ['#eff6ff','#2563eb','M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z','Location','Southville 1, Niugan<br>Cabuyao, Laguna'],
+                ['#eff6ff','#2563eb','M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z','Location',nl2br(e(config('parish.address')))],
                 ['#eff6ff','#2563eb','M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z','Office Hours','Tue&ndash;Sun: 9AM&ndash;12NN<br>2PM&ndash;5PM'],
                 ['#eff6ff','#2563eb','M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z','Contact Us','<a href="'.route('contact').'" style="color:#2563eb;font-weight:600;text-decoration:none;">Send us a message &rarr;</a>']
             ] as $c)

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Welcome') &mdash; {{ config('parish.name') }}</title>
-    <meta name="description" content="@yield('meta-description', 'Mary Help of Christians Parish - Southville 1, Niugan, Cabuyao, Laguna')">
+    <meta name="description" content="@yield('meta-description', config('parish.name') . ' - ' . config('parish.address'))">
     <link rel="icon" type="image/png" href="{{ asset('images/parish-logo.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
@@ -193,8 +193,8 @@
             <a href="{{ route('home') }}" class="pub-logo">
                 <img src="{{ asset('images/parish-logo.png') }}" alt="MHC Parish" class="pub-logo-img">
                 <div class="pub-logo-text">
-                    <p class="pub-logo-name">Mary Help of Christians</p>
-                    <p class="pub-logo-sub">Niugan, Cabuyao, Laguna</p>
+                    <p class="pub-logo-name">{{ config('parish.name') }}</p>
+                    <p class="pub-logo-sub">{{ config('parish.address') }}</p>
                 </div>
             </a>
 
@@ -247,8 +247,8 @@
                     <img src="{{ asset('images/parish-logo.png') }}" alt="MHC Parish"
                          style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #bfdbfe;">
                     <div>
-                        <p style="font-size:0.8rem;font-weight:800;color:#1e3a8a;margin:0;line-height:1.2;">MHC Parish</p>
-                        <p style="font-size:0.65rem;color:#64748b;margin:0;">Niugan, Cabuyao</p>
+                        <p style="font-size:0.8rem;font-weight:800;color:#1e3a8a;margin:0;line-height:1.2;">{{ config('parish.name') }}</p>
+                        <p style="font-size:0.65rem;color:#64748b;margin:0;">{{ config('parish.address') }}</p>
                     </div>
                 </div>
                 <button class="pub-drawer-close" id="pub-drawer-close">
@@ -342,13 +342,13 @@
                                     box-shadow:0 4px 12px rgba(0,0,0,0.25);">
                         <div>
                             <p style="font-weight:800;font-size:0.9375rem;color:#fff;margin:0;line-height:1.25;">
-                                Mary Help of Christians Parish
+                                {{ config('parish.name') }}
                             </p>
                             <p style="font-size:0.75rem;color:#93c5fd;margin:0;">Diocese of San Pablo</p>
                         </div>
                     </div>
                     <p style="color:#94a3b8;font-size:0.875rem;line-height:1.75;margin-bottom:1.5rem;">
-                        Serving the community of Southville 1, Niugan, Cabuyao, Laguna with faith, hope, and love.
+                        Serving the community of {{ config('parish.address') }} with faith, hope, and love.
                         <em style="color:#bfdbfe;">Feast Day: May 24</em>
                     </p>
 
@@ -454,7 +454,7 @@
             <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:1.5rem;
                         display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem;">
                 <p style="font-size:0.8125rem;color:#475569;margin:0;">
-                    &copy; {{ date('Y') }} Mary Help of Christians Parish. All rights reserved.
+                    &copy; {{ date('Y') }} {{ config('parish.name') }}. All rights reserved.
                 </p>
                 <div style="display:flex;gap:1.25rem;">
                     <a href="{{ route('walkin.index') }}"
@@ -504,7 +504,7 @@
             <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
                 <div class="bot-message">
                     <div class="bg-white rounded-2xl rounded-tl-none px-3 py-2 text-sm shadow-sm max-w-xs">
-                        Hello! Welcome to Mary Help of Christians Parish. How can I help you today?
+                        Hello! Welcome to {{ config('parish.name') }}. How can I help you today?
                     </div>
                 </div>
             </div>
