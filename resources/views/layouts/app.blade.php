@@ -355,9 +355,9 @@
                         </div>
                     </div>
 
-                    {{-- Role badge --}}
-                    <span class="hidden md:inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 capitalize">
-                        {{ auth()->user()->getRoleNames()->first() }}
+                    {{-- User name badge --}}
+                    <span class="hidden md:inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                        {{ auth()->user()->name }}
                     </span>
                 </div>
 

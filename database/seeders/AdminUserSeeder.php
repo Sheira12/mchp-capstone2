@@ -20,7 +20,7 @@ class AdminUserSeeder extends Seeder
             ]
         );
         // Force password & active in case record already existed
-        $admin->update(['password' => Hash::make('Admin@1234'), 'is_active' => true]);
+        $admin->update(['name' => 'System Administrator', 'password' => Hash::make('Admin@1234'), 'is_active' => true]);
         $admin->syncRoles(['super_admin']);
 
         // ── Parish Secretary ─────────────────────────────────
