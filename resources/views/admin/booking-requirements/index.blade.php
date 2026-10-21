@@ -85,7 +85,7 @@
                         <th class="px-4 py-3 text-left font-semibold text-gray-600">Status</th>
                         <th class="px-4 py-3 text-left font-semibold text-gray-600">Submitted</th>
                         <th class="px-4 py-3 text-left font-semibold text-gray-600">
-                            @can('requirements.review')Actions@else View@endcan
+                            {{ app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('requirements.review') ? 'Actions' : 'View' }}
                         </th>
                     </tr>
                 </thead>
@@ -123,7 +123,7 @@
                         <td class="px-4 py-3">
                             <a href="{{ route('admin.booking-requirements.show', $sub->booking) }}"
                                class="text-blue-600 hover:underline text-sm font-medium">
-                                @can('requirements.review')Review@else View@endcan
+                                {{ app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('requirements.review') ? 'Review' : 'View' }}
                             </a>
                         </td>
                     </tr>
