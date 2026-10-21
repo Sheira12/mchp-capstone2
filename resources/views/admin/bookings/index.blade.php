@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title', 'Bookings')
 @section('page-title', 'Bookings')
 
@@ -98,7 +98,7 @@
                 <div class="flex-1 min-w-0">
                     <p class="font-bold text-gray-900 text-sm">{{ $booking->getTypeLabel() }}</p>
                     <p class="text-xs text-gray-500 mt-0.5">
-                        {{ $booking->scheduled_date->format('M d, Y') }}
+                        {{ $booking->scheduled_date?->format('M d, Y') ?? 'TBD' }}
                         @if($booking->scheduled_time)
                         · {{ \Carbon\Carbon::parse($booking->scheduled_time)->format('g:i A') }}
                         @endif
@@ -168,7 +168,7 @@
                         </td>
                         <td class="px-4 py-3 text-gray-600">{{ $booking->getTypeLabel() }}</td>
                         <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
-                            {{ $booking->scheduled_date->format('M d, Y') }}
+                            {{ $booking->scheduled_date?->format('M d, Y') ?? 'TBD' }}
                             @if($booking->scheduled_time)
                             <span class="text-gray-400 text-xs"> {{ \Carbon\Carbon::parse($booking->scheduled_time)->format('g:i A') }}</span>
                             @endif

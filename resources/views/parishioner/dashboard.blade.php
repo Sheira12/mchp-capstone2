@@ -394,8 +394,13 @@
             {{-- Date block --}}
             <div class="flex-shrink-0 w-12 h-12 rounded-xl flex flex-col items-center justify-center text-center"
                  style="background:#eff6ff;">
+                @if($booking->scheduled_date)
                 <p class="text-xs font-bold text-blue-600 leading-none">{{ $booking->scheduled_date->format('M') }}</p>
                 <p class="text-lg font-extrabold text-blue-900 leading-none">{{ $booking->scheduled_date->format('d') }}</p>
+                @else
+                <p class="text-xs font-bold text-blue-400 leading-none">TBD</p>
+                <p class="text-xs text-blue-300 leading-none mt-0.5">Date</p>
+                @endif
             </div>
             {{-- Info --}}
             <div class="flex-1 min-w-0">
@@ -539,8 +544,8 @@
         <div class="upcoming-row">
             <div class="flex-shrink-0 w-12 h-12 rounded-xl flex flex-col items-center justify-center"
                  style="background:{{ $daysLeft <= 3 ? '#fee2e2' : ($daysLeft <= 7 ? '#fef3c7' : '#eff6ff') }};">
-                <p class="text-xs font-bold leading-none" style="color:{{ $daysLeft <= 3 ? '#dc2626' : ($daysLeft <= 7 ? '#d97706' : '#2563eb') }}">{{ $booking->scheduled_date->format('M') }}</p>
-                <p class="text-lg font-extrabold leading-none" style="color:{{ $daysLeft <= 3 ? '#991b1b' : ($daysLeft <= 7 ? '#92400e' : '#1e3a8a') }}">{{ $booking->scheduled_date->format('d') }}</p>
+                <p class="text-xs font-bold leading-none" style="color:{{ $daysLeft <= 3 ? '#dc2626' : ($daysLeft <= 7 ? '#d97706' : '#2563eb') }}">{{ $booking->scheduled_date?->format('M') }}</p>
+                <p class="text-lg font-extrabold leading-none" style="color:{{ $daysLeft <= 3 ? '#991b1b' : ($daysLeft <= 7 ? '#92400e' : '#1e3a8a') }}">{{ $booking->scheduled_date?->format('d') }}</p>
             </div>
             <div class="flex-1 min-w-0">
                 <p class="font-bold text-sm text-gray-900 truncate">{{ $booking->getTypeLabel() }}</p>

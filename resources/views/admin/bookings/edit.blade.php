@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title', 'Edit Booking — ' . $booking->reference_number)
 @section('page-title', 'Edit Booking')
 
@@ -47,7 +47,7 @@
                 <div>
                     <label class="form-label">Scheduled Date <span class="text-red-500">*</span></label>
                     <input type="date" name="scheduled_date"
-                           value="{{ old('scheduled_date', $booking->scheduled_date->format('Y-m-d')) }}"
+                           value="{{ old('scheduled_date', $booking->scheduled_date?->format('Y-m-d')) }}"
                            required class="form-input w-full @error('scheduled_date') border-red-400 @enderror">
                     @error('scheduled_date')<p class="form-error">{{ $message }}</p>@enderror
                 </div>

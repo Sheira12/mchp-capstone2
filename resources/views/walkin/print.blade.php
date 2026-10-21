@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -193,7 +193,7 @@
         </div>
         <div class="stub-row">
             <span class="stub-label">Date</span>
-            <span class="stub-value">{{ $booking->scheduled_date->format('M d, Y') }}</span>
+            <span class="stub-value">{{ $booking->scheduled_date?->format('M d, Y') }}</span>
         </div>
         <div class="stub-row">
             <span class="stub-label">Time</span>

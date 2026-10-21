@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -154,7 +154,7 @@
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Requested Date</span>
-                        <span class="detail-value">{{ $booking->scheduled_date->format('F d, Y') }}</span>
+                        <span class="detail-value">{{ $booking->scheduled_date?->format('F d, Y') }}</span>
                     </div>
                     @if($booking->scheduled_time)
                     <div class="detail-row">

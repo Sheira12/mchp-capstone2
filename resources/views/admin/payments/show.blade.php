@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title', 'Payment Details')
 @section('page-title', 'Payment Details')
 
@@ -118,7 +118,7 @@ $sc = $statusConfig[$payment->status] ?? $statusConfig['pending'];
                             <dd>
                                 <a href="{{ route('admin.bookings.show', $payment->booking) }}"
                                    class="inline-flex items-center gap-2 text-blue-600 hover:underline font-medium text-sm">
-                                    {{ $payment->booking->getTypeLabel() }} — {{ $payment->booking->scheduled_date->format('M d, Y') }}
+                                    {{ $payment->booking->getTypeLabel() }} — {{ $payment->booking->scheduled_date?->format('M d, Y') }}
                                     <span class="text-xs font-mono text-gray-400">{{ $payment->booking->reference_number }}</span>
                                 </a>
                             </dd>

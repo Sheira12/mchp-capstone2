@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', $parishioner->full_name)
 @section('page-title', 'Parishioner Profile')
@@ -136,7 +136,7 @@
                     <div class="px-5 py-3 flex items-center justify-between">
                         <div>
                             <p class="font-medium text-sm text-gray-900">{{ $booking->getTypeLabel() }}</p>
-                            <p class="text-xs text-gray-400">{{ $booking->scheduled_date->format('M d, Y') }} · {{ $booking->reference_number }}</p>
+                            <p class="text-xs text-gray-400">{{ $booking->scheduled_date?->format('M d, Y') }} · {{ $booking->reference_number }}</p>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="badge badge-{{ $booking->status }}">{{ $booking->getStatusLabel() }}</span>

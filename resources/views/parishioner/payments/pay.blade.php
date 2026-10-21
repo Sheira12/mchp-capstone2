@@ -1,4 +1,4 @@
-@extends('layouts.portal')
+﻿@extends('layouts.portal')
 @section('title', 'Make Payment')
 
 @push('styles')
@@ -95,7 +95,7 @@
         <div class="grid grid-cols-2 gap-3 text-sm mb-4">
             <div>
                 <p class="text-blue-300 text-xs">Date</p>
-                <p class="font-semibold">{{ $booking->scheduled_date->format('M d, Y') }}</p>
+                <p class="font-semibold">{{ $booking->scheduled_date?->format('M d, Y') }}</p>
             </div>
             <div>
                 <p class="text-blue-300 text-xs">Reference</p>

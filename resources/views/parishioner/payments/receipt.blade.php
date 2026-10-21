@@ -1,4 +1,4 @@
-@extends('layouts.portal')
+﻿@extends('layouts.portal')
 @section('title', 'Payment Receipt')
 
 @section('content')
@@ -95,7 +95,7 @@
                 </div>
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-500">Scheduled Date</span>
-                    <span class="font-semibold text-gray-800">{{ $payment->booking->scheduled_date->format('F d, Y') }}</span>
+                    <span class="font-semibold text-gray-800">{{ $payment->booking->scheduled_date?->format('F d, Y') }}</span>
                 </div>
                 @if($payment->booking->scheduled_time)
                 <div class="flex justify-between text-sm">

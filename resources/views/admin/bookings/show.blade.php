@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title', 'Booking Details')
 @section('page-title', 'Booking Details')
 
@@ -42,7 +42,7 @@ $sc = $statusConfig[$booking->status] ?? $statusConfig['pending'];
         <p class="text-sm text-amber-700 mt-0.5">
             <strong>{{ $booking->parishioner?->full_name ?? 'Walk-in' }}</strong> has requested
             <strong>{{ $booking->getTypeLabel() }}</strong> on
-            <strong>{{ $booking->scheduled_date->format('F d, Y') }}</strong>.
+            <strong>{{ $booking->scheduled_date?->format('F d, Y') }}</strong>.
             Please confirm or decline below.
         </p>
     </div>
@@ -69,8 +69,8 @@ $sc = $statusConfig[$booking->status] ?? $statusConfig['pending'];
             <dl class="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
                 <div>
                     <dt class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Scheduled Date</dt>
-                    <dd class="font-bold text-gray-900 text-base">{{ $booking->scheduled_date->format('F d, Y') }}</dd>
-                    <dd class="text-xs text-gray-500">{{ $booking->scheduled_date->format('l') }}</dd>
+                    <dd class="font-bold text-gray-900 text-base">{{ $booking->scheduled_date?->format('F d, Y') }}</dd>
+                    <dd class="text-xs text-gray-500">{{ $booking->scheduled_date?->format('l') }}</dd>
                 </div>
                 <div>
                     <dt class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Scheduled Time</dt>
@@ -233,7 +233,7 @@ $sc = $statusConfig[$booking->status] ?? $statusConfig['pending'];
                     </label>
                     <textarea name="admin_notes" rows="2"
                               class="w-full text-sm border border-green-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white resize-none placeholder-green-300"
-                              placeholder="e.g. Please bring your documents. See you on {{ $booking->scheduled_date->format('M d') }}!"></textarea>
+                              placeholder="e.g. Please bring your documents. See you on {{ $booking->scheduled_date?->format('M d') }}!"></textarea>
                 </div>
                 <button type="button"
                         onclick="showConfirmModal('confirm-form','Confirm Booking','Are you sure you want to confirm this booking for {{ addslashes($booking->parishioner?->full_name ?? 'this walk-in') }}?','Confirm','green')"

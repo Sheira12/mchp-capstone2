@@ -201,7 +201,7 @@
                             </td>
                             <td class="py-2.5 text-gray-600">{{ $booking->getTypeLabel() }}</td>
                             <td class="py-2.5 text-gray-500 whitespace-nowrap">
-                                {{ $booking->scheduled_date->format('M d, Y') }}
+                                {{ $booking->scheduled_date?->format('M d, Y') ?? '—' }}
                                 @if($booking->scheduled_time)
                                 <span class="text-xs text-gray-400 block">{{ \Carbon\Carbon::parse($booking->scheduled_time)->format('g:i A') }}</span>
                                 @endif

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -374,7 +374,7 @@ $mobileNum  = $booking->parishioner->contact_number ?? '09XXXXXXXXX';
             </div>
             <div class="review-row">
                 <span class="review-label">Date</span>
-                <span class="review-value">{{ $booking->scheduled_date->format('M d, Y') }}</span>
+                <span class="review-value">{{ $booking->scheduled_date?->format('M d, Y') }}</span>
             </div>
             <div class="review-row">
                 <span class="review-label">{{ $brandName }} Account</span>

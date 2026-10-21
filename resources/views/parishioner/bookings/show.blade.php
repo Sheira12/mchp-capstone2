@@ -1,4 +1,4 @@
-@extends('layouts.portal')
+﻿@extends('layouts.portal')
 
 @section('title', 'Booking Details')
 
@@ -39,7 +39,7 @@
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div class="bg-gray-50 rounded-xl p-4">
                     <dt class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Date</dt>
-                    <dd class="font-bold text-gray-900">{{ $booking->scheduled_date->format('F d, Y') }}</dd>
+                    <dd class="font-bold text-gray-900">{{ $booking->scheduled_date?->format('F d, Y') }}</dd>
                 </div>
                 <div class="bg-gray-50 rounded-xl p-4">
                     <dt class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Time</dt>
