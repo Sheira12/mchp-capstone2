@@ -81,6 +81,13 @@ class ParishionerRequirementController extends Controller
             'rejection_reason' => null,
         ]);
 
+        // ── Cascade approval to matching BookingRequirement rows ──────────────
+        // When an eligibility declaration (parishioner_requirements) is verified,
+        // automatically approve any pending booking_requirements rows for the
+        // same parishioner + same service_requirement_id, so the parishioner
+        // doesn't have to re-submit the same document on the booking form.
+        $this->cascadeApprovalToBookingRequirements($parishionerRequirement);
+
         AuditLog::create([
             'user_id'    => auth()->id(),
             'action'     => 'parishioner_requirement_approved',
@@ -235,6 +242,58 @@ class ParishionerRequirementController extends Controller
             ));
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::warning('ParishionerRequirement notify failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * When a parishioner_requirement is verified (eligibility declaration approved),
+     * automatically approve any pending booking_requirement rows for the same
+     * parishioner + same service_requirement_id.
+     *
+     * This prevents the parishioner from having to upload the same document twice —
+     * once for eligibility and once per booking stub.
+     */
+    private function cascadeApprovalToBookingRequirements(ParishionerRequirement $pr): void
+    {
+        try {
+            // Find all stub/pending bookings for this parishioner that have a
+            // booking_requirement row for the same service_requirement_id
+            $pendingBookingReqs = \App\Models\BookingRequirement::where(
+                    'service_requirement_id', $pr->service_requirement_id
+                )
+                ->whereIn('status', ['pending', 'needs_revision'])
+                ->whereHas('booking', function ($q) use ($pr) {
+                    $q->where('parishioner_id', $pr->parishioner_id)
+                      ->whereNotIn('status', ['cancelled', 'completed']);
+                })
+                ->get();
+
+            foreach ($pendingBookingReqs as $br) {
+                $br->update([
+                    'status'       => 'approved',
+                    'reviewed_by'  => auth()->id(),
+                    'reviewed_at'  => now(),
+                    'admin_remark' => 'Auto-approved: eligibility declaration verified by ' . auth()->user()->name,
+                ]);
+
+                // Check if all required items are now approved → set booking gate
+                $booking  = $br->booking;
+                $progress = $booking->requirementsProgress();
+
+                if ($progress['total'] > 0
+                    && $progress['approved'] >= $progress['total']
+                    && !$booking->requirements_approved_at
+                ) {
+                    $booking->update([
+                        'requirements_approved_at' => now(),
+                        'requirements_approved_by' => auth()->id(),
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning(
+                'cascadeApprovalToBookingRequirements failed: ' . $e->getMessage()
+            );
         }
     }
 }
