@@ -420,12 +420,20 @@ Route::middleware(['auth', 'role:super_admin|parish_secretary|finance_officer'])
     });
 
     // Booking Requirements Review Queue (per-booking document uploads)
+    // READ routes — visible to all admin roles (read-only for super_admin and finance_officer)
     Route::prefix('booking-requirements')->name('booking-requirements.')->group(function () {
-        Route::get('/',                     [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'reviewQueue'])->name('index');
-        Route::get('/booking/{booking}',    [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'showBookingRequirements'])->name('show');
-        Route::post('/{bookingRequirement}/approve',          [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'approve'])->name('approve');
-        Route::post('/{bookingRequirement}/request-revision', [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'requestRevision'])->name('request-revision');
-        Route::post('/booking/{booking}/approve-all',         [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'approveAll'])->name('approve-all');
+        Route::get('/',                  [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'reviewQueue'])->name('index');
+        Route::get('/booking/{booking}', [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'showBookingRequirements'])->name('show');
+
+        // MUTATION routes — parish_secretary only
+        // super_admin and finance_officer are blocked at the route layer here,
+        // AND at the Gate layer (Gate::define 'requirements.review') in AppServiceProvider.
+        // Two independent enforcement layers so neither can be bypassed independently.
+        Route::middleware('role:parish_secretary')->group(function () {
+            Route::post('/{bookingRequirement}/approve',          [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'approve'])->name('approve');
+            Route::post('/{bookingRequirement}/request-revision', [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'requestRevision'])->name('request-revision');
+            Route::post('/booking/{booking}/approve-all',         [\App\Http\Controllers\Admin\ServiceRequirementController::class, 'approveAll'])->name('approve-all');
+        });
     });
 
     // Mass Schedules

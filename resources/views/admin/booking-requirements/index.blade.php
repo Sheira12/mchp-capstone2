@@ -10,7 +10,17 @@
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl font-bold text-gray-900">Requirements Review Queue</h1>
+            @can('requirements.review')
             <p class="text-sm text-gray-500 mt-0.5">Review and approve parishioner-submitted booking requirements.</p>
+            @else
+            <p class="text-sm text-gray-500 mt-0.5">
+                View parishioner-submitted booking requirements.
+                <span class="ml-1 inline-flex items-center gap-1 text-xs text-blue-600 font-medium bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    View-only — approvals handled by Parish Secretary
+                </span>
+            </p>
+            @endcan
         </div>
         @if($pendingCount > 0)
         <span class="inline-flex items-center gap-1.5 bg-yellow-100 text-yellow-800 text-sm font-bold px-3 py-1.5 rounded-full border border-yellow-200">
@@ -74,7 +84,9 @@
                         <th class="px-4 py-3 text-left font-semibold text-gray-600">Type</th>
                         <th class="px-4 py-3 text-left font-semibold text-gray-600">Status</th>
                         <th class="px-4 py-3 text-left font-semibold text-gray-600">Submitted</th>
-                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Actions</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-600">
+                            @can('requirements.review')Actions@else View@endcan
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -110,7 +122,9 @@
                         </td>
                         <td class="px-4 py-3">
                             <a href="{{ route('admin.booking-requirements.show', $sub->booking) }}"
-                               class="text-blue-600 hover:underline text-sm font-medium">Review</a>
+                               class="text-blue-600 hover:underline text-sm font-medium">
+                                @can('requirements.review')Review@else View@endcan
+                            </a>
                         </td>
                     </tr>
                     @endforeach

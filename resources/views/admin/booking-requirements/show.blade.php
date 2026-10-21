@@ -46,7 +46,8 @@
         </p>
         @endif
 
-        {{-- Approve All button --}}
+        {{-- Approve All button — parish_secretary only --}}
+        @can('requirements.review')
         @if(!$allDone && $booking->bookingRequirements->isNotEmpty())
         <form method="POST" action="{{ route('admin.booking-requirements.approve-all', $booking) }}" class="mt-3">
             @csrf
@@ -56,6 +57,15 @@
             </button>
         </form>
         @endif
+        @else
+        {{-- Read-only notice for super_admin / finance_officer --}}
+        <p class="mt-3 text-xs text-gray-400 italic flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            View-only — requirement approvals are handled by the Parish Secretary.
+        </p>
+        @endcan
     </div>
 
     {{-- Requirement Items --}}
@@ -140,8 +150,9 @@
             </div>
             @endif
 
-            {{-- Action buttons --}}
+            {{-- Action buttons — parish_secretary only --}}
             @if($item->submitted_at && $item->status !== 'approved')
+            @can('requirements.review')
             <div class="flex flex-wrap gap-2 mt-2">
                 {{-- Approve --}}
                 <form method="POST" action="{{ route('admin.booking-requirements.approve', $item) }}" class="inline">
@@ -172,6 +183,15 @@
                     <button type="button" onclick="toggleRevisionForm({{ $item->id }})" class="btn-secondary text-sm">Cancel</button>
                 </div>
             </form>
+            @else
+            {{-- Read-only pending indicator for non-reviewers --}}
+            <p class="text-xs text-amber-600 font-medium flex items-center gap-1 mt-2">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Pending review by Parish Secretary
+            </p>
+            @endcan
 
             @elseif($item->status === 'approved')
             <p class="text-xs text-green-600 font-semibold flex items-center gap-1 mt-1">

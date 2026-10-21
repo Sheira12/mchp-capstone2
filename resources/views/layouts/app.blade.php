@@ -164,6 +164,9 @@
                 Eligibility Waivers
             </a>
             @endrole
+            {{-- Requirements Queue — parish_secretary (full) and super_admin (read-only view).
+                 finance_officer has no access to the requirements queue. --}}
+            @role('parish_secretary|super_admin')
             <a href="{{ route('admin.booking-requirements.index') }}" class="nav-link {{ request()->routeIs('admin.booking-requirements.*') ? 'active' : '' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 17h.01"/></svg>
                 Requirements Queue
@@ -174,10 +177,19 @@
                         $pendingReqCount = 0;
                     }
                 @endphp
-                @if($pendingReqCount > 0)
-                <span class="ml-auto bg-yellow-400 text-yellow-900 text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">{{ $pendingReqCount }}</span>
-                @endif
+                @role('parish_secretary')
+                    @if($pendingReqCount > 0)
+                    <span class="ml-auto bg-yellow-400 text-yellow-900 text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">{{ $pendingReqCount }}</span>
+                    @endif
+                @else
+                    {{-- super_admin: view-only indicator instead of actionable badge --}}
+                    <svg class="ml-auto w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" title="View only">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                @endrole
             </a>
+            @endrole
             <a href="{{ route('admin.parishioner-requirements.index') }}" class="nav-link {{ request()->routeIs('admin.parishioner-requirements.*') ? 'active' : '' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 Eligibility Verifications

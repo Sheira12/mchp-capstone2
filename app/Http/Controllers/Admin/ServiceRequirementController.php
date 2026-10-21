@@ -165,6 +165,9 @@ class ServiceRequirementController extends Controller
     /** Approve a single requirement item. */
     public function approve(Request $request, BookingRequirement $bookingRequirement)
     {
+        // Double-enforced: route middleware 'role:parish_secretary' + Gate ability
+        \Illuminate\Support\Facades\Gate::authorize('requirements.review');
+
         $request->validate([
             'admin_remark' => ['nullable', 'string', 'max:500'],
         ]);
@@ -215,6 +218,8 @@ class ServiceRequirementController extends Controller
     /** Reject / request revision on a single item. */
     public function requestRevision(Request $request, BookingRequirement $bookingRequirement)
     {
+        \Illuminate\Support\Facades\Gate::authorize('requirements.review');
+
         $request->validate([
             'admin_remark' => ['required', 'string', 'max:500'],
         ]);
@@ -256,6 +261,8 @@ class ServiceRequirementController extends Controller
     /** Manually mark all requirements as approved for a booking. */
     public function approveAll(Request $request, Booking $booking)
     {
+        \Illuminate\Support\Facades\Gate::authorize('requirements.review');
+
         $booking->bookingRequirements()->update([
             'status'      => 'approved',
             'reviewed_by' => auth()->id(),
