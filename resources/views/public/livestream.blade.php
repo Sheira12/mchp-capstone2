@@ -1,6 +1,6 @@
-@extends('layouts.public')
+﻿@extends('layouts.public')
 @section('title', 'Livestream & Videos')
-@section('meta-description', 'Watch live and recorded Masses, sacraments, and events from Mary Help of Christians Parish.')
+@section('meta-description', 'Watch live and recorded Masses, sacraments, and events from ' . config('parish.name') . '.')
 
 @section('content')
 {{-- Hero --}}

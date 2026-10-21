@@ -1,7 +1,7 @@
-@extends('layouts.public')
+﻿@extends('layouts.public')
 
 @section('title', 'Document Verification')
-@section('meta-description', 'Verify the authenticity of a parish document from Mary Help of Christians Parish')
+@section('meta-description', 'Verify the authenticity of a parish document from ' . config('parish.name'))
 
 @push('styles')
 <style>
@@ -61,7 +61,9 @@
     <div style="text-align:center;margin-bottom:1.5rem;">
         <img src="{{ asset('images/parish-logo.png') }}" alt="Parish Logo"
              style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,0.15);margin-bottom:0.75rem;">
-        <p style="font-size:0.875rem;font-weight:700;color:#1e3a8a;margin:0;">Mary Help of Christians Parish</p>
+        <p style="font-size:0.875rem;font-weight:700;color:#1e3a8a;margin:0;">
+                {{ config('parish.name') }}
+            </p>
         <p style="font-size:0.75rem;color:#64748b;margin:2px 0 0;">Official Document Verification System</p>
     </div>
 

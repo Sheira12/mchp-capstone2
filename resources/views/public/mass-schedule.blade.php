@@ -1,6 +1,6 @@
-@extends('layouts.public')
+﻿@extends('layouts.public')
 @section('title', 'Mass Schedule')
-@section('meta-description', 'Weekly Mass schedule and special masses at Mary Help of Christians Parish, Niugan, Cabuyao, Laguna.')
+@section('meta-description', 'Weekly Mass schedule and special masses at ' . config('parish.name') . ', Niugan, Cabuyao, Laguna.')
 
 @push('styles')
 <style>
@@ -66,7 +66,7 @@
 <section class="ms-hero">
     <div class="relative z-10 max-w-3xl mx-auto px-4">
         <p class="inline-block text-xs font-bold tracking-widest uppercase text-blue-300 mb-3">
-            Mary Help of Christians Parish
+            {{ config('parish.name') }}
         </p>
         <h1 class="text-3xl sm:text-4xl font-black text-white mb-2">Mass Schedule</h1>
         <p class="text-blue-200 text-sm">Niugan, Cabuyao, Laguna &mdash; All are welcome</p>

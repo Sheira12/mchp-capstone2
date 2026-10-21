@@ -1,6 +1,6 @@
-@extends('layouts.public')
+﻿@extends('layouts.public')
 @section('title', 'Announcements')
-@section('meta-description', 'Latest announcements and news from Mary Help of Christians Parish')
+@section('meta-description', 'Latest announcements and news from ' . config('parish.name'))
 
 @push('styles')
 <style>
@@ -122,7 +122,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div style="max-width:600px;">
             <p style="font-size:0.75rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#93c5fd;margin-bottom:0.75rem;">
-                Mary Help of Christians Parish
+                {{ config('parish.name') }}
             </p>
             <h1 style="font-size:clamp(2rem,5vw,3rem);font-weight:800;line-height:1.15;margin-bottom:0.75rem;">
                 Parish Announcements

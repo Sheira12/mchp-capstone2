@@ -1,6 +1,6 @@
-@extends('layouts.public')
+﻿@extends('layouts.public')
 @section('title', 'Parish Gallery')
-@section('meta-description', 'Photo gallery of Mary Help of Christians Parish — Masses, sacraments, community events and more.')
+@section('meta-description', 'Photo gallery of ' . config('parish.name') . ' — Masses, sacraments, community events and more.')
 
 @section('content')
 
@@ -13,7 +13,7 @@
     <div class="relative max-w-5xl mx-auto px-4 text-center text-white">
         <span class="inline-block px-4 py-1.5 rounded-full bg-white/10 text-sm font-medium text-blue-200 mb-4">📷 Parish Life</span>
         <h1 class="text-4xl font-bold mb-3">Photo Gallery</h1>
-        <p class="text-blue-200 max-w-xl mx-auto">Celebrating faith, community, and the sacraments of Mary Help of Christians Parish.</p>
+        <p class="text-blue-200 max-w-xl mx-auto">Celebrating faith, community, and the sacraments of {{ config('parish.name') }}.</p>
     </div>
 </section>
 

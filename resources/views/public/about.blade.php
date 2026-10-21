@@ -1,4 +1,4 @@
-@extends('layouts.public')
+﻿@extends('layouts.public')
 @section('title', 'About the Parish')
 
 @push('styles')
@@ -75,7 +75,7 @@
             <div>
                 <p style="color:#bfdbfe;font-size:0.875rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem;">Diocese of San Pablo · Archdiocese of Lipa</p>
                 <h1 style="font-size:clamp(1.75rem,4vw,3rem);font-weight:800;line-height:1.15;margin-bottom:0.75rem;">
-                    Mary Help of Christians Parish
+                    {{ config('parish.name') }}
                 </h1>
                 <p style="color:#bfdbfe;font-size:1rem;max-width:560px;line-height:1.7;margin-bottom:1.25rem;">
                     Serving the community of Southville 1, Niugan, Cabuyao, Laguna with faith, hope, and charity since 2015.
@@ -131,7 +131,9 @@
                 <div style="width:48px;height:4px;background:#2563eb;border-radius:9999px;margin-bottom:1.5rem;"></div>
                 <div style="font-size:1rem;color:#475569;line-height:1.85;space-y:1rem;">
                     <p style="margin-bottom:1rem;">
-                        <strong style="color:#1e3a8a;">Mary Help of Christians Parish</strong> was established to serve the growing Catholic community of
+                        <strong style="color:#1e3a8a;">
+                {{ config('parish.name') }}
+            </strong> was established to serve the growing Catholic community of
                         Southville 1, Niugan, Cabuyao, Laguna. Named after the Blessed Virgin Mary under her title
                         "Help of Christians" — patroness of those who seek her intercession — the parish has grown
                         from a small community chapel into a vibrant center of faith and service.

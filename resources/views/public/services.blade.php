@@ -1,6 +1,6 @@
 ﻿@extends('layouts.public')
 @section('title', 'Services & Sacraments')
-@section('meta-description', 'Parish services including sacraments, blessings, seminars, and certificates at Mary Help of Christians Parish')
+@section('meta-description', 'Parish services including sacraments, blessings, seminars, and certificates at ' . config('parish.name'))
 
 @push('styles')
 <style>
@@ -149,7 +149,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div class="text-center max-w-2xl mx-auto">
             <p style="color:#bfdbfe;font-size:0.8125rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.625rem;">
-                Mary Help of Christians Parish
+                {{ config('parish.name') }}
             </p>
             <h1 style="font-size:clamp(2rem,5vw,3rem);font-weight:800;line-height:1.15;margin-bottom:1rem;">
                 Services & Sacraments
