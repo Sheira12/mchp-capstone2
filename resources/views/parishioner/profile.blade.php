@@ -245,14 +245,14 @@
                     <div class="fl">
                         <label>First Name <span>*</span></label>
                         <input type="text" name="first_name"
-                               value="{{ old('first_name', $parishioner?->first_name) }}"
+                               value="{{ old('first_name', $parishioner?->first_name ?? $namePrefill['first_name'] ?? '') }}"
                                required placeholder="Juan">
                         @error('first_name')<p class="err">{{ $message }}</p>@enderror
                     </div>
                     <div class="fl">
                         <label>Middle Name</label>
                         <input type="text" name="middle_name"
-                               value="{{ old('middle_name', $parishioner?->middle_name) }}"
+                               value="{{ old('middle_name', $parishioner?->middle_name ?? $namePrefill['middle_name'] ?? '') }}"
                                placeholder="Santos">
                     </div>
                 </div>
@@ -261,7 +261,7 @@
                     <div class="fl">
                         <label>Last Name <span>*</span></label>
                         <input type="text" name="last_name"
-                               value="{{ old('last_name', $parishioner?->last_name) }}"
+                               value="{{ old('last_name', $parishioner?->last_name ?? $namePrefill['last_name'] ?? '') }}"
                                required placeholder="Dela Cruz">
                         @error('last_name')<p class="err">{{ $message }}</p>@enderror
                     </div>

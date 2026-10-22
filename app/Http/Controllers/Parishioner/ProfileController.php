@@ -14,7 +14,27 @@ class ProfileController extends Controller
         $user        = auth()->user();
         $parishioner = $user->parishioner;
 
-        return view('parishioner.profile', compact('user', 'parishioner'));
+        // When no parishioner profile exists yet, parse the user's registered
+        // full name into first / middle / last parts so the form pre-fills them.
+        // The parishioner can correct any part before saving.
+        $namePrefill = null;
+        if (!$parishioner) {
+            $parts = preg_split('/\s+/', trim($user->name), -1, PREG_SPLIT_NO_EMPTY);
+            if (count($parts) === 1) {
+                $namePrefill = ['first_name' => $parts[0], 'middle_name' => '', 'last_name' => ''];
+            } elseif (count($parts) === 2) {
+                $namePrefill = ['first_name' => $parts[0], 'middle_name' => '', 'last_name' => $parts[1]];
+            } else {
+                // 3+ words: first = first word, last = last word, middle = everything in between
+                $namePrefill = [
+                    'first_name'  => $parts[0],
+                    'middle_name' => implode(' ', array_slice($parts, 1, -1)),
+                    'last_name'   => $parts[count($parts) - 1],
+                ];
+            }
+        }
+
+        return view('parishioner.profile', compact('user', 'parishioner', 'namePrefill'));
     }
 
     public function removePhoto()
