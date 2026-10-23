@@ -129,6 +129,13 @@ class WalkInBookingController extends Controller
             ]);
         }
 
+        // ── CAPACITY GUARD — hard-reject if date is fully booked ─────────────
+        if (Booking::isDateFullyBooked($validated['scheduled_date'], $validated['booking_type'])) {
+            return back()->withInput()->withErrors([
+                'scheduled_date' => 'This date is fully booked for the selected service type. Please choose a different date.',
+            ]);
+        }
+
         // Check for scheduling conflict
         $conflict = Booking::where('scheduled_date', $validated['scheduled_date'])
             ->where('scheduled_time', $validated['scheduled_time'])

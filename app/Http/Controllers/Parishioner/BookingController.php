@@ -175,6 +175,17 @@ class BookingController extends Controller
             $stubId = $approvedBooking->id;
         }
 
+        // ── CAPACITY GUARD — hard-reject if date is fully booked ─────────────
+        // Enforces the same 5-booking threshold used by the calendar API
+        // (/api/booked-dates) so the server-side state always matches the UI.
+        // This also closes the race-condition window between calendar load and submit.
+        if (Booking::isDateFullyBooked($validated['scheduled_date'], $validated['booking_type'])) {
+            return back()->withInput()->withErrors([
+                'scheduled_date' => 'This date is fully booked for ' . ($service?->name ?? $validated['booking_type'])
+                    . '. Please choose a different date.',
+            ]);
+        }
+
         // Conflict detection — checks overlapping time slots including service duration + 30-min buffer
         $conflict = \App\Models\Booking::where('scheduled_date', $validated['scheduled_date'])
             ->where('booking_type', $validated['booking_type'])

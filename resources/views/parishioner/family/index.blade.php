@@ -118,6 +118,11 @@
                     <p class="text-xs text-gray-400">
                         {{ $member->relationship_to_head ?? 'Member' }}
                         @if($member->birthdate) · Age {{ $member->age }} @endif
+                        @if($member->user)
+                        · <span class="text-green-600 font-medium">Has portal account</span>
+                        @else
+                        · <span class="text-gray-400">No portal account</span>
+                        @endif
                     </p>
                 </div>
                 @if($parishioner->is_head_of_family && $member->id !== $parishioner->id)
@@ -192,6 +197,29 @@
                 <label class="form-label">Contact Number</label>
                 <input type="text" name="contact_number" value="{{ old('contact_number') }}" class="form-input w-full sm:w-1/2"
                        placeholder="09XX-XXX-XXXX (optional)">
+            </div>
+
+            {{-- Optional email creates a portal login for the member --}}
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div class="flex items-start gap-3">
+                    <svg class="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-blue-800 mb-1">Create a Portal Account (optional)</p>
+                        <p class="text-xs text-blue-600 mb-3">
+                            If you provide an email address, this member will get their own portal login.
+                            They can use <strong>Forgot Password</strong> on the login page to set their own password.
+                        </p>
+                        <div>
+                            <label class="form-label text-blue-800">Member's Email Address</label>
+                            <input type="email" name="email" value="{{ old('email') }}"
+                                   class="form-input w-full @error('email') border-red-400 @enderror"
+                                   placeholder="member@email.com (leave blank if no account needed)">
+                            @error('email')<p class="form-error">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+                </div>
             </div>
             <button type="submit"
                     class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl transition shadow-sm">

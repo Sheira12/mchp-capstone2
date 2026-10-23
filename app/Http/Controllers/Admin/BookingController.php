@@ -62,6 +62,18 @@ class BookingController extends Controller
     {
         $validated = $this->validateBooking($request);
 
+        // ── CAPACITY GUARD — hard-reject if date is fully booked ─────────────
+        // Admin can still create bookings but the same threshold applies.
+        // If the admin needs to override, they should change the status of an
+        // existing booking first, or use the edit form to adjust dates.
+        if (Booking::isDateFullyBooked($validated['scheduled_date'], $validated['booking_type'])) {
+            return back()->withInput()->withErrors([
+                'scheduled_date' => 'This date is fully booked for the selected service type ('
+                    . (Booking::TYPES[$validated['booking_type']] ?? $validated['booking_type'])
+                    . '). Cancel or reschedule an existing booking first.',
+            ]);
+        }
+
         // Conflict detection — checks overlapping time slots including service duration + 30-min buffer
         $conflict = Booking::where('scheduled_date', $validated['scheduled_date'])
             ->where('booking_type', $validated['booking_type'])

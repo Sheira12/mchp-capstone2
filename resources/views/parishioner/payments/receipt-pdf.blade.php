@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -499,7 +499,7 @@ $P = "\xe2\x82\xb1";   // UTF-8 bytes for ₱
                     <div class="item-meta">
                         Booking Ref: {{ $payment->booking->reference_number }}
                         @if($payment->booking->scheduled_date)
-                            &nbsp;·&nbsp; Scheduled: {{ $payment->booking->scheduled_date->format('F d, Y') }}
+                            &nbsp;·&nbsp; Scheduled: {{ $payment->booking->scheduled_date?->format('F d, Y') }}
                             @if($payment->booking->scheduled_time)
                                 &nbsp;{{ \Carbon\Carbon::parse($payment->booking->scheduled_time)->format('g:i A') }}
                             @endif

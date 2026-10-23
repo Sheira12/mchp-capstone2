@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Family;
 use App\Models\Parishioner;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 /**
  * Parishioner-facing family management.
@@ -31,7 +32,7 @@ class FamilyController extends Controller
                 ->with('info', 'Please complete your profile before managing your family.');
         }
 
-        $family = $parishioner->family;
+        $family = $parishioner->family?->load(['members.user']);
 
         return view('parishioner.family.index', compact('parishioner', 'family'));
     }
@@ -76,6 +77,8 @@ class FamilyController extends Controller
      * Add a family member by parishioner search (name + birthdate duplicate detection).
      * The parishioner must already have an account or the admin must create their profile.
      * Here we allow linking an existing parishioner to this family.
+     * Optionally, if an email is provided, a user account is created for the new member
+     * so they can log in to their own parishioner portal.
      */
     public function addMember(Request $request)
     {
@@ -93,6 +96,7 @@ class FamilyController extends Controller
             'civil_status'         => ['nullable', 'in:single,married,widowed,separated,annulled'],
             'relationship_to_head' => ['required', 'string', 'max:100'],
             'contact_number'       => ['nullable', 'string', 'max:20'],
+            'email'                => ['nullable', 'email', 'unique:users,email'],
         ]);
 
         // Duplicate detection: warn if name+birthdate already exists
@@ -139,8 +143,42 @@ class FamilyController extends Controller
             'province'  => $parishioner->family->province,
         ]);
 
-        return redirect()->route('parishioner.family.index')
-            ->with('success', $member->full_name . ' has been added to your family.');
+        // ── Optional: create a portal user account for the new member ─────────
+        // If the family head provides an email, the member gets their own login
+        // so they can access the parishioner portal independently.
+        $userCreated = false;
+        if (!empty($validated['email'])) {
+            $fullName = trim(
+                $validated['first_name'] . ' ' .
+                ($validated['middle_name'] ? $validated['middle_name'] . ' ' : '') .
+                $validated['last_name']
+            );
+
+            // Generate a random initial password — the member should use
+            // "Forgot Password" to set their own password on first login.
+            $tempPassword = \Illuminate\Support\Str::random(12);
+
+            $user = \App\Models\User::create([
+                'name'           => $fullName,
+                'email'          => $validated['email'],
+                'password'       => \Illuminate\Support\Facades\Hash::make($tempPassword),
+                'parishioner_id' => $member->id,
+            ]);
+            $user->assignRole('parishioner');
+
+            // Update parishioner with email
+            $member->update(['email' => $validated['email']]);
+
+            $userCreated = true;
+        }
+
+        $successMsg = $member->full_name . ' has been added to your family.';
+        if ($userCreated) {
+            $successMsg .= ' A portal account was created for them at ' . $validated['email']
+                . '. They can use "Forgot Password" to set their own password.';
+        }
+
+        return redirect()->route('parishioner.family.index')->with('success', $successMsg);
     }
 
     /**

@@ -1,4 +1,4 @@
-@extends('layouts.portal')
+﻿@extends('layouts.portal')
 @section('title', 'Order ' . $order->order_number)
 
 @section('content')
@@ -56,7 +56,7 @@
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Service</p>
                     <p class="font-bold text-gray-900">{{ $order->booking?->getTypeLabel() ?? $order->service?->name }}</p>
                     @if($order->booking?->scheduled_date)
-                    <p class="text-gray-600">{{ $order->booking->scheduled_date->format('F d, Y') }}</p>
+                    <p class="text-gray-600">{{ $order->booking->scheduled_date?->format('F d, Y') }}</p>
                     @endif
                 </div>
                 <div>

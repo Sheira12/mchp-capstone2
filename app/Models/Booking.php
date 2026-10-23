@@ -17,6 +17,14 @@ class Booking extends Model
         'cancelled' => 'Cancelled',
     ];
 
+    /**
+     * Maximum active bookings per date per service type.
+     * Dates at or above this threshold are shown as "Fully Booked" (red)
+     * on the calendar and are hard-rejected by the server-side capacity guard.
+     * Must match the cnt >= threshold check in routes/web.php api.booked-dates.
+     */
+    const CAPACITY_PER_DATE = 5;
+
     const TYPES = [
         // Sacramentals
         'house_blessing'    => 'House Blessing',
@@ -190,5 +198,23 @@ class Booking extends Model
     {
         return $query->where('scheduled_date', '>=', now()->toDateString())
                      ->whereIn('status', ['pending', 'confirmed']);
+    }
+
+    /**
+     * Check whether a date is at or over capacity for a given booking type.
+     * Returns true when the date is fully booked and no more submissions
+     * should be accepted.
+     *
+     * @param string $date       YYYY-MM-DD
+     * @param string $bookingType  e.g. 'house_blessing'
+     */
+    public static function isDateFullyBooked(string $date, string $bookingType): bool
+    {
+        $count = static::where('scheduled_date', $date)
+            ->where('booking_type', $bookingType)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->count();
+
+        return $count >= static::CAPACITY_PER_DATE;
     }
 }
