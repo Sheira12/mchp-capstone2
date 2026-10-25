@@ -130,14 +130,24 @@
     background: #fff1f2;
     color: #be123c;
     cursor: not-allowed;
+    pointer-events: none;          /* ← truly unclickable at CSS level */
     box-shadow: inset 0 0 0 1.5px #fda4af;
-    opacity: 0.8;
+    opacity: 0.85;
+    flex-direction: column;
+    gap: 1px;
 }
-.cal-day.booked::after {
-    content: '✕';
-    position: absolute; bottom: 4px; left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.55rem; color: #f43f5e; font-weight: 900;
+/* Replace single ✕ pseudo with "Fully Booked" micro-label inside cell */
+.cal-day.booked::after { display: none; }   /* remove old ✕ bottom mark */
+.cal-day.booked .booked-label {
+    display: block;
+    font-size: 0.48rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #f43f5e;
+    line-height: 1;
+    margin-top: 1px;
+    white-space: nowrap;
 }
 
 /* Past */
@@ -724,11 +734,16 @@ function renderCalendar() {
         cell.textContent = d;
         cell.title = tooltip; // native browser tooltip
 
-        if (!classes.includes('past') && !classes.includes('booked')) {
+        // For fully booked dates: add micro-label inside the cell and skip click listener.
+        // pointer-events:none on .cal-day.booked already prevents all interaction,
+        // but we also skip addEventListener for belt-and-suspenders safety.
+        if (classes.includes('booked')) {
+            const label = document.createElement('span');
+            label.className = 'booked-label';
+            label.textContent = 'Fully Booked';
+            cell.appendChild(label);
+        } else if (!classes.includes('past') && !classes.includes('empty')) {
             cell.addEventListener('click', () => selectDate(date, dateStr));
-        } else if (classes.includes('booked')) {
-            // Booked cells: show the inline warning on click instead of silently ignoring it
-            cell.addEventListener('click', () => showBookedWarning(cell));
         }
 
         grid.appendChild(cell);
@@ -784,24 +799,18 @@ function selectDate(date, dateStr) {
 }
 
 // ── Show warning when a fully-booked date is clicked ─────────────────────────
-// Fires the inline banner and shakes the cell so the user knows why nothing happened.
+// Defensive fallback only — pointer-events:none on .cal-day.booked means
+// this should never fire in normal use. Kept as a safety net.
 function showBookedWarning(cell) {
     const warn     = document.getElementById('cal-inline-warning');
     const warnIcon = document.getElementById('cal-inline-icon');
     const warnText = document.getElementById('cal-inline-text');
 
-    // Show the warning banner
     warn.classList.remove('hidden', 'cal-warn-full', 'cal-warn-busy', 'cal-warn-ok');
     warn.classList.add('cal-warn-full');
     warnIcon.textContent = '✕';
     warnText.textContent = 'Fully Booked – This date has reached its maximum booking capacity. Please select another date.';
-
-    // Scroll the warning into view smoothly
-    warn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-    // Shake animation on the clicked cell for tactile feedback
-    cell.classList.add('cal-day-shake');
-    setTimeout(() => cell.classList.remove('cal-day-shake'), 500);
+    // No scrollIntoView — the warning sits directly below the calendar, always visible
 }
 
 // ── Format date as YYYY-MM-DD ─────────────────────────────────────────────────
@@ -811,14 +820,43 @@ function formatDate(date) {
         + String(date.getDate()).padStart(2, '0');
 }
 
-// ── Prevent submit if no date selected ──────────────────────────────────────
+// ── Prevent submit if no date selected OR date is fully booked ──────────────
 document.getElementById('booking-form').addEventListener('submit', function(e) {
-    if (!document.getElementById('scheduled_date').value) {
+    const dateVal = document.getElementById('scheduled_date').value;
+
+    // Guard 1: no date selected at all
+    if (!dateVal) {
         e.preventDefault();
-        alert('Please select a date from the calendar.');
+        // Show inline warning below calendar — no alert(), no scroll
+        const warn     = document.getElementById('cal-inline-warning');
+        const warnIcon = document.getElementById('cal-inline-icon');
+        const warnText = document.getElementById('cal-inline-text');
+        warn.classList.remove('hidden', 'cal-warn-full', 'cal-warn-busy', 'cal-warn-ok');
+        warn.classList.add('cal-warn-full');
+        warnIcon.textContent = '✕';
+        warnText.textContent = 'Please select a date from the calendar before submitting.';
         return;
     }
-    // Disable submit button to prevent double-submission
+
+    // Guard 2: client-side capacity check — block if selected date is in bookedDates[]
+    // This is a fast UI-level pre-check; the server enforces the same rule in store().
+    if (bookedDates.includes(dateVal)) {
+        e.preventDefault();
+        const warn     = document.getElementById('cal-inline-warning');
+        const warnIcon = document.getElementById('cal-inline-icon');
+        const warnText = document.getElementById('cal-inline-text');
+        warn.classList.remove('hidden', 'cal-warn-full', 'cal-warn-busy', 'cal-warn-ok');
+        warn.classList.add('cal-warn-full');
+        warnIcon.textContent = '✕';
+        warnText.textContent = 'Fully Booked – This date has reached its maximum booking capacity. Please select another date.';
+        // Clear the hidden input so the invalid date is not re-submitted
+        document.getElementById('scheduled_date').value = '';
+        selectedDate = null;
+        renderCalendar();
+        return;
+    }
+
+    // All checks passed — disable button to prevent double-submission
     const btn = document.getElementById('submit-btn');
     btn.disabled = true;
     btn.classList.add('opacity-75', 'cursor-not-allowed');
