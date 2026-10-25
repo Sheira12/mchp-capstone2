@@ -193,6 +193,17 @@
 }
 .cal-today-btn:hover { background: rgba(255,255,255,0.32); }
 
+/* ── Inline calendar warning ── */
+.cal-warn-full {
+    background: #fff1f2; border: 1.5px solid #fda4af; color: #9f1239;
+}
+.cal-warn-busy {
+    background: #fefce8; border: 1.5px solid #fde68a; color: #78350f;
+}
+.cal-warn-ok {
+    background: #f0fdf4; border: 1.5px solid #86efac; color: #14532d;
+}
+
 /* ── Availability badge ── */
 .avail-badge {
     display: inline-flex; align-items: center; gap: 6px;
@@ -435,6 +446,12 @@
                     {{-- Hidden date input --}}
                     <input type="hidden" name="scheduled_date" id="scheduled_date" value="{{ old('scheduled_date') }}" required>
 
+                    {{-- Inline availability warning — shown immediately below the calendar on date click --}}
+                    <div id="cal-inline-warning" class="hidden mt-3 rounded-xl px-4 py-3 flex items-center gap-2.5 text-sm font-semibold">
+                        <span id="cal-inline-icon" style="font-size:1rem;flex-shrink:0;"></span>
+                        <span id="cal-inline-text"></span>
+                    </div>
+
                     {{-- Selected date card --}}
                     <div id="selected-date-display" class="date-selected-card hidden mt-3">
                         <div class="date-selected-icon">
@@ -593,6 +610,9 @@ function calNav(dir) {
     calMonth += dir;
     if (calMonth > 11) { calMonth = 0; calYear++; }
     if (calMonth < 0)  { calMonth = 11; calYear--; }
+    // Hide inline warning when navigating months — no date selected in new month yet
+    const warn = document.getElementById('cal-inline-warning');
+    if (warn) warn.classList.add('hidden');
     loadAvailability();
 }
 
@@ -713,7 +733,28 @@ function selectDate(date, dateStr) {
     });
     display.classList.remove('hidden');
 
-    // Update availability badge in header
+    // ── Update inline warning directly below the calendar ────────────────────
+    const warn     = document.getElementById('cal-inline-warning');
+    const warnIcon = document.getElementById('cal-inline-icon');
+    const warnText = document.getElementById('cal-inline-text');
+
+    warn.classList.remove('hidden', 'cal-warn-full', 'cal-warn-busy', 'cal-warn-ok');
+
+    if (bookedDates.includes(dateStr)) {
+        warn.classList.add('cal-warn-full');
+        warnIcon.textContent = '✕';
+        warnText.textContent = 'Fully Booked — This date has reached its maximum booking capacity. Please choose another date.';
+    } else if (busyDates.includes(dateStr)) {
+        warn.classList.add('cal-warn-busy');
+        warnIcon.textContent = '⚠';
+        warnText.textContent = 'Slots Available — This date has existing bookings but is still open for scheduling.';
+    } else {
+        warn.classList.add('cal-warn-ok');
+        warnIcon.textContent = '✓';
+        warnText.textContent = 'Slots Available — This date is open with no existing bookings.';
+    }
+
+    // Update availability badge in Step 2 header (existing behaviour)
     const badge = document.getElementById('avail-badge');
     badge.classList.remove('hidden');
     if (bookedDates.includes(dateStr)) {
