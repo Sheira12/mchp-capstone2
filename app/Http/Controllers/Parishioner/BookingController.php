@@ -176,14 +176,13 @@ class BookingController extends Controller
         }
 
         // ── CAPACITY GUARD — hard-reject if date is fully booked ─────────────
-        // Enforces the same 5-booking threshold used by the calendar API
-        // (/api/booked-dates) so the server-side state always matches the UI.
-        // This also closes the race-condition window between calendar load and submit.
         if (Booking::isDateFullyBooked($validated['scheduled_date'], $validated['booking_type'])) {
-            return back()->withInput()->withErrors([
-                'scheduled_date' => 'This date is fully booked for ' . ($service?->name ?? $validated['booking_type'])
-                    . '. Please choose a different date.',
-            ]);
+            $msg = 'This date is fully booked for ' . ($service?->name ?? $validated['booking_type'])
+                . '. Please choose a different date.';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['errors' => ['scheduled_date' => [$msg]]], 422);
+            }
+            return back()->withInput()->withErrors(['scheduled_date' => $msg]);
         }
 
         // Conflict detection — checks overlapping time slots including service duration + 30-min buffer
@@ -210,9 +209,11 @@ class BookingController extends Controller
             ->exists();
 
         if ($conflict) {
-            return back()->withInput()->withErrors([
-                'scheduled_time' => 'This time slot is already taken. Please choose another time or date.',
-            ]);
+            $msg = 'This time slot is already taken. Please choose another time or date.';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['errors' => ['scheduled_time' => [$msg]]], 422);
+            }
+            return back()->withInput()->withErrors(['scheduled_time' => $msg]);
         }
 
         // Get service fee
@@ -266,8 +267,16 @@ class BookingController extends Controller
             }
         }
 
-        return redirect()->route('parishioner.bookings.show', $booking)
-            ->with('success', 'Booking submitted! We will confirm it shortly.');
+        $redirectUrl = route('parishioner.bookings.show', $booking);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'redirect' => $redirectUrl,
+                'message'  => 'Booking submitted! We will confirm it shortly.',
+            ]);
+        }
+
+        return redirect($redirectUrl)->with('success', 'Booking submitted! We will confirm it shortly.');
     }
 
     public function show(Booking $booking)

@@ -822,45 +822,96 @@ function formatDate(date) {
 
 // ── Prevent submit if no date selected OR date is fully booked ──────────────
 document.getElementById('booking-form').addEventListener('submit', function(e) {
-    const dateVal = document.getElementById('scheduled_date').value;
+    e.preventDefault(); // Always intercept — submit via fetch to prevent page reload
 
-    // Guard 1: no date selected at all
-    if (!dateVal) {
-        e.preventDefault();
-        // Show inline warning below calendar — no alert(), no scroll
-        const warn     = document.getElementById('cal-inline-warning');
-        const warnIcon = document.getElementById('cal-inline-icon');
-        const warnText = document.getElementById('cal-inline-text');
+    const form    = this;
+    const dateVal = document.getElementById('scheduled_date').value;
+    const warn     = document.getElementById('cal-inline-warning');
+    const warnIcon = document.getElementById('cal-inline-icon');
+    const warnText = document.getElementById('cal-inline-text');
+
+    function showCalWarning(msg) {
         warn.classList.remove('hidden', 'cal-warn-full', 'cal-warn-busy', 'cal-warn-ok');
         warn.classList.add('cal-warn-full');
         warnIcon.textContent = '✕';
-        warnText.textContent = 'Please select a date from the calendar before submitting.';
+        warnText.textContent = msg;
+    }
+
+    // Client Guard 1: no date selected
+    if (!dateVal) {
+        showCalWarning('Please select a date from the calendar before submitting.');
         return;
     }
 
-    // Guard 2: client-side capacity check — block if selected date is in bookedDates[]
-    // This is a fast UI-level pre-check; the server enforces the same rule in store().
+    // Client Guard 2: selected date is known to be fully booked
     if (bookedDates.includes(dateVal)) {
-        e.preventDefault();
-        const warn     = document.getElementById('cal-inline-warning');
-        const warnIcon = document.getElementById('cal-inline-icon');
-        const warnText = document.getElementById('cal-inline-text');
-        warn.classList.remove('hidden', 'cal-warn-full', 'cal-warn-busy', 'cal-warn-ok');
-        warn.classList.add('cal-warn-full');
-        warnIcon.textContent = '✕';
-        warnText.textContent = 'Fully Booked – This date has reached its maximum booking capacity. Please select another date.';
-        // Clear the hidden input so the invalid date is not re-submitted
+        showCalWarning('Fully Booked – This date has reached its maximum capacity. Please select another date.');
         document.getElementById('scheduled_date').value = '';
         selectedDate = null;
         renderCalendar();
         return;
     }
 
-    // All checks passed — disable button to prevent double-submission
+    // All client checks passed — submit via fetch so the page never reloads
     const btn = document.getElementById('submit-btn');
     btn.disabled = true;
     btn.classList.add('opacity-75', 'cursor-not-allowed');
     btn.innerHTML = '<svg style="width:16px;height:16px;animation:spin 1s linear infinite;flex-shrink:0" fill="none" viewBox="0 0 24 24"><circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path style="opacity:.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/></svg> Submitting…';
+
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+        },
+        body: formData,
+    })
+    .then(async res => {
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data.redirect) {
+            // Success — server sends redirect URL
+            window.location.href = data.redirect;
+            return;
+        }
+
+        if (res.status === 422 && data.errors) {
+            // Validation error — show inline without page reload
+            btn.disabled = false;
+            btn.classList.remove('opacity-75', 'cursor-not-allowed');
+            btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg> Submit Booking Request';
+
+            // Find the most relevant error message to show
+            const msgs = Object.values(data.errors).flat();
+            const primary = msgs[0] || 'There was a problem with your submission. Please check your details.';
+
+            // If it's a date/capacity issue, show in calendar warning
+            if (data.errors.scheduled_date || data.errors.scheduled_time) {
+                showCalWarning(primary);
+                // Refresh availability so the calendar reflects the real state
+                loadAvailability();
+            } else {
+                // General error — show in warning banner
+                showCalWarning(primary);
+            }
+            return;
+        }
+
+        // Unexpected error
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg> Submit Booking Request';
+        showCalWarning('An unexpected error occurred. Please try again.');
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg> Submit Booking Request';
+        showCalWarning('Network error — please check your connection and try again.');
+    });
 });
 
 // ── Off-site / In-church location toggle ────────────────────────────────────
