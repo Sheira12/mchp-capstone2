@@ -204,6 +204,18 @@
     background: #f0fdf4; border: 1.5px solid #86efac; color: #14532d;
 }
 
+/* ── Shake animation for booked-date rejection feedback ── */
+@keyframes cal-shake {
+    0%, 100% { transform: translateX(0); }
+    20%      { transform: translateX(-4px); }
+    40%      { transform: translateX(4px); }
+    60%      { transform: translateX(-3px); }
+    80%      { transform: translateX(3px); }
+}
+.cal-day-shake {
+    animation: cal-shake 0.45s ease-in-out;
+}
+
 /* ── Availability badge ── */
 .avail-badge {
     display: inline-flex; align-items: center; gap: 6px;
@@ -714,6 +726,9 @@ function renderCalendar() {
 
         if (!classes.includes('past') && !classes.includes('booked')) {
             cell.addEventListener('click', () => selectDate(date, dateStr));
+        } else if (classes.includes('booked')) {
+            // Booked cells: show the inline warning on click instead of silently ignoring it
+            cell.addEventListener('click', () => showBookedWarning(cell));
         }
 
         grid.appendChild(cell);
@@ -768,7 +783,28 @@ function selectDate(date, dateStr) {
     renderCalendar();
 }
 
-// ── Format date as YYYY-MM-DD ────────────────────────────────────────────────
+// ── Show warning when a fully-booked date is clicked ─────────────────────────
+// Fires the inline banner and shakes the cell so the user knows why nothing happened.
+function showBookedWarning(cell) {
+    const warn     = document.getElementById('cal-inline-warning');
+    const warnIcon = document.getElementById('cal-inline-icon');
+    const warnText = document.getElementById('cal-inline-text');
+
+    // Show the warning banner
+    warn.classList.remove('hidden', 'cal-warn-full', 'cal-warn-busy', 'cal-warn-ok');
+    warn.classList.add('cal-warn-full');
+    warnIcon.textContent = '✕';
+    warnText.textContent = 'Fully Booked – This date has reached its maximum booking capacity. Please select another date.';
+
+    // Scroll the warning into view smoothly
+    warn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // Shake animation on the clicked cell for tactile feedback
+    cell.classList.add('cal-day-shake');
+    setTimeout(() => cell.classList.remove('cal-day-shake'), 500);
+}
+
+// ── Format date as YYYY-MM-DD ─────────────────────────────────────────────────
 function formatDate(date) {
     return date.getFullYear() + '-'
         + String(date.getMonth() + 1).padStart(2, '0') + '-'
