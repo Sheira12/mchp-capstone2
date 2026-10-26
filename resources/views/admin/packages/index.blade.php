@@ -65,7 +65,12 @@
                             @if($pkg->inclusionsList())
                             <ul class="list-disc list-inside text-xs space-y-0.5">
                                 @foreach(array_slice($pkg->inclusionsList(), 0, 3) as $inc)
-                                <li>{{ $inc }}</li>
+                                <li>
+                                    {{ is_array($inc) ? $inc['name'] : $inc }}
+                                    @if(is_array($inc) && ($inc['price'] ?? 0) > 0)
+                                    <span class="text-gray-400">— ₱{{ number_format($inc['price'], 2) }}</span>
+                                    @endif
+                                </li>
                                 @endforeach
                                 @if(count($pkg->inclusionsList()) > 3)
                                 <li class="text-gray-400">+{{ count($pkg->inclusionsList()) - 3 }} more</li>

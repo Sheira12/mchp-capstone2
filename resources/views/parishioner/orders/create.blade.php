@@ -83,7 +83,12 @@
                         @foreach($pkg->inclusionsList() as $inc)
                         <li class="text-xs text-gray-600 flex items-start gap-1.5">
                             <svg class="w-3 h-3 text-green-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                            {{ $inc }}
+                            <span>
+                                {{ is_array($inc) ? $inc['name'] : $inc }}
+                                @if(is_array($inc) && ($inc['price'] ?? 0) > 0)
+                                <span class="text-gray-400 ml-1">₱{{ number_format($inc['price'], 2) }}</span>
+                                @endif
+                            </span>
                         </li>
                         @endforeach
                     </ul>
