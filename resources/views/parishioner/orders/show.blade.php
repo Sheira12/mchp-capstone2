@@ -130,7 +130,7 @@
                             <td class="px-4 py-2.5 text-gray-800">{{ $item['label'] }}</td>
                             @if($hasQtyPrice)
                             <td class="px-3 py-2.5 text-right text-gray-500 hidden sm:table-cell">
-                                {{ ($item['qty'] ?? 1) > 1 ? $item['qty'] . 'x' : '1' }}
+                                {{ ($item['qty'] ?? 1) }}
                             </td>
                             <td class="px-3 py-2.5 text-right text-gray-500 hidden sm:table-cell">
                                 @if(($item['price'] ?? 0) > 0) ₱{{ number_format($item['price'], 2) }} @endif
