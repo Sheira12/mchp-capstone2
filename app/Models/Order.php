@@ -121,8 +121,11 @@ class Order extends Model
     public function lineItemsList(): array
     {
         return collect($this->line_items ?? [])->map(fn($item) => [
-            'label'  => $item['label'] ?? 'Service',
-            'amount' => (float) ($item['amount'] ?? 0),
+            'label'    => $item['label'] ?? 'Service',
+            'qty'      => (int)   ($item['qty']   ?? 1),
+            'price'    => (float) ($item['price']  ?? $item['amount'] ?? 0),
+            'amount'   => (float) ($item['amount'] ?? 0),
+            'type'     => $item['type'] ?? 'inclusion',
         ])->all();
     }
 

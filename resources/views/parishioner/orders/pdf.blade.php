@@ -94,33 +94,68 @@ body { font-family: DejaVu Sans, Arial, sans-serif; font-size:10pt; color:#1e293
         </table>
 
         {{-- Line items --}}
+        @php
+            $items      = $order->lineItemsList();
+            $hasQtyPrice = collect($items)->contains(fn($i) => ($i['price'] ?? 0) > 0);
+            $paidAmt    = $order->payment && $order->payment->status === 'paid' ? (float) $order->payment->amount : 0;
+            $balance    = max(0, (float) $order->total - $paidAmt);
+        @endphp
         <p class="section-title">Breakdown</p>
         <table class="line-items">
             <thead>
                 <tr>
-                    <th>Description</th>
+                    <th style="width:50%;">Description</th>
+                    @if($hasQtyPrice)
+                    <th style="text-align:right;width:10%;">Qty</th>
+                    <th style="text-align:right;width:15%;">Unit Price</th>
+                    @endif
                     <th style="text-align:right;">Amount</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($order->lineItemsList() as $item)
-                <tr>
-                    <td>{{ $item['label'] }}</td>
-                    <td class="amount">
-                        @if($item['amount'] > 0)
-                            &#8369;{{ number_format($item['amount'], 2) }}
-                        @elseif(str_starts_with(trim($item['label']), '•') || str_starts_with(trim($item['label']), '·'))
-                            <span style="color:#64748b;font-size:8pt;">Included</span>
-                        @endif
+                @foreach($items as $item)
+                @if(($item['type'] ?? '') === 'discount')
+                <tr style="background:#f0fdf4;">
+                    <td @if($hasQtyPrice) colspan="3" @endif style="color:#16a34a;font-weight:bold;">
+                        &#10003; {{ $item['label'] }}
+                    </td>
+                    <td class="amount" style="color:#16a34a;font-weight:bold;">
+                        &minus; &#8369;{{ number_format(abs($item['amount']), 2) }}
                     </td>
                 </tr>
+                @else
+                <tr>
+                    <td>{{ $item['label'] }}</td>
+                    @if($hasQtyPrice)
+                    <td class="amount" style="color:#64748b;">
+                        {{ ($item['qty'] ?? 1) > 1 ? $item['qty'] . '&times;' : '' }}
+                    </td>
+                    <td class="amount" style="color:#64748b;">
+                        {{ ($item['price'] ?? 0) > 0 ? '&#8369;' . number_format($item['price'], 2) : '' }}
+                    </td>
+                    @endif
+                    <td class="amount">
+                        {{ ($item['amount'] ?? 0) > 0 ? '&#8369;' . number_format($item['amount'], 2) : '<span style="color:#94a3b8;font-size:8pt;">Included</span>' }}
+                    </td>
+                </tr>
+                @endif
                 @endforeach
             </tbody>
             <tfoot>
                 <tr class="total-row">
-                    <td>TOTAL AMOUNT DUE</td>
+                    <td @if($hasQtyPrice) colspan="3" @endif>TOTAL AMOUNT DUE</td>
                     <td class="amount">&#8369;{{ number_format($order->total, 2) }}</td>
                 </tr>
+                @if($paidAmt > 0)
+                <tr style="background:#f0fdf4;">
+                    <td @if($hasQtyPrice) colspan="3" @endif style="font-weight:bold;color:#16a34a;padding:5px 10px;">Amount Paid</td>
+                    <td class="amount" style="font-weight:bold;color:#16a34a;padding:5px 10px;">&#8369;{{ number_format($paidAmt, 2) }}</td>
+                </tr>
+                <tr style="background:#f8fafc;">
+                    <td @if($hasQtyPrice) colspan="3" @endif style="font-weight:bold;padding:5px 10px;">Remaining Balance</td>
+                    <td class="amount" style="font-weight:bold;color:{{ $balance > 0 ? '#dc2626' : '#16a34a' }};padding:5px 10px;">&#8369;{{ number_format($balance, 2) }}</td>
+                </tr>
+                @endif
             </tfoot>
         </table>
 

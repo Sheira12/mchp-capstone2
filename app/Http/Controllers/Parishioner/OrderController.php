@@ -57,19 +57,47 @@ class OrderController extends Controller
             if (!$package || $package->service_id !== $service?->id) {
                 return back()->withErrors(['service_package_id' => 'Invalid package selected.']);
             }
-            // Build line items from package — use package name directly, don't append "Package"
-            $packageLabel = rtrim($package->name, ' Package');
-            // Avoid double "Package" if name already ends with it
-            $lineItems[] = ['label' => $package->name, 'amount' => (float) $package->price];
-            foreach ($package->inclusionsList() as $inc) {
-                $lineItems[] = ['label' => '  • ' . $inc, 'amount' => 0]; // descriptive rows
+
+            // Build rich line items — one row per inclusion with qty, unit price, subtotal
+            $inclusions    = $package->inclusionsList();
+            $inclusionsSum = 0;
+
+            foreach ($inclusions as $inc) {
+                $subtotal       = (float) ($inc['subtotal'] ?? ($inc['qty'] * $inc['price']));
+                $inclusionsSum += $subtotal;
+                $lineItems[]    = [
+                    'label'    => $inc['name'],
+                    'qty'      => (int) ($inc['qty'] ?? 1),
+                    'price'    => (float) ($inc['price'] ?? 0),
+                    'amount'   => $subtotal,
+                    'type'     => 'inclusion',
+                ];
             }
-            $total = (float) $package->price;
+
+            // Discount row (if configured)
+            $discount = (float) ($package->discount ?? 0);
+            if ($discount > 0) {
+                $lineItems[] = [
+                    'label'  => 'Package Discount',
+                    'qty'    => 1,
+                    'price'  => -$discount,
+                    'amount' => -$discount,
+                    'type'   => 'discount',
+                ];
+            }
+
+            $total = max(0, (float) $package->price);
         } else {
             // Standard / no package — use base service fee
             $fee         = (float) ($service?->fee ?? $booking->service_fee ?? 0);
-            $lineItems[] = ['label' => ($service?->name ?? $booking->getTypeLabel()) . ' — Standard Fee', 'amount' => $fee];
-            $total       = $fee;
+            $lineItems[] = [
+                'label'  => ($service?->name ?? $booking->getTypeLabel()) . ' — Standard Fee',
+                'qty'    => 1,
+                'price'  => $fee,
+                'amount' => $fee,
+                'type'   => 'service',
+            ];
+            $total = $fee;
         }
 
         // Create the Order

@@ -32,18 +32,20 @@ class PackageController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'service_id'  => ['required', 'exists:services,id'],
-            'name'        => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
-            'inclusions'  => ['nullable', 'string'],   // newline-separated list
-            'price'       => ['required', 'numeric', 'min:0'],
-            'sort_order'  => ['nullable', 'integer', 'min:0'],
-            'is_active'   => ['boolean'],
+            'service_id'      => ['required', 'exists:services,id'],
+            'name'            => ['required', 'string', 'max:255'],
+            'description'     => ['nullable', 'string', 'max:1000'],
+            'inclusions_json' => ['nullable', 'string'],
+            'price'           => ['required', 'numeric', 'min:0'],
+            'discount'        => ['nullable', 'numeric', 'min:0'],
+            'sort_order'      => ['nullable', 'integer', 'min:0'],
+            'is_active'       => ['boolean'],
         ]);
 
-        $validated['inclusions'] = $this->parseInclusions($request->get('inclusions', ''));
+        $validated['inclusions'] = $this->parseInclusionsJson($request->get('inclusions_json', '[]'));
         $validated['is_active']  = $request->boolean('is_active', true);
         $validated['sort_order'] = $validated['sort_order'] ?? 0;
+        unset($validated['inclusions_json']);
 
         ServicePackage::create($validated);
 
@@ -59,17 +61,19 @@ class PackageController extends Controller
     public function update(Request $request, ServicePackage $package)
     {
         $validated = $request->validate([
-            'service_id'  => ['required', 'exists:services,id'],
-            'name'        => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
-            'inclusions'  => ['nullable', 'string'],
-            'price'       => ['required', 'numeric', 'min:0'],
-            'sort_order'  => ['nullable', 'integer', 'min:0'],
-            'is_active'   => ['boolean'],
+            'service_id'      => ['required', 'exists:services,id'],
+            'name'            => ['required', 'string', 'max:255'],
+            'description'     => ['nullable', 'string', 'max:1000'],
+            'inclusions_json' => ['nullable', 'string'],
+            'price'           => ['required', 'numeric', 'min:0'],
+            'discount'        => ['nullable', 'numeric', 'min:0'],
+            'sort_order'      => ['nullable', 'integer', 'min:0'],
+            'is_active'       => ['boolean'],
         ]);
 
-        $validated['inclusions'] = $this->parseInclusions($request->get('inclusions', ''));
+        $validated['inclusions'] = $this->parseInclusionsJson($request->get('inclusions_json', '[]'));
         $validated['is_active']  = $request->boolean('is_active');
+        unset($validated['inclusions_json']);
 
         $package->update($validated);
 
@@ -92,8 +96,10 @@ class PackageController extends Controller
             'id'          => $p->id,
             'name'        => $p->name,
             'description' => $p->description,
-            'inclusions'  => $p->inclusionsList(),
+            'inclusions'  => $p->inclusionsList(),          // rich objects
+            'inclusion_names' => $p->inclusionNames(),      // flat strings for legacy display
             'price'       => (float) $p->price,
+            'discount'    => (float) ($p->discount ?? 0),
             'price_fmt'   => $p->priceFormatted(),
         ]);
 
@@ -102,12 +108,27 @@ class PackageController extends Controller
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    /** Parse textarea (one inclusion per line) into array. */
-    private function parseInclusions(string $raw): array
+    /**
+     * Parse the JSON string from inclusions_json hidden input into a safe array.
+     * Each item: {name, price, qty, subtotal}
+     */
+    private function parseInclusionsJson(string $json): array
     {
-        return collect(explode("\n", $raw))
-            ->map(fn($line) => trim($line))
-            ->filter()
+        $decoded = json_decode($json, true);
+        if (!is_array($decoded)) return [];
+
+        return collect($decoded)
+            ->filter(fn($i) => !empty(trim($i['name'] ?? '')))
+            ->map(function ($i) {
+                $qty      = max(1, (int) ($i['qty']   ?? 1));
+                $price    = max(0, (float) ($i['price'] ?? 0));
+                return [
+                    'name'     => trim($i['name']),
+                    'price'    => round($price, 2),
+                    'qty'      => $qty,
+                    'subtotal' => round($qty * $price, 2),
+                ];
+            })
             ->values()
             ->all();
     }

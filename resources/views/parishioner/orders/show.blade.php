@@ -72,31 +72,79 @@
             </div>
 
             {{-- Line items --}}
+            @php
+                $items      = $order->lineItemsList();
+                $hasQtyPrice = collect($items)->contains(fn($i) => ($i['price'] ?? 0) > 0 && ($i['qty'] ?? 1) > 1 || ($i['price'] ?? 0) > 0);
+                $discount   = collect($items)->where('type', 'discount')->sum('amount');
+                $paidAmt    = $order->payment && $order->payment->status === 'paid' ? (float) $order->payment->amount : 0;
+                $balance    = max(0, (float) $order->total - $paidAmt);
+            @endphp
             <div class="border border-gray-200 rounded-xl overflow-hidden">
                 <table class="min-w-full text-sm">
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-4 py-2.5 text-left font-semibold text-gray-600">Description</th>
+                            @if($hasQtyPrice)
+                            <th class="px-3 py-2.5 text-right font-semibold text-gray-600 hidden sm:table-cell">Qty</th>
+                            <th class="px-3 py-2.5 text-right font-semibold text-gray-600 hidden sm:table-cell">Unit Price</th>
+                            @endif
                             <th class="px-4 py-2.5 text-right font-semibold text-gray-600">Amount</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        @foreach($order->lineItemsList() as $item)
-                        <tr>
-                            <td class="px-4 py-2.5 text-gray-800">{{ $item['label'] }}</td>
-                            <td class="px-4 py-2.5 text-right text-gray-900 font-medium">
-                                @if($item['amount'] > 0)
-                                ₱{{ number_format($item['amount'], 2) }}
-                                @endif
+                        @foreach($items as $item)
+                        @if(($item['type'] ?? '') === 'discount')
+                        <tr class="bg-green-50">
+                            <td class="px-4 py-2.5 text-green-700 font-semibold">
+                                <svg class="w-3.5 h-3.5 inline mr-1 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5l7 7-7 7-5-5V3z"/></svg>
+                                {{ $item['label'] }}
+                            </td>
+                            @if($hasQtyPrice)
+                            <td class="px-3 py-2.5 hidden sm:table-cell"></td>
+                            <td class="px-3 py-2.5 hidden sm:table-cell"></td>
+                            @endif
+                            <td class="px-4 py-2.5 text-right text-green-700 font-semibold">
+                                − ₱{{ number_format(abs($item['amount']), 2) }}
                             </td>
                         </tr>
+                        @else
+                        <tr>
+                            <td class="px-4 py-2.5 text-gray-800">{{ $item['label'] }}</td>
+                            @if($hasQtyPrice)
+                            <td class="px-3 py-2.5 text-right text-gray-500 hidden sm:table-cell">
+                                {{ ($item['qty'] ?? 1) > 1 ? $item['qty'] . '×' : '' }}
+                            </td>
+                            <td class="px-3 py-2.5 text-right text-gray-500 hidden sm:table-cell">
+                                @if(($item['price'] ?? 0) > 0) ₱{{ number_format($item['price'], 2) }} @endif
+                            </td>
+                            @endif
+                            <td class="px-4 py-2.5 text-right text-gray-900 font-medium">
+                                @if(($item['amount'] ?? 0) > 0) ₱{{ number_format($item['amount'], 2) }} @endif
+                            </td>
+                        </tr>
+                        @endif
                         @endforeach
                     </tbody>
-                    <tfoot class="bg-blue-50">
-                        <tr>
-                            <td class="px-4 py-3 font-bold text-gray-900 text-right">TOTAL AMOUNT DUE</td>
+                    <tfoot>
+                        <tr class="bg-blue-50 border-t-2 border-blue-200">
+                            <td class="px-4 py-3 font-bold text-gray-900 text-right {{ $hasQtyPrice ? '' : '' }}"
+                                colspan="{{ $hasQtyPrice ? 3 : 1 }}">TOTAL AMOUNT DUE</td>
                             <td class="px-4 py-3 font-bold text-blue-700 text-right text-lg">₱{{ number_format($order->total, 2) }}</td>
                         </tr>
+                        @if($paidAmt > 0)
+                        <tr class="bg-green-50">
+                            <td class="px-4 py-2 text-green-700 font-semibold text-right"
+                                colspan="{{ $hasQtyPrice ? 3 : 1 }}">Amount Paid</td>
+                            <td class="px-4 py-2 text-right text-green-700 font-bold">₱{{ number_format($paidAmt, 2) }}</td>
+                        </tr>
+                        <tr class="bg-gray-50 border-t border-gray-200">
+                            <td class="px-4 py-2 font-bold text-gray-900 text-right"
+                                colspan="{{ $hasQtyPrice ? 3 : 1 }}">Remaining Balance</td>
+                            <td class="px-4 py-2 text-right font-bold {{ $balance > 0 ? 'text-red-600' : 'text-green-600' }}">
+                                ₱{{ number_format($balance, 2) }}
+                            </td>
+                        </tr>
+                        @endif
                     </tfoot>
                 </table>
             </div>
