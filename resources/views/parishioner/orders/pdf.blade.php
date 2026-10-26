@@ -128,7 +128,7 @@ body { font-family: DejaVu Sans, Arial, sans-serif; font-size:10pt; color:#1e293
                     <td>{{ $item['label'] }}</td>
                     @if($hasQtyPrice)
                     <td class="amount" style="color:#64748b;">
-                        {{ ($item['qty'] ?? 1) > 1 ? $item['qty'] . '&times;' : '' }}
+                        {{ ($item['qty'] ?? 1) > 1 ? $item['qty'] . 'x' : '1' }}
                     </td>
                     <td class="amount" style="color:#64748b;">
                         {{ ($item['price'] ?? 0) > 0 ? number_format($item['price'], 2) : '' }}

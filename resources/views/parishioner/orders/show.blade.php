@@ -1,6 +1,24 @@
 ﻿@extends('layouts.portal')
 @section('title', 'Order ' . $order->order_number)
 
+@push('styles')
+<style>
+@media print {
+    /* Hide everything except the order document card */
+    .portal-sidebar, .portal-topbar, .mobile-bottom-nav,
+    .flex.items-center.gap-3:first-child,   /* back button + title row */
+    .flex.flex-wrap.gap-3                    /* action buttons row */
+    { display: none !important; }
+
+    body, .portal-content, .portal-main, .portal-shell { background: #fff !important; }
+
+    /* Status banner and document card print cleanly */
+    .space-y-6 { gap: 0 !important; }
+    .bg-white.rounded-2xl { box-shadow: none !important; border: 1px solid #ccc !important; }
+}
+</style>
+@endpush
+
 @section('content')
 <div class="space-y-6 max-w-3xl w-full">
 
@@ -112,7 +130,7 @@
                             <td class="px-4 py-2.5 text-gray-800">{{ $item['label'] }}</td>
                             @if($hasQtyPrice)
                             <td class="px-3 py-2.5 text-right text-gray-500 hidden sm:table-cell">
-                                {{ ($item['qty'] ?? 1) > 1 ? $item['qty'] . '×' : '' }}
+                                {{ ($item['qty'] ?? 1) > 1 ? $item['qty'] . 'x' : '1' }}
                             </td>
                             <td class="px-3 py-2.5 text-right text-gray-500 hidden sm:table-cell">
                                 @if(($item['price'] ?? 0) > 0) ₱{{ number_format($item['price'], 2) }} @endif
@@ -172,6 +190,11 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 Download PDF
             </a>
+            <button type="button" onclick="window.print()"
+                    class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold px-5 py-2.5 rounded-xl transition text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Print
+            </button>
         @elseif($order->status === 'paid')
             @if($order->payment)
             <a href="{{ route('parishioner.payments.receipt', $order->payment) }}"
@@ -183,6 +206,11 @@
                class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold px-5 py-2.5 rounded-xl transition text-sm">
                 Download Order PDF
             </a>
+            <button type="button" onclick="window.print()"
+                    class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold px-5 py-2.5 rounded-xl transition text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Print
+            </button>
         @endif
     </div>
 
