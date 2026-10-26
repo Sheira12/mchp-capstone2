@@ -106,7 +106,13 @@ body { font-family: DejaVu Sans, Arial, sans-serif; font-size:10pt; color:#1e293
                 @foreach($order->lineItemsList() as $item)
                 <tr>
                     <td>{{ $item['label'] }}</td>
-                    <td class="amount">{{ $item['amount'] > 0 ? '&#8369;' . number_format($item['amount'], 2) : '' }}</td>
+                    <td class="amount">
+                        @if($item['amount'] > 0)
+                            &#8369;{{ number_format($item['amount'], 2) }}
+                        @elseif(str_starts_with(trim($item['label']), '•') || str_starts_with(trim($item['label']), '·'))
+                            <span style="color:#64748b;font-size:8pt;">Included</span>
+                        @endif
+                    </td>
                 </tr>
                 @endforeach
             </tbody>

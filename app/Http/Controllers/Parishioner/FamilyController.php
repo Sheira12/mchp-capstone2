@@ -93,11 +93,18 @@ class FamilyController extends Controller
             'middle_name'          => ['nullable', 'string', 'max:100'],
             'birthdate'            => ['nullable', 'date', 'before:today'],
             'gender'               => ['nullable', 'in:male,female,other'],
+            'gender_other'         => ['nullable', 'string', 'max:50'],
             'civil_status'         => ['nullable', 'in:single,married,widowed,separated,annulled'],
             'relationship_to_head' => ['required', 'string', 'max:100'],
             'contact_number'       => ['nullable', 'string', 'max:20'],
             'email'                => ['nullable', 'email', 'unique:users,email'],
         ]);
+
+        // If "other" was selected and a custom gender was typed, use that value
+        if (($validated['gender'] ?? '') === 'other' && !empty($validated['gender_other'])) {
+            $validated['gender'] = strtolower(trim($validated['gender_other']));
+        }
+        unset($validated['gender_other']);
 
         // Duplicate detection: warn if name+birthdate already exists
         $duplicate = Parishioner::where('first_name', $validated['first_name'])

@@ -57,8 +57,10 @@ class OrderController extends Controller
             if (!$package || $package->service_id !== $service?->id) {
                 return back()->withErrors(['service_package_id' => 'Invalid package selected.']);
             }
-            // Build line items from package
-            $lineItems[] = ['label' => $package->name . ' Package', 'amount' => (float) $package->price];
+            // Build line items from package — use package name directly, don't append "Package"
+            $packageLabel = rtrim($package->name, ' Package');
+            // Avoid double "Package" if name already ends with it
+            $lineItems[] = ['label' => $package->name, 'amount' => (float) $package->price];
             foreach ($package->inclusionsList() as $inc) {
                 $lineItems[] = ['label' => '  • ' . $inc, 'amount' => 0]; // descriptive rows
             }
@@ -132,7 +134,8 @@ class OrderController extends Controller
                 'phone'   => config('parish.phone'),
                 'email'   => config('parish.email'),
             ],
-        ])->setPaper('A4', 'portrait');
+        ])->setPaper('A4', 'portrait')
+          ->setOption(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans']);
 
         return $pdf->download('OP-' . $order->order_number . '.pdf');
     }

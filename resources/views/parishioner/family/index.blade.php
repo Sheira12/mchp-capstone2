@@ -185,11 +185,16 @@
                 </div>
                 <div>
                     <label class="form-label">Gender</label>
-                    <select name="gender" class="form-select w-full">
+                    <select name="gender" id="gender-select" class="form-select w-full" onchange="toggleGenderOther(this.value)">
                         <option value="">Select…</option>
                         <option value="male"   {{ old('gender')==='male'   ? 'selected' : '' }}>Male</option>
                         <option value="female" {{ old('gender')==='female' ? 'selected' : '' }}>Female</option>
+                        <option value="other"  {{ old('gender')==='other'  ? 'selected' : '' }}>Other (please specify)</option>
                     </select>
+                    <input type="text" name="gender_other" id="gender-other-input"
+                           value="{{ old('gender_other') }}"
+                           placeholder="Specify gender…"
+                           class="form-input w-full mt-2 {{ old('gender')==='other' ? '' : 'hidden' }}">
                 </div>
             </div>
             <div>
@@ -231,4 +236,20 @@
 
     @endif
 </div>
+@push('scripts')
+<script>
+function toggleGenderOther(val) {
+    const inp = document.getElementById('gender-other-input');
+    if (!inp) return;
+    if (val === 'other') {
+        inp.classList.remove('hidden');
+        inp.required = true;
+    } else {
+        inp.classList.add('hidden');
+        inp.required = false;
+        inp.value = '';
+    }
+}
+</script>
+@endpush
 @endsection
