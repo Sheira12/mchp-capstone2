@@ -131,11 +131,15 @@ body { font-family: DejaVu Sans, Arial, sans-serif; font-size:10pt; color:#1e293
                         {{ ($item['qty'] ?? 1) > 1 ? $item['qty'] . '&times;' : '' }}
                     </td>
                     <td class="amount" style="color:#64748b;">
-                        {{ ($item['price'] ?? 0) > 0 ? '&#8369;' . number_format($item['price'], 2) : '' }}
+                        {{ ($item['price'] ?? 0) > 0 ? number_format($item['price'], 2) : '' }}
                     </td>
                     @endif
                     <td class="amount">
-                        {{ ($item['amount'] ?? 0) > 0 ? '&#8369;' . number_format($item['amount'], 2) : '<span style="color:#94a3b8;font-size:8pt;">Included</span>' }}
+                        @if(($item['amount'] ?? 0) > 0)
+                            {{ number_format($item['amount'], 2) }}
+                        @else
+                            <span style="color:#94a3b8;font-size:8pt;">Included</span>
+                        @endif
                     </td>
                 </tr>
                 @endif
